@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>冒險者儀表板 - 星火廣告推廣公會</title>
+    
+    <!-- 共用CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- 儀表板專用CSS -->
+    <style>
+        /* ===== RPG儀表板專用樣式 ===== */
+        :root {
+            --rpg-dark: #0f172a;
+            --rpg-card: #1e293b;
+            --rpg-accent: #4db8ff;
+            --rpg-gold: #FFD700;
+            --rpg-success: #06C755;
+            --rpg-danger: #ff4757;
+            --rpg-purple: #9d4edd;
+        }
+        
+        /* 整體背景 */
+        body {
+            background: var(--rpg-dark);
+            color: #e2e8f0;
+            font-family: 'Noto Sans TC', sans-serif;
+            min-height: 100vh;
+        }
+        
+        /* RPG主題導覽列 */
+        .navbar {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid var(--rpg-gold);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        
+        .nav-link {
+            color: #cbd5e1;
+        }
+        
+        .nav-link:hover {
+            color: var(--rpg-accent);
+        }
+        
+        /* 公會大廳標題區 */
+        .dashboard-header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+            color: white;
+            padding: 60px 0 40px;
+            margin-top: 70px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .dashboard-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 L100,0 L100,100 Z" fill="rgba(255,215,0,0.1)"/></svg>');
+            background-size: cover;
+        }
+        
+        .welcome-title {
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .welcome-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+        
+        /* 等級徽章 */
+        .level-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0,0,0,0.3);
+            padding: 8px 20px;
+            border-radius: 30px;
+            border: 2px solid var(--rpg-gold);
+        }
+        
+        .level-number {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--rpg-gold);
+        }
+        
+        /* 狀態卡片網格 */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin: 40px 0;
+        }
+        
+        /* RPG狀態卡片 */
+        .stat-card {
+            background: linear-gradient(135deg, var(--rpg-card) 0%, #2d3748 100%);
+            border-radius: 20px;
+            padding: 30px;
+            border: 2px solid;
+            border-image: linear-gradient(45deg, var(--rpg-accent), transparent) 1;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--rpg-accent), var(--rpg-purple));
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+        
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: var(--rpg-accent);
+        }
+        
+        .stat-value {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: white;
+            margin: 10px 0;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+        }
+        
+        /* 經驗值進度條 */
+        .xp-container {
+            margin: 30px 0;
+        }
+        
+        .xp-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .xp-bar {
+            height: 24px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 2px solid rgba(255,255,255,0.2);
+            position: relative;
+        }
+        
+        .xp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #06C755, #4db8ff, #9d4edd);
+            border-radius: 10px;
+            transition: width 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .xp-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255,255,255,0.3), 
+                transparent);
+            animation: xpShine 2s infinite;
+        }
+        
+        @keyframes xpShine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        /* 任務大廳 */
+        .quest-hall {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 20px;
+            padding: 40px;
+            margin: 60px 0;
+            border: 2px solid rgba(77, 184, 255, 0.2);
+        }
+        
+        .section-title-rpg {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 40px;
+            color: white;
+            text-align: center;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .section-title-rpg::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 25%;
+            right: 25%;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, var(--rpg-accent), transparent);
+        }
+        
+        /* 任務卡片 */
+        .quest-card {
+            background: linear-gradient(135deg, #2d3748 0%, #1e293b 100%);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 5px solid;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .quest-card:hover {
+            transform: translateX(10px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+        }
+        
+        .quest-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.03), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .quest-card:hover::before {
+            opacity: 1;
+        }
+        
+        .quest-difficulty {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        
+        .difficulty-beginner {
+            background: #27ae60;
+            color: white;
+            border-left-color: #27ae60;
+        }
+        
+        .difficulty-intermediate {
+            background: #f39c12;
+            color: white;
+            border-left-color: #f39c12;
+        }
+        
+        .difficulty-advanced {
+            background: #e74c3c;
+            color: white;
+            border-left-color: #e74c3c;
+        }
+        
+        .quest-reward {
+            color: var(--rpg-gold);
+            font-weight: 800;
+            font-size: 1.5rem;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+        }
+        
+        /* RPG按鈕 */
+        .btn-rpg {
+            background: linear-gradient(135deg, var(--rpg-accent) 0%, #1a8cff 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            box-shadow: 0 5px 15px rgba(77, 184, 255, 0.3);
+        }
+        
+        .btn-rpg:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(77, 184, 255, 0.5);
+            background: linear-gradient(135deg, #1a8cff 0%, #0066cc 100%);
+        }
+        
+        /* 成就系統 */
+        .achievement-hall {
+            margin: 60px 0;
+        }
+        
+        .badge-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 25px;
+            margin: 40px 0;
+        }
+        
+        .badge {
+            background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            border: 3px solid;
+            position: relative;
+            transition: all 0.3s;
+        }
+        
+        .badge:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+        }
+        
+        .badge-locked {
+            filter: grayscale(1);
+            opacity: 0.6;
+        }
+        
+        .badge-bronze { border-color: #CD7F32; }
+        .badge-silver { border-color: #C0C0C0; }
+        .badge-gold { border-color: #FFD700; }
+        
+        .badge-icon {
+            font-size: 2.5rem;
+            margin-bottom: 5px;
+        }
+        
+        /* 工具區 */
+        .toolbox {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 40px 0;
+        }
+        
+        .tool-card {
+            background: linear-gradient(135deg, var(--rpg-card) 0%, #2d3748 100%);
+            border-radius: 15px;
+            padding: 30px;
+            border: 2px solid rgba(77, 184, 255, 0.3);
+            transition: all 0.3s;
+        }
+        
+        .tool-card:hover {
+            border-color: var(--rpg-accent);
+            transform: translateY(-5px);
+        }
+        
+        /* 響應式設計 */
+        @media (max-width: 768px) {
+            .welcome-title {
+                font-size: 2rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .badge-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 15px;
+            }
+            
+            .toolbox {
+                grid-template-columns: 1fr;
+            }
+            
+            .quest-hall {
+                padding: 20px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .badge-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .level-badge {
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- RPG主題導覽列 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <img src="logo.png" alt="星火廣告" class="logo-img">
+                <div class="logo-text">星火廣告</div>
+            </a>
+            <div class="nav-links">
+                <a href="dashboard.html" class="nav-link"><i class="fas fa-home"></i> 公會大廳</a>
+                <a href="#quests" class="nav-link"><i class="fas fa-tasks"></i> 任務大廳</a>
+                <a href="#achievements" class="nav-link"><i class="fas fa-trophy"></i> 成就殿堂</a>
+                <a href="#tools" class="nav-link"><i class="fas fa-tools"></i> 冒險工具</a>
+                <a href="index.html" class="nav-link"><i class="fas fa-sign-out-alt"></i> 返回首頁</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 公會大廳標題區 -->
+    <section class="dashboard-header">
+        <div class="container">
+            <div style="text-align: center;">
+                <h1 class="welcome-title">🏰 歡迎回來，<span id="userName">冒險者</span>！</h1>
+                <p class="welcome-subtitle">先鋒推廣公會 - 你的賺錢冒險基地</p>
+                
+                <div class="level-badge">
+                    <span class="level-number">Lv. <span id="userLevel">5</span></span>
+                    <span>冒險者</span>
+                    <span>|</span>
+                    <span><i class="fas fa-coins" style="color: #FFD700;"></i> <span id="totalEarned">8,450</span> 金幣</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 即時狀態面板 -->
+    <section class="section" style="background: transparent; padding-top: 40px;">
+        <div class="container">
+            <h2 class="section-title-rpg">⚡ 冒險者狀態</h2>
+            
+            <!-- 經驗值進度條 -->
+            <div class="xp-container">
+                <div class="xp-label">
+                    <span>經驗值</span>
+                    <span><span id="currentXP">1,250</span> / <span id="nextLevelXP">2,000</span> XP</span>
+                </div>
+                <div class="xp-bar">
+                    <div class="xp-fill" id="xpFill" style="width: 62.5%;"></div>
+                </div>
+            </div>
+            
+            <!-- 狀態卡片網格 -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-value" id="todayEarnings">$ 420</div>
+                    <p>今日收益</p>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">📈</div>
+                    <div class="stat-value" id="monthEarnings">$ 8,450</div>
+                    <p>本月累計</p>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-value" id="completedQuests">18</div>
+                    <p>已完成任務</p>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">⏱️</div>
+                    <div class="stat-value" id="activeDays">24</div>
+                    <p>冒險天數</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 任務大廳 -->
+    <section class="quest-hall" id="quests">
+        <div class="container">
+            <h2 class="section-title-rpg">📋 任務大廳</h2>
+            
+            <!-- 任務列表 -->
+            <div id="questList">
+                <!-- 任務1 -->
+                <div class="quest-card difficulty-beginner">
+                    <span class="quest-difficulty difficulty-beginner">新手任務</span>
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div>
+                            <h3 style="margin: 0 0 10px 0; color: white;">🚗 分享車輛貼文到FB</h3>
+                            <p style="color: #94a3b8; margin: 5px 0; line-height: 1.6;">
+                                將指定車輛貼文分享到3個相關FB社團，並截圖回報
+                            </p>
+                            <div style="display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap;">
+                                <span style="color: #cbd5e1; font-size: 0.9rem;">
+                                    <i class="far fa-clock"></i> 剩餘: 2天
+                                </span>
+                                <span style="color: #cbd5e1; font-size: 0.9rem;">
+                                    <i class="fas fa-users"></i> 42人已完成
+                                </span>
+                                <span style="color: #cbd5e1; font-size: 0.9rem;">
+                                    <i class="fas fa-star"></i> +50 XP
+                                </span>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="quest-reward">$ 150</div>
+                            <button class="btn-rpg" onclick="acceptQuest(1)">
+                                ⚔️ 接受任務
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 任務2 -->
+                <div class="quest-card difficulty-intermediate">
+                    <span class="quest-difficulty difficulty-intermediate">中級任務</span>
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div>
+                            <h3 style="margin: 0 0 10px 0; color: white;">📱 LINE群組推廣</h3>
+                            <p style="color: #94a3b8; margin: 5px 0; line-height: 1.6;">
+                                將車輛資訊分享到5個LINE群組，並獲得至少3個有效詢問
+                            </p>
+                            <div style="display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap;">
+                                <span style="color: #cbd5e1; font-size: 0.9rem;">
+                                    <i class="far fa-clock"></i> 剩餘: 5天
+                                </span>
+                                <span style="color: #cbd5e1; font-size: 0.9rem;">
+                                    <i class="fas fa-users"></i> 28人已完成
+                                </span>
+                                <span style="color: #cbd5e1; font-size: 0.9rem;">
+                                    <i class="fas fa-star"></i> +120 XP
+                                </span>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="quest-reward">$ 350</div>
+                            <button class="btn-rpg" onclick="acceptQuest(2)">
+                                ⚔️ 接受任務
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 任務3 -->
+                <div class="quest-card difficulty-advanced">
+                    <span class="quest-difficulty difficulty-advanced">高級任務</span>
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div>
+                            <h3 style="margin: 0 0 10px 0; color: white;">🎯 成功引薦買家</h3>
+                            <p style="color: #94a3b8; margin: 5px 0; line-height: 1.6;">
+                                引薦實際買家完成看車，並獲得車商確認
+                            </p>
+                            <div style="display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap;">
+                                <span style="color: #cbd5e1; font-size: 0.9rem;">
+                                    <i class="far fa-clock"></i> 剩餘: 7天
+                                </span>
+                                <span style="color: #cbd5e1; font-size: 0.9rem;">
+                                    <i class="fas fa-users"></i> 15人已完成
+                                </span>
+                                <span style="color: #cbd5e1; font-size: 0.9rem;">
+                                    <i class="fas fa-star"></i> +300 XP
+                                </span>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="quest-reward">$ 1,200</div>
+                            <button class="btn-rpg" onclick="acceptQuest(3)">
+                                ⚔️ 接受任務
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 成就殿堂 -->
+    <section class="achievement-hall" id="achievements">
+        <div class="container">
+            <h2 class="section-title-rpg">🏆 成就殿堂</h2>
+            
+            <div class="badge-grid">
+                <!-- 已解鎖成就 -->
+                <div class="badge badge-bronze">
+                    <div class="badge-icon">🚀</div>
+                    <div style="font-size: 0.8rem; text-align: center;">新手起航</div>
+                </div>
+                
+                <div class="badge badge-bronze">
+                    <div class="badge-icon">💰</div>
+                    <div style="font-size: 0.8rem; text-align: center;">第一桶金</div>
+                </div>
+                
+                <div class="badge badge-silver">
+                    <div class="badge-icon">📈</div>
+                    <div style="font-size: 0.8rem; text-align: center;">月入五千</div>
+                </div>
+                
+                <!-- 鎖定成就 -->
+                <div class="badge badge-locked">
+                    <div class="badge-icon">👑</div>
+                    <div style="font-size: 0.8rem; text-align: center;">王牌推手</div>
+                </div>
+                
+                <div class="badge badge-locked">
+                    <div class="badge-icon">🏅</div>
+                    <div style="font-size: 0.8rem; text-align: center;">任務大師</div>
+                </div>
+                
+                <div class="badge badge-locked">
+                    <div class="badge-icon">💎</div>
+                    <div style="font-size: 0.8rem; text-align: center;">鑽石會員</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 冒險工具區 -->
+    <section class="section" id="tools" style="background: transparent;">
+        <div class="container">
+            <h2 class="section-title-rpg">🛠️ 冒險工具</h2>
+            
+            <div class="toolbox">
+                <div class="tool-card">
+                    <h3 style="color: white; margin-bottom: 15px;"><i class="fas fa-link"></i> 推廣連結</h3>
+                    <p style="color: #94a3b8; margin-bottom: 20px;">你的專屬推廣連結，分享即可追蹤成效</p>
+                    <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <code style="color: #4db8ff; word-break: break-all;">https://xianfeng.com/ref/你的ID</code>
+                    </div>
+                    <button class="btn-rpg" onclick="copyLink()">
+                        <i class="fas fa-copy"></i> 複製連結
+                    </button>
+                </div>
+                
+                <div class="tool-card">
+                    <h3 style="color: white; margin-bottom: 15px;"><i class="fas fa-wallet"></i> 獎金提領</h3>
+                    <p style="color: #94a3b8; margin-bottom: 20px;">可提領金額：<strong style="color: #FFD700;">$ 3,250</strong></p>
+                    <p style="color: #94a3b8; margin-bottom: 20px; font-size: 0.9rem;">
+                        最低提領：$ 500<br>
+                        每月15日處理提領申請
+                    </p>
+                    <button class="btn-rpg" onclick="withdrawFunds()">
+                        <i class="fas fa-money-check-alt"></i> 申請提領
+                    </button>
+                </div>
+                
+                <div class="tool-card">
+                    <h3 style="color: white; margin-bottom: 15px;"><i class="fas fa-chart-line"></i> 數據報表</h3>
+                    <p style="color: #94a3b8; margin-bottom: 20px;">查看你的推廣成效與收益分析</p>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-rpg" style="background: linear-gradient(135deg, #06C755, #05a244);">
+                            <i class="fas fa-calendar-alt"></i> 本週報表
+                        </button>
+                        <button class="btn-rpg" style="background: linear-gradient(135deg, #9d4edd, #7b2cbf);">
+                            <i class="fas fa-chart-bar"></i> 分析圖表
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 頁尾 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-section">
+                    <h3>快速連結</h3>
+                    <div class="footer-links">
+                        <a href="index.html" class="footer-link">網站首頁</a>
+                        <a href="dashboard.html" class="footer-link">公會大廳</a>
+                        <a href="#quests" class="footer-link">任務大廳</a>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>支援中心</h3>
+                    <div class="contact-info">
+                        <p><i class="fas fa-question-circle"></i> <span>任務問題諮詢</span></p>
+                        <p>
+                            <i class="fab fa-line"></i> 
+                            <span>官方客服：</span>
+                            <strong>@206zsrzq</strong>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>© 2025 星火廣告. 版權所有。</p>
+                <p style="margin-top: 10px;">冒險者公會系統 v1.0 | 本日登入：<span id="loginCount">1,248</span> 位冒險者</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- RPG儀表板腳本 -->
+    <script>
+        // 初始化用戶資料
+        function loadUserData() {
+            // 從 localStorage 讀取用戶資料
+            const savedUser = localStorage.getItem('currentUser');
+            let userData;
+            
+            if (savedUser) {
+                userData = JSON.parse(savedUser);
+            } else {
+                // 預設用戶資料（如果沒有登入資料）
+                userData = {
+                    name: '先鋒冒險者',
+                    level: 5,
+                    xp: 1250,
+                    totalEarned: 8450,
+                    todayEarnings: 420,
+                    monthEarnings: 8450,
+                    completedQuests: 18,
+                    activeDays: 24,
+                    nextLevelXP: 2000
+                };
+                localStorage.setItem('currentUser', JSON.stringify(userData));
+            }
+            
+            // 更新頁面資料
+            document.getElementById('userName').textContent = userData.name;
+            document.getElementById('userLevel').textContent = userData.level;
+            document.getElementById('totalEarned').textContent = userData.totalEarned.toLocaleString();
+            document.getElementById('todayEarnings').textContent = '$ ' + userData.todayEarnings.toLocaleString();
+            document.getElementById('monthEarnings').textContent = '$ ' + userData.monthEarnings.toLocaleString();
+            document.getElementById('completedQuests').textContent = userData.completedQuests;
+            document.getElementById('activeDays').textContent = userData.activeDays;
+            document.getElementById('currentXP').textContent = userData.xp.toLocaleString();
+            document.getElementById('nextLevelXP').textContent = userData.nextLevelXP.toLocaleString();
+            
+            // 計算經驗值百分比
+            const xpPercent = (userData.xp / userData.nextLevelXP * 100).toFixed(1);
+            document.getElementById('xpFill').style.width = ${xpPercent}%;
+        }
+        
+        // 接受任務功能
+        function acceptQuest(questId) {
+            const questNames = ['分享車輛貼文到FB', 'LINE群組推廣', '成功引薦買家'];
+            const questRewards = [150, 350, 1200];
+            
+            const questName = questNames[questId - 1];
+            const questReward = questRewards[questId - 1];
+            
+            // 確認對話框
+            const confirmMsg = 確定要接受任務嗎？\n\n任務：${questName}\n獎勵：$${questReward}\n\n接受後任務將出現在「進行中」列表;
+            
+            if (confirm(confirmMsg)) {
+                // 更新用戶資料
+                const userData = JSON.parse(localStorage.getItem('currentUser') || '{}');
+                
+                // 顯示成功訊息
+                alert(✅ 任務接受成功！\n\n"${questName}" 已加入你的任務列表\n記得在時限內完成並回報哦！);
+                
+                // 這裡可以添加實際的任務接受邏輯
+                console.log(任務 ${questId} 已接受);
+            }
+        }
+        
+        // 複製推廣連結
+        function copyLink() {
+            const link = 'https://xianfeng.com/ref/' + (Math.random().toString(36).substring(2, 10));
+            
+            // 使用現代 clipboard API
+            navigator.clipboard.writeText(link).then(() => {
+                alert('✅ 推廣連結已複製到剪貼簿！\n\n' + link);
+            }).catch(err => {
+                // 備用方案
+                const textArea = document.createElement('textarea');
+                textArea.value = link;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('✅ 推廣連結已複製到剪貼簿！\n\n' + link);
+            });
+        }
+        
+        // 提領獎金
+        function withdrawFunds() {
+            const userData = JSON.parse(localStorage.getItem('currentUser') || '{}');
+            const available = 3250; // 可提領金額
+            
+            if (available < 500) {
+                alert('💰 提領金額不足\n\n目前可提領：$' + available + '\n最低提領門檻：$500\n\n請繼續完成任務賺取更多獎金！');
+                return;
+            }
+            
+            const amount = prompt(請輸入提領金額 (最低 $500，最高 $${available})：, available);
+            
+            if (amount && amount >= 500 && amount <= available) {
+                alert(✅ 提領申請已提交！\n\n金額：$${amount}\n處理時間：1-3個工作日\n\n款項將匯入你預設的銀行帳戶);
+            } else if (amount) {
+                alert('❌ 金額輸入錯誤\n請確認金額在 $500 ~ $' + available + ' 之間');
+            }
+        }
+        
+        // 登出功能
+        function logout() {
+            if (confirm('確定要登出冒險者公會嗎？')) {
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('isLoggedIn');
+                alert('👋 已成功登出，期待再次冒險！');
+                window.location.href = 'index.html';
+            }
+        }
+        
+        // 頁面載入時初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserData();
+            
+            // 檢查登入狀態
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            if (!isLoggedIn) {
+                // 如果未登入，導向註冊頁
+                alert('請先登入冒險者公會！');
+                window.location.href = 'signup.html';
+            }
+            
+            // 添加登出按鈕事件
+            const logoutBtn = document.querySelector('a[href="index.html"]');
+            if (logoutBtn && logoutBtn.innerHTML.includes('返回首頁')) {
+                logoutBtn.onclick = function(e) {
+                    e.preventDefault();
+                    logout();
+                };
+            }
+        });
+        
+        // 動態更新登入人數（模擬）
+        setInterval(() => {
+            const countElem = document.getElementById('loginCount');
+            if (countElem) {
+                const current = parseInt(countElem.textContent.replace(/,/g, ''));
+                const change = Math.floor(Math.random() * 10) - 3; // -3 到 +6
+                const newCount = Math.max(1200, current + change);
+                countElem.textContent = newCount.toLocaleString();
+            }
+        }, 30000); // 每30秒更新一次
+    </script>
+</body>
+</html>
