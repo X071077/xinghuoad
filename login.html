@@ -3,245 +3,209 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>星火廣告｜登入</title>
+  <title>登入｜星火廣告</title>
   <meta name="description" content="星火廣告會員登入" />
   <style>
     :root{
-      --bg:#0b0f19;
-      --card:#121a2b;
-      --text:rgba(255,255,255,.92);
-      --muted:rgba(255,255,255,.72);
-      --line:rgba(255,255,255,.12);
-      --btn:#00d4ff;
-      --btn2:#4f8cff;
-      --danger:#ff5b5b;
-      --ok:#47d18c;
-      --radius:16px;
-      --shadow:0 18px 60px rgba(0,0,0,.35);
+      --bg:#0b0f19; --card:#11182a; --text:rgba(255,255,255,.92);
+      --muted:rgba(255,255,255,.70); --line:rgba(255,255,255,.12);
+      --accent:#32e0c4; --danger:#ff5c7a;
+      --radius:16px; --shadow:0 18px 60px rgba(0,0,0,.35);
+      --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", Arial;
     }
     *{box-sizing:border-box}
     body{
-      margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", Arial, sans-serif;
-      background: radial-gradient(1200px 600px at 20% 0%, rgba(79,140,255,.22), transparent 55%),
-                  radial-gradient(900px 500px at 90% 10%, rgba(0,212,255,.18), transparent 50%),
+      margin:0; min-height:100vh; font-family:var(--font);
+      background: radial-gradient(1100px 500px at 20% -10%, rgba(50,224,196,.16), transparent 60%),
+                  radial-gradient(900px 500px at 90% 10%, rgba(110,168,255,.16), transparent 55%),
                   var(--bg);
       color:var(--text);
-      min-height:100vh;
-      display:flex;
-      align-items:center;
-      justify-content:center;
+      display:flex; align-items:center; justify-content:center;
       padding:24px;
     }
-    .wrap{
-      width:min(960px, 100%);
-      display:grid;
-      grid-template-columns: 1.1fr .9fr;
-      gap:18px;
-    }
-    @media (max-width: 860px){
-      .wrap{grid-template-columns:1fr}
-    }
-    .hero{
-      padding:26px;
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
-      box-shadow: var(--shadow);
-      position:relative;
-      overflow:hidden;
-    }
-    .hero:before{
-      content:"";
-      position:absolute; inset:-80px -80px auto auto;
-      width:220px; height:220px;
-      background: radial-gradient(circle at 30% 30%, rgba(0,212,255,.35), transparent 60%);
-      filter: blur(2px);
-      transform: rotate(15deg);
-    }
-    .brand{
-      display:flex; align-items:center; gap:10px;
-      margin-bottom:14px;
-    }
+    .wrap{width:min(520px, 100%);}
+    .brand{display:flex; align-items:center; gap:12px; margin-bottom:14px;}
     .logo{
-      width:44px; height:44px; border-radius:12px;
-      background: linear-gradient(135deg, rgba(0,212,255,.9), rgba(79,140,255,.9));
-      box-shadow: 0 10px 30px rgba(0,212,255,.18);
+      width:40px; height:40px; border-radius:12px;
+      background: linear-gradient(135deg, rgba(50,224,196,.9), rgba(110,168,255,.9));
+      box-shadow: 0 10px 30px rgba(50,224,196,.18);
     }
-    h1{margin:6px 0 10px; font-size:28px; letter-spacing:.5px}
-    .sub{color:var(--muted); line-height:1.7; margin:0}
+    .brand h1{font-size:18px; margin:0}
+    .brand p{margin:2px 0 0; color:var(--muted); font-size:13px}
+
     .card{
-      padding:22px;
+      background: rgba(17,24,42,.86);
       border:1px solid var(--line);
       border-radius:var(--radius);
-      background: rgba(18,26,43,.7);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(6px);
+      box-shadow:var(--shadow);
+      padding:22px;
+      backdrop-filter: blur(10px);
     }
-    label{display:block; font-size:13px; color:var(--muted); margin:14px 0 8px}
+    .title{font-size:20px; margin:0 0 6px}
+    .sub{margin:0 0 18px; color:var(--muted); font-size:13px; line-height:1.6}
+
+    label{display:block; font-size:13px; color:var(--muted); margin:12px 0 6px}
     input{
       width:100%;
       padding:12px 12px;
       border-radius:12px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.22);
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
       color:var(--text);
       outline:none;
     }
-    input:focus{
-      border-color: rgba(0,212,255,.55);
-      box-shadow: 0 0 0 3px rgba(0,212,255,.14);
-    }
-    .row{
-      display:flex; align-items:center; justify-content:space-between;
-      margin-top:12px;
-      gap:10px;
-      flex-wrap:wrap;
-    }
+    input:focus{border-color:rgba(50,224,196,.55); box-shadow:0 0 0 3px rgba(50,224,196,.12)}
+    .row{display:flex; gap:12px; align-items:center; justify-content:space-between; margin-top:10px}
+    .hint{font-size:12px; color:var(--muted)}
     .btn{
-      border:0;
-      cursor:pointer;
+      width:100%;
+      margin-top:14px;
       padding:12px 14px;
       border-radius:12px;
-      font-weight:700;
-      background: linear-gradient(135deg, var(--btn), var(--btn2));
-      color:#001018;
-      width:100%;
+      border:0;
+      background: linear-gradient(135deg, rgba(50,224,196,.95), rgba(110,168,255,.95));
+      color:#041014;
+      font-weight:800;
+      cursor:pointer;
     }
-    .btn[disabled]{opacity:.55; cursor:not-allowed}
-    .link{
-      color: rgba(0,212,255,.9);
-      text-decoration:none;
+    .btn:disabled{opacity:.55; cursor:not-allowed}
+    .links{
+      display:flex; justify-content:space-between; gap:10px;
+      margin-top:12px; font-size:13px;
     }
-    .link:hover{text-decoration:underline}
+    a{color:rgba(50,224,196,.95); text-decoration:none}
+    a:hover{text-decoration:underline}
     .msg{
       margin-top:12px;
-      font-size:13px;
-      line-height:1.6;
       padding:10px 12px;
       border-radius:12px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.18);
-      display:none;
-    }
-    .msg.ok{display:block; border-color: rgba(71,209,140,.35); color: rgba(71,209,140,.95)}
-    .msg.err{display:block; border-color: rgba(255,91,91,.35); color: rgba(255,91,91,.95)}
-    .small{font-size:12px; color:var(--muted); margin-top:10px}
-    .toplinks{
-      display:flex; gap:10px; flex-wrap:wrap;
-      margin-top:14px;
-    }
-    .pill{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:10px 12px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.18);
-      color:var(--text);
-      text-decoration:none;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
       font-size:13px;
+      display:none;
+      line-height:1.55;
+      white-space:pre-line;
     }
-    .pill:hover{border-color: rgba(0,212,255,.35)}
+    .msg.error{border-color: rgba(255,92,122,.35); background: rgba(255,92,122,.10); color: rgba(255,255,255,.94)}
+    .msg.ok{border-color: rgba(50,224,196,.35); background: rgba(50,224,196,.10)}
+    .small{margin-top:14px; color:var(--muted); font-size:12px; line-height:1.6}
+    .chip{
+      display:inline-block; padding:2px 8px; border-radius:999px;
+      border:1px solid var(--line); background: rgba(255,255,255,.05);
+      font-size:12px; color:var(--muted);
+    }
   </style>
 </head>
-
 <body>
   <div class="wrap">
-
-    <section class="hero">
-      <div class="brand">
-        <div class="logo" aria-hidden="true"></div>
-        <div>
-          <div style="font-weight:800; letter-spacing:.6px;">星火廣告</div>
-          <div style="color:var(--muted); font-size:12px; margin-top:2px;">會員系統</div>
-        </div>
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <div>
+        <h1>星火廣告</h1>
+        <p>會員登入</p>
       </div>
-      <h1>登入你的帳號</h1>
-      <p class="sub">使用帳號與密碼登入後，系統會呼叫 Netlify Function（auth）去 Google Sheet 驗證。</p>
+    </div>
 
-      <div class="toplinks">
-        <a class="pill" href="/index.html">← 回首頁</a>
-        <a class="pill" href="/signup.html">前往註冊 →</a>
-      </div>
+    <div class="card">
+      <h2 class="title">登入帳號</h2>
+      <p class="sub">請輸入你的帳號與密碼。登入成功後會自動前往會員頁（dashboard）。</p>
 
-      <p class="small">提醒：若你直接打開 <code>/.netlify/functions/auth</code> 看到 <code>Method not allowed</code> 是正常的，因為它只接受 POST。</p>
-    </section>
-
-    <section class="card">
       <form id="loginForm">
         <label for="username">帳號（username）</label>
-        <input id="username" name="username" autocomplete="username" required placeholder="輸入你的帳號" />
+        <input id="username" name="username" autocomplete="username" required placeholder="例如：iceking" />
 
         <label for="password">密碼（password）</label>
-        <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="輸入你的密碼" />
+        <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="請輸入密碼" />
 
         <div class="row">
-          <button class="btn" id="submitBtn" type="submit">登入</button>
+          <span class="hint"><span class="chip">提示</span> 你剛剛看到的「Method not allowed」是正常的：因為函式只允許 POST。</span>
         </div>
+
+        <button class="btn" id="submitBtn" type="submit">登入</button>
 
         <div id="msg" class="msg"></div>
 
+        <div class="links">
+          <a href="./signup.html">還沒有帳號？去註冊</a>
+          <a href="./index.html">回首頁</a>
+        </div>
+
         <div class="small">
-          沒有帳號？ <a class="link" href="/signup.html">點我註冊</a>
+          如果你之後想把登入後跳轉位置改掉，把底下 JS 的 <b>dashboard.html</b> 改成你要的頁面即可。
         </div>
       </form>
-    </section>
-
+    </div>
   </div>
 
   <script>
-    const form = document.getElementById("loginForm");
-    const msgEl = document.getElementById("msg");
-    const btn = document.getElementById("submitBtn");
+    const form = document.getElementById('loginForm');
+    const btn = document.getElementById('submitBtn');
+    const msg = document.getElementById('msg');
 
-    function setMsg(type, text){
-      msgEl.className = "msg " + (type === "ok" ? "ok" : "err");
-      msgEl.textContent = text;
+    function showMessage(text, type){
+      msg.style.display = 'block';
+      msg.className = 'msg ' + (type || '');
+      msg.textContent = text;
+    }
+    function clearMessage(){
+      msg.style.display = 'none';
+      msg.className = 'msg';
+      msg.textContent = '';
     }
 
-    function clearMsg(){
-      msgEl.className = "msg";
-      msgEl.textContent = "";
-    }
-
-    form.addEventListener("submit", async (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      clearMsg();
+      clearMessage();
 
-      const username = document.getElementById("username").value.trim();
-      const password = document.getElementById("password").value;
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
 
       if(!username || !password){
-        setMsg("err", "請輸入帳號與密碼");
+        showMessage('請輸入帳號與密碼。', 'error');
         return;
       }
 
       btn.disabled = true;
-      btn.textContent = "登入中…";
+      const oldText = btn.textContent;
+      btn.textContent = '登入中...';
 
       try{
-        const res = await fetch("/.netlify/functions/auth", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "login", username, password })
+        const res = await fetch('/.netlify/functions/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'login',
+            username,
+            password
+          })
         });
 
         const data = await res.json().catch(() => ({}));
 
-        if(res.ok && data && data.ok){
-          // ✅ 成功：你可以依需求改導向頁
-          setMsg("ok", "登入成功，正在跳轉…");
-          // 你要跳回官網會員資料 or dashboard 就改這裡
-          window.location.href = "/dashboard.html";
-        }else{
-          setMsg("err", data.error || "登入失敗（帳號或密碼錯誤）");
+        if(!res.ok){
+          const err = data?.error || data?.message || `登入失敗（HTTP ${res.status}）`;
+          showMessage(err, 'error');
+          return;
         }
+
+        // 你後端如果有回 token / user，就存起來
+        if (data?.token) localStorage.setItem('xinghuo_token', data.token);
+        if (data?.user)  localStorage.setItem('xinghuo_user', JSON.stringify(data.user));
+
+        showMessage('登入成功，正在跳轉…', 'ok');
+
+        // 允許用 ?next=xxx 指定登入後跳轉
+        const url = new URL(location.href);
+        const next = url.searchParams.get('next') || 'dashboard.html';
+        setTimeout(() => {
+          location.href = next;
+        }, 450);
+
       }catch(err){
-        console.error(err);
-        setMsg("err", "連線失敗：請稍後再試（或檢查 Netlify 部署是否完成）");
+        showMessage('系統連線失敗，請稍後再試。\n' + (err?.message || ''), 'error');
       }finally{
         btn.disabled = false;
-        btn.textContent = "登入";
+        btn.textContent = oldText;
       }
     });
   </script>
