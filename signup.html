@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>登入｜星火廣告</title>
-  <meta name="description" content="星火廣告會員登入" />
+  <title>註冊｜星火廣告</title>
+  <meta name="description" content="星火廣告會員註冊" />
   <style>
     :root{
       --bg:#0b0f19; --card:#11182a; --text:rgba(255,255,255,.92);
@@ -23,7 +23,7 @@
       display:flex; align-items:center; justify-content:center;
       padding:24px;
     }
-    .wrap{width:min(520px, 100%);}
+    .wrap{width:min(560px, 100%);}
     .brand{display:flex; align-items:center; gap:12px; margin-bottom:14px;}
     .logo{
       width:40px; height:40px; border-radius:12px;
@@ -55,8 +55,6 @@
       outline:none;
     }
     input:focus{border-color:rgba(50,224,196,.55); box-shadow:0 0 0 3px rgba(50,224,196,.12)}
-    .row{display:flex; gap:12px; align-items:center; justify-content:space-between; margin-top:10px}
-    .hint{font-size:12px; color:var(--muted)}
     .btn{
       width:100%;
       margin-top:14px;
@@ -69,12 +67,6 @@
       cursor:pointer;
     }
     .btn:disabled{opacity:.55; cursor:not-allowed}
-    .links{
-      display:flex; justify-content:space-between; gap:10px;
-      margin-top:12px; font-size:13px;
-    }
-    a{color:rgba(50,224,196,.95); text-decoration:none}
-    a:hover{text-decoration:underline}
     .msg{
       margin-top:12px;
       padding:10px 12px;
@@ -88,12 +80,13 @@
     }
     .msg.error{border-color: rgba(255,92,122,.35); background: rgba(255,92,122,.10); color: rgba(255,255,255,.94)}
     .msg.ok{border-color: rgba(50,224,196,.35); background: rgba(50,224,196,.10)}
-    .small{margin-top:14px; color:var(--muted); font-size:12px; line-height:1.6}
-    .chip{
-      display:inline-block; padding:2px 8px; border-radius:999px;
-      border:1px solid var(--line); background: rgba(255,255,255,.05);
-      font-size:12px; color:var(--muted);
+    .links{
+      display:flex; justify-content:space-between; gap:10px;
+      margin-top:12px; font-size:13px;
     }
+    a{color:rgba(50,224,196,.95); text-decoration:none}
+    a:hover{text-decoration:underline}
+    .small{margin-top:14px; color:var(--muted); font-size:12px; line-height:1.6}
   </style>
 </head>
 <body>
@@ -102,43 +95,45 @@
       <div class="logo" aria-hidden="true"></div>
       <div>
         <h1>星火廣告</h1>
-        <p>會員登入</p>
+        <p>會員註冊</p>
       </div>
     </div>
 
     <div class="card">
-      <h2 class="title">登入帳號</h2>
-      <p class="sub">請輸入你的帳號與密碼。登入成功後會自動前往會員頁（dashboard）。</p>
+      <h2 class="title">建立新帳號</h2>
+      <p class="sub">註冊成功後會把資料寫入 Google Sheet，並自動跳到登入或會員頁。</p>
 
-      <form id="loginForm">
+      <form id="signupForm">
+        <label for="name">姓名 / 暱稱（name）</label>
+        <input id="name" name="name" autocomplete="name" placeholder="例如：阿坤（可留空）" />
+
         <label for="username">帳號（username）</label>
-        <input id="username" name="username" autocomplete="username" required placeholder="例如：iceking" />
+        <input id="username" name="username" autocomplete="username" required placeholder="至少 3 個字" />
 
         <label for="password">密碼（password）</label>
-        <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="請輸入密碼" />
+        <input id="password" name="password" type="password" autocomplete="new-password" required placeholder="至少 6 個字" />
 
-        <div class="row">
-          <span class="hint"><span class="chip">提示</span> 你剛剛看到的「Method not allowed」是正常的：因為函式只允許 POST。</span>
-        </div>
+        <label for="password2">再次輸入密碼</label>
+        <input id="password2" name="password2" type="password" autocomplete="new-password" required placeholder="再輸入一次" />
 
-        <button class="btn" id="submitBtn" type="submit">登入</button>
+        <button class="btn" id="submitBtn" type="submit">註冊</button>
 
         <div id="msg" class="msg"></div>
 
         <div class="links">
-          <a href="./signup.html">還沒有帳號？去註冊</a>
+          <a href="./login.html">已經有帳號？去登入</a>
           <a href="./index.html">回首頁</a>
         </div>
 
         <div class="small">
-          如果你之後想把登入後跳轉位置改掉，把底下 JS 的 <b>dashboard.html</b> 改成你要的頁面即可。
+          註冊會呼叫 <code>/.netlify/functions/auth</code>，送出 <b>action: register</b> 來寫入你的 users Sheet。
         </div>
       </form>
     </div>
   </div>
 
   <script>
-    const form = document.getElementById('loginForm');
+    const form = document.getElementById('signupForm');
     const btn = document.getElementById('submitBtn');
     const msg = document.getElementById('msg');
 
@@ -157,49 +152,56 @@
       e.preventDefault();
       clearMessage();
 
+      const name = document.getElementById('name').value.trim();
       const username = document.getElementById('username').value.trim();
       const password = document.getElementById('password').value;
+      const password2 = document.getElementById('password2').value;
 
-      if(!username || !password){
-        showMessage('請輸入帳號與密碼。', 'error');
-        return;
+      if(username.length < 3){
+        showMessage('帳號至少需要 3 個字。', 'error'); return;
+      }
+      if(password.length < 6){
+        showMessage('密碼至少需要 6 個字。', 'error'); return;
+      }
+      if(password !== password2){
+        showMessage('兩次輸入的密碼不一致。', 'error'); return;
       }
 
       btn.disabled = true;
       const oldText = btn.textContent;
-      btn.textContent = '登入中...';
+      btn.textContent = '註冊中...';
 
       try{
         const res = await fetch('/.netlify/functions/auth', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            action: 'login',
+            action: 'register',
             username,
-            password
+            password,
+            name
           })
         });
 
         const data = await res.json().catch(() => ({}));
 
         if(!res.ok){
-          const err = data?.error || data?.message || `登入失敗（HTTP ${res.status}）`;
+          // 常見：username already exists（409）
+          const err = data?.error || data?.message || `註冊失敗（HTTP ${res.status}）`;
           showMessage(err, 'error');
           return;
         }
 
-        // 你後端如果有回 token / user，就存起來
+        // 成功：如果後端有回 token / user，就存起來
         if (data?.token) localStorage.setItem('xinghuo_token', data.token);
         if (data?.user)  localStorage.setItem('xinghuo_user', JSON.stringify(data.user));
 
-        showMessage('登入成功，正在跳轉…', 'ok');
+        showMessage('註冊成功！正在跳轉…', 'ok');
 
-        // 允許用 ?next=xxx 指定登入後跳轉
-        const url = new URL(location.href);
-        const next = url.searchParams.get('next') || 'dashboard.html';
+        // 你要註冊後直接去會員頁 or 去登入頁都可以改這裡
         setTimeout(() => {
-          location.href = next;
-        }, 450);
+          location.href = './dashboard.html';
+        }, 600);
 
       }catch(err){
         showMessage('系統連線失敗，請稍後再試。\n' + (err?.message || ''), 'error');
