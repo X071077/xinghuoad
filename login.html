@@ -5,15 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>登入｜星火廣告</title>
   <meta name="description" content="星火廣告會員登入" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+
   <style>
     :root{
-      --bg:#0b0f19; --card:#11182a; --text:rgba(255,255,255,.92);
-      --muted:rgba(255,255,255,.70); --line:rgba(255,255,255,.12);
+      --bg:#0b0f19; --card:#11182a;
+      --text:#ffffff;              /* ✅ 全站亮白 */
+      --muted:#ffffff;             /* ✅ 不再灰 */
+      --line:rgba(255,255,255,.12);
       --accent:#32e0c4; --danger:#ff5c7a;
       --radius:16px; --shadow:0 18px 60px rgba(0,0,0,.35);
-      --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", Arial;
+      --font: "Zen Maru Gothic", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", Arial;
     }
+
     *{box-sizing:border-box}
+
     body{
       margin:0; min-height:100vh; font-family:var(--font);
       background: radial-gradient(1100px 500px at 20% -10%, rgba(50,224,196,.16), transparent 60%),
@@ -22,84 +31,99 @@
       color:var(--text);
       display:flex; align-items:center; justify-content:center;
       padding:24px;
+      font-size:24px; /* ✅ 16px × 1.5 = 24px（整體放大） */
     }
-    .wrap{width:min(520px, 100%);}
-    .brand{display:flex; align-items:center; gap:12px; margin-bottom:14px;}
+
+    .wrap{width:min(680px, 100%);}
+    .brand{display:flex; align-items:center; gap:16px; margin-bottom:18px;}
+
     .logo{
-      width:40px; height:40px; border-radius:12px;
-      background: linear-gradient(135deg, rgba(50,224,196,.9), rgba(110,168,255,.9));
-      box-shadow: 0 10px 30px rgba(50,224,196,.18);
+      width:78px; height:78px;      /* ✅ 52 × 1.5 */
+      border-radius:24px;           /* ✅ 16 × 1.5 */
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      box-shadow: 0 10px 30px rgba(50,224,196,.14);
+      padding:9px;                  /* ✅ 6 × 1.5 */
+      display:block;
+      object-fit: contain;
     }
-    .brand h1{font-size:18px; margin:0}
-    .brand p{margin:2px 0 0; color:var(--muted); font-size:13px}
+
+    .brand h1{font-size:33px; margin:0;}     /* 22 × 1.5 */
+    .brand p{margin:3px 0 0; color:var(--muted); font-size:21px;} /* 14 × 1.5 */
 
     .card{
       background: rgba(17,24,42,.86);
       border:1px solid var(--line);
       border-radius:var(--radius);
       box-shadow:var(--shadow);
-      padding:22px;
+      padding:45px;                 /* 30 × 1.5 */
       backdrop-filter: blur(10px);
     }
-    .title{font-size:20px; margin:0 0 6px}
-    .sub{margin:0 0 18px; color:var(--muted); font-size:13px; line-height:1.6}
 
-    label{display:block; font-size:13px; color:var(--muted); margin:12px 0 6px}
+    .title{font-size:39px; margin:0 0 9px;} /* 26 × 1.5 */
+    .sub{margin:0 0 27px; color:var(--muted); font-size:23px; line-height:1.7;} /* 15 × 1.5 = 22.5 取 23 */
+
+    label{display:block; font-size:21px; color:var(--muted); margin:18px 0 9px;} /* 14,12,6 ×1.5 */
     input{
       width:100%;
-      padding:12px 12px;
-      border-radius:12px;
+      padding:21px 21px;            /* 14 × 1.5 */
+      font-size:24px;               /* 16 × 1.5 */
+      border-radius:18px;           /* 12 × 1.5 */
       border:1px solid var(--line);
       background: rgba(255,255,255,.06);
       color:var(--text);
       outline:none;
     }
-    input:focus{border-color:rgba(50,224,196,.55); box-shadow:0 0 0 3px rgba(50,224,196,.12)}
-    .row{display:flex; gap:12px; align-items:center; justify-content:space-between; margin-top:10px}
-    .hint{font-size:12px; color:var(--muted)}
+    input:focus{border-color:rgba(50,224,196,.55); box-shadow:0 0 0 4.5px rgba(50,224,196,.12)}
+    input::placeholder{color:#ffffff; opacity:1;}
+
     .btn{
       width:100%;
-      margin-top:14px;
-      padding:12px 14px;
-      border-radius:12px;
+      margin-top:27px;              /* 18 × 1.5 */
+      padding:21px 24px;            /* 14/16 × 1.5 */
+      font-size:24px;               /* 16 × 1.5 */
+      border-radius:18px;           /* 12 × 1.5 */
       border:0;
       background: linear-gradient(135deg, rgba(50,224,196,.95), rgba(110,168,255,.95));
-      color:#041014;
+      color:#ffffff;                /* ✅ 按鈕字也亮白 */
       font-weight:800;
       cursor:pointer;
+      text-shadow: 0 1px 2px rgba(0,0,0,.35);
     }
     .btn:disabled{opacity:.55; cursor:not-allowed}
+
     .links{
       display:flex; justify-content:space-between; gap:10px;
-      margin-top:12px; font-size:13px;
+      margin-top:18px;              /* 12 × 1.5 */
+      font-size:20px;               /* 13 × 1.5 ≈ 19.5 */
     }
-    a{color:rgba(50,224,196,.95); text-decoration:none}
-    a:hover{text-decoration:underline}
+
+    a{
+      color:#ffffff;                /* ✅ 連結字也亮白 */
+      text-decoration:underline;
+      text-underline-offset:3px;
+    }
+
     .msg{
-      margin-top:12px;
-      padding:10px 12px;
-      border-radius:12px;
+      margin-top:18px;              /* 12 × 1.5 */
+      padding:15px 18px;            /* 10/12 × 1.5 */
+      border-radius:18px;           /* 12 × 1.5 */
       border:1px solid var(--line);
       background: rgba(255,255,255,.06);
-      font-size:13px;
+      font-size:20px;               /* 13 × 1.5 ≈ 19.5 */
       display:none;
       line-height:1.55;
       white-space:pre-line;
+      color:#ffffff;
     }
-    .msg.error{border-color: rgba(255,92,122,.35); background: rgba(255,92,122,.10); color: rgba(255,255,255,.94)}
-    .msg.ok{border-color: rgba(50,224,196,.35); background: rgba(50,224,196,.10)}
-    .small{margin-top:14px; color:var(--muted); font-size:12px; line-height:1.6}
-    .chip{
-      display:inline-block; padding:2px 8px; border-radius:999px;
-      border:1px solid var(--line); background: rgba(255,255,255,.05);
-      font-size:12px; color:var(--muted);
-    }
+    .msg.error{border-color: rgba(255,92,122,.35); background: rgba(255,92,122,.10); color:#ffffff}
+    .msg.ok{border-color: rgba(50,224,196,.35); background: rgba(50,224,196,.10); color:#ffffff}
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="brand">
-      <div class="logo" aria-hidden="true"></div>
+      <img class="logo" src="./picture/logo.png" alt="星火廣告 Logo">
       <div>
         <h1>星火廣告</h1>
         <p>會員登入</p>
@@ -108,18 +132,14 @@
 
     <div class="card">
       <h2 class="title">登入帳號</h2>
-      <p class="sub">請輸入你的帳號與密碼。登入成功後會自動前往會員頁（dashboard）。</p>
+      <p class="sub">請輸入你的帳號與密碼。登入成功後會自動前往會員頁</p>
 
       <form id="loginForm">
-        <label for="username">帳號（username）</label>
-        <input id="username" name="username" autocomplete="username" required placeholder="例如：iceking" />
+        <label for="username">帳號</label>
+        <input id="username" name="username" autocomplete="username" required placeholder="例如：bingkuai123" />
 
-        <label for="password">密碼（password）</label>
+        <label for="password">密碼</label>
         <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="請輸入密碼" />
-
-        <div class="row">
-          <span class="hint"><span class="chip">提示</span> 你剛剛看到的「Method not allowed」是正常的：因為函式只允許 POST。</span>
-        </div>
 
         <button class="btn" id="submitBtn" type="submit">登入</button>
 
@@ -128,10 +148,6 @@
         <div class="links">
           <a href="./signup.html">還沒有帳號？去註冊</a>
           <a href="./index.html">回首頁</a>
-        </div>
-
-        <div class="small">
-          如果你之後想把登入後跳轉位置改掉，把底下 JS 的 <b>dashboard.html</b> 改成你要的頁面即可。
         </div>
       </form>
     </div>
@@ -173,11 +189,7 @@
         const res = await fetch('/.netlify/functions/auth', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'login',
-            username,
-            password
-          })
+          body: JSON.stringify({ action: 'login', username, password })
         });
 
         const data = await res.json().catch(() => ({}));
@@ -188,17 +200,13 @@
           return;
         }
 
-        // 你後端如果有回 token / user，就存起來
         if (data?.token) localStorage.setItem('xinghuo_token', data.token);
         if (data?.user)  localStorage.setItem('xinghuo_user', JSON.stringify(data.user));
 
         showMessage('登入成功，正在跳轉…', 'ok');
 
-        // 允許用 ?next=xxx 指定登入後跳轉
-        const url = new URL(location.href);
-        const next = url.searchParams.get('next') || 'dashboard.html';
         setTimeout(() => {
-          location.href = next;
+          location.href = './dashboard.html';
         }, 450);
 
       }catch(err){
