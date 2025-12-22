@@ -1,869 +1,955 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>冒險者儀表板 - 星火廣告推廣公會</title>
-    
-    <!-- 共用CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
-    
-    <!-- 儀表板專用CSS -->
-    <style>
-        /* ===== RPG儀表板專用樣式 ===== */
-        :root {
-            --rpg-dark: #0f172a;
-            --rpg-card: #1e293b;
-            --rpg-accent: #4db8ff;
-            --rpg-gold: #FFD700;
-            --rpg-success: #06C755;
-            --rpg-danger: #ff4757;
-            --rpg-purple: #9d4edd;
-        }
-        
-        /* 整體背景 */
-        body {
-            background: var(--rpg-dark);
-            color: #e2e8f0;
-            font-family: 'Noto Sans TC', sans-serif;
-            min-height: 100vh;
-        }
-        
-        /* RPG主題導覽列 */
-        .navbar {
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 2px solid var(--rpg-gold);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-        }
-        
-        .nav-link {
-            color: #cbd5e1;
-        }
-        
-        .nav-link:hover {
-            color: var(--rpg-accent);
-        }
-        
-        /* 公會大廳標題區 */
-        .dashboard-header {
-            background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
-            color: white;
-            padding: 60px 0 40px;
-            margin-top: 70px;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .dashboard-header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 L100,0 L100,100 Z" fill="rgba(255,215,0,0.1)"/></svg>');
-            background-size: cover;
-        }
-        
-        .welcome-title {
-            font-size: 2.8rem;
-            font-weight: 800;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-        
-        .welcome-subtitle {
-            font-size: 1.2rem;
-            opacity: 0.9;
-            margin-bottom: 30px;
-        }
-        
-        /* 等級徽章 */
-        .level-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(0,0,0,0.3);
-            padding: 8px 20px;
-            border-radius: 30px;
-            border: 2px solid var(--rpg-gold);
-        }
-        
-        .level-number {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: var(--rpg-gold);
-        }
-        
-        /* 狀態卡片網格 */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-            margin: 40px 0;
-        }
-        
-        /* RPG狀態卡片 */
-        .stat-card {
-            background: linear-gradient(135deg, var(--rpg-card) 0%, #2d3748 100%);
-            border-radius: 20px;
-            padding: 30px;
-            border: 2px solid;
-            border-image: linear-gradient(45deg, var(--rpg-accent), transparent) 1;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--rpg-accent), var(--rpg-purple));
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
-        }
-        
-        .stat-icon {
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-            color: var(--rpg-accent);
-        }
-        
-        .stat-value {
-            font-size: 2.8rem;
-            font-weight: 800;
-            color: white;
-            margin: 10px 0;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-        }
-        
-        /* 經驗值進度條 */
-        .xp-container {
-            margin: 30px 0;
-        }
-        
-        .xp-label {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            font-weight: 600;
-        }
-        
-        .xp-bar {
-            height: 24px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 12px;
-            overflow: hidden;
-            border: 2px solid rgba(255,255,255,0.2);
-            position: relative;
-        }
-        
-        .xp-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #06C755, #4db8ff, #9d4edd);
-            border-radius: 10px;
-            transition: width 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .xp-fill::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(90deg, 
-                transparent, 
-                rgba(255,255,255,0.3), 
-                transparent);
-            animation: xpShine 2s infinite;
-        }
-        
-        @keyframes xpShine {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-        
-        /* 任務大廳 */
-        .quest-hall {
-            background: rgba(30, 41, 59, 0.5);
-            border-radius: 20px;
-            padding: 40px;
-            margin: 60px 0;
-            border: 2px solid rgba(77, 184, 255, 0.2);
-        }
-        
-        .section-title-rpg {
-            font-size: 2.2rem;
-            font-weight: 800;
-            margin-bottom: 40px;
-            color: white;
-            text-align: center;
-            position: relative;
-            display: inline-block;
-        }
-        
-        .section-title-rpg::after {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            left: 25%;
-            right: 25%;
-            height: 4px;
-            background: linear-gradient(90deg, transparent, var(--rpg-accent), transparent);
-        }
-        
-        /* 任務卡片 */
-        .quest-card {
-            background: linear-gradient(135deg, #2d3748 0%, #1e293b 100%);
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 20px;
-            border-left: 5px solid;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .quest-card:hover {
-            transform: translateX(10px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
-        }
-        
-        .quest-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.03), transparent);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        
-        .quest-card:hover::before {
-            opacity: 1;
-        }
-        
-        .quest-difficulty {
-            display: inline-block;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            margin-bottom: 15px;
-        }
-        
-        .difficulty-beginner {
-            background: #27ae60;
-            color: white;
-            border-left-color: #27ae60;
-        }
-        
-        .difficulty-intermediate {
-            background: #f39c12;
-            color: white;
-            border-left-color: #f39c12;
-        }
-        
-        .difficulty-advanced {
-            background: #e74c3c;
-            color: white;
-            border-left-color: #e74c3c;
-        }
-        
-        .quest-reward {
-            color: var(--rpg-gold);
-            font-weight: 800;
-            font-size: 1.5rem;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-        }
-        
-        /* RPG按鈕 */
-        .btn-rpg {
-            background: linear-gradient(135deg, var(--rpg-accent) 0%, #1a8cff 100%);
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 10px;
-            font-weight: 700;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-            box-shadow: 0 5px 15px rgba(77, 184, 255, 0.3);
-        }
-        
-        .btn-rpg:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(77, 184, 255, 0.5);
-            background: linear-gradient(135deg, #1a8cff 0%, #0066cc 100%);
-        }
-        
-        /* 成就系統 */
-        .achievement-hall {
-            margin: 60px 0;
-        }
-        
-        .badge-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 25px;
-            margin: 40px 0;
-        }
-        
-        .badge {
-            background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto;
-            border: 3px solid;
-            position: relative;
-            transition: all 0.3s;
-        }
-        
-        .badge:hover {
-            transform: scale(1.1) rotate(5deg);
-            box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
-        }
-        
-        .badge-locked {
-            filter: grayscale(1);
-            opacity: 0.6;
-        }
-        
-        .badge-bronze { border-color: #CD7F32; }
-        .badge-silver { border-color: #C0C0C0; }
-        .badge-gold { border-color: #FFD700; }
-        
-        .badge-icon {
-            font-size: 2.5rem;
-            margin-bottom: 5px;
-        }
-        
-        /* 工具區 */
-        .toolbox {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
-            margin: 40px 0;
-        }
-        
-        .tool-card {
-            background: linear-gradient(135deg, var(--rpg-card) 0%, #2d3748 100%);
-            border-radius: 15px;
-            padding: 30px;
-            border: 2px solid rgba(77, 184, 255, 0.3);
-            transition: all 0.3s;
-        }
-        
-        .tool-card:hover {
-            border-color: var(--rpg-accent);
-            transform: translateY(-5px);
-        }
-        
-        /* 響應式設計 */
-        @media (max-width: 768px) {
-            .welcome-title {
-                font-size: 2rem;
-            }
-            
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .badge-grid {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 15px;
-            }
-            
-            .toolbox {
-                grid-template-columns: 1fr;
-            }
-            
-            .quest-hall {
-                padding: 20px;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .badge-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .level-badge {
-                flex-direction: column;
-                gap: 5px;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>會員儀表板 - 星火廣告</title>
+
+  <!-- Icons + Font -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#0b0f19;
+      --card:rgba(17,24,42,.86);
+      --text:#ffffff;
+      --muted:#ffffff;
+      --line:rgba(255,255,255,.12);
+      --accent:#32e0c4;
+      --accent2:#6ea8ff;
+      --danger:#ff5c7a;
+      --gold:#FFD700;
+      --radius:18px;
+      --shadow:0 18px 60px rgba(0,0,0,.35);
+      --font:"Zen Maru Gothic", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", Arial;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0; min-height:100vh;
+      font-family:var(--font);
+      background:
+        radial-gradient(1100px 500px at 20% -10%, rgba(50,224,196,.16), transparent 60%),
+        radial-gradient(900px 500px at 90% 10%, rgba(110,168,255,.16), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      font-size:24px; /* 1.5倍基準字 */
+    }
+
+    /* Layout helpers */
+    .container{width:min(1100px, 92%); margin:0 auto;}
+    .section{padding:44px 0;}
+    .glass{
+      background: var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    /* Navbar */
+    .navbar{
+      position:fixed; top:0; left:0; right:0; z-index:50;
+      background: rgba(15, 23, 42, 0.75);
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      backdrop-filter: blur(10px);
+    }
+    .nav-container{
+      width:min(1200px, 92%);
+      margin:0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 0;
+      gap:16px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:12px;
+      text-decoration:none; color:var(--text);
+      font-weight:800;
+    }
+    .brand img{
+      width:56px; height:56px;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      padding:7px;
+      object-fit:contain;
+      box-shadow: 0 10px 30px rgba(50,224,196,.14);
+    }
+    .nav-links{
+      display:flex; flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:flex-end;
+    }
+    .nav-link{
+      display:inline-flex; align-items:center; gap:10px;
+      padding:10px 14px;
+      border-radius:14px;
+      color:var(--text);
+      text-decoration:none;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      transition: transform .2s ease, border-color .2s ease, background .2s ease;
+      font-size:20px; /* 13*1.5 ≈ 19.5 */
+      white-space:nowrap;
+    }
+    .nav-link:hover{
+      transform: translateY(-2px);
+      border-color: rgba(50,224,196,.45);
+      background: rgba(50,224,196,.10);
+    }
+    .nav-link.danger{
+      border-color: rgba(255,92,122,.35);
+      background: rgba(255,92,122,.10);
+    }
+    .nav-link.danger:hover{
+      border-color: rgba(255,92,122,.55);
+      background: rgba(255,92,122,.18);
+    }
+
+    /* Header */
+    .dashboard-header{
+      margin-top:92px;
+      padding:54px 0 34px;
+      position:relative;
+      overflow:hidden;
+    }
+    .dashboard-header::before{
+      content:"";
+      position:absolute; inset:0;
+      background:
+        radial-gradient(900px 360px at 15% 20%, rgba(255,215,0,.10), transparent 60%),
+        radial-gradient(900px 420px at 90% 30%, rgba(157,78,221,.12), transparent 55%),
+        radial-gradient(900px 520px at 60% 110%, rgba(50,224,196,.10), transparent 60%);
+      pointer-events:none;
+    }
+    .header-inner{
+      position:relative;
+      text-align:center;
+    }
+    .welcome-title{
+      margin:0 0 10px;
+      font-size:44px;
+      font-weight:900;
+      text-shadow: 2px 2px 6px rgba(0,0,0,.45);
+    }
+    .welcome-subtitle{
+      margin:0 0 18px;
+      opacity:.95;
+      font-size:22px;
+    }
+    .level-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:12px;
+      padding:10px 18px;
+      border-radius:999px;
+      border:1px solid rgba(255,215,0,.45);
+      background: rgba(0,0,0,.22);
+      box-shadow: 0 10px 30px rgba(0,0,0,.22);
+      flex-wrap:wrap;
+      justify-content:center;
+    }
+    .level-number{
+      font-size:28px;
+      font-weight:900;
+      color:var(--gold);
+    }
+    .badge-sep{opacity:.6}
+
+    /* Quick Profile Card */
+    .profile-row{
+      margin-top:24px;
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:18px;
+      align-items:stretch;
+    }
+    .profile-card{
+      padding:22px;
+      text-align:left;
+    }
+    .profile-title{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:12px;
+      margin-bottom:14px;
+    }
+    .profile-title h3{
+      margin:0;
+      font-size:26px;
+      font-weight:900;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:6px 12px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      font-size:18px;
+      opacity:.95;
+      white-space:nowrap;
+    }
+    .kv{
+      display:grid;
+      grid-template-columns: 160px 1fr;
+      row-gap:10px;
+      column-gap:10px;
+      font-size:20px;
+      line-height:1.6;
+    }
+    .kv .k{opacity:.85}
+    .kv .v{font-weight:800; word-break:break-word}
+    .actions{
+      display:flex; gap:10px; flex-wrap:wrap;
+      margin-top:14px;
+    }
+
+    /* Buttons */
+    .btn{
+      border:0;
+      cursor:pointer;
+      border-radius:18px;
+      padding:16px 18px;
+      font-size:22px;
+      font-weight:900;
+      color:var(--text);
+      background: linear-gradient(135deg, rgba(50,224,196,.95), rgba(110,168,255,.95));
+      box-shadow: 0 10px 30px rgba(50,224,196,.14);
+      text-shadow: 0 1px 2px rgba(0,0,0,.35);
+      transition: transform .2s ease, box-shadow .2s ease;
+    }
+    .btn:hover{transform: translateY(-2px); box-shadow: 0 14px 38px rgba(50,224,196,.22);}
+    .btn.secondary{
+      background: rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.16);
+      box-shadow: none;
+    }
+    .btn.secondary:hover{border-color: rgba(50,224,196,.45);}
+
+    /* XP */
+    .xp-container{margin-top:18px;}
+    .xp-label{
+      display:flex; justify-content:space-between; gap:10px;
+      font-weight:800;
+      margin-bottom:10px;
+      font-size:20px;
+    }
+    .xp-bar{
+      height:26px;
+      border-radius:999px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+    }
+    .xp-fill{
+      height:100%;
+      width: 0%;
+      border-radius:999px;
+      background: linear-gradient(90deg, #06C755, #32e0c4, #6ea8ff, #9d4edd);
+      transition: width 900ms cubic-bezier(0.34, 1.56, 0.64, 1);
+      position:relative;
+      overflow:hidden;
+    }
+    .xp-fill::after{
+      content:"";
+      position:absolute; inset:0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent);
+      animation: xpShine 2s infinite;
+    }
+    @keyframes xpShine { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
+
+    /* Stats */
+    .section-title{
+      margin:0 0 18px;
+      font-size:34px;
+      font-weight:900;
+      text-align:center;
+    }
+    .stats-grid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap:18px;
+      margin-top:18px;
+    }
+    .stat-card{
+      padding:22px;
+      border-radius:22px;
+      border:1px solid rgba(255,255,255,.12);
+      background: linear-gradient(135deg, rgba(17,24,42,.86) 0%, rgba(45,55,72,.70) 100%);
+      box-shadow: 0 10px 30px rgba(0,0,0,.28);
+      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+      position:relative;
+      overflow:hidden;
+    }
+    .stat-card::before{
+      content:"";
+      position:absolute; top:0; left:0; right:0;
+      height:4px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      opacity:.9;
+    }
+    .stat-card:hover{
+      transform: translateY(-6px);
+      box-shadow: 0 16px 44px rgba(0,0,0,.38);
+      border-color: rgba(50,224,196,.28);
+    }
+    .stat-icon{font-size:34px; margin-bottom:10px;}
+    .stat-value{font-size:44px; font-weight:900; margin:6px 0 4px;}
+    .stat-label{opacity:.9; font-weight:700;}
+
+    /* Quests */
+    .quest-hall{padding:34px 0;}
+    .quest-wrap{padding:28px;}
+    .quest-card{
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.10);
+      background: linear-gradient(135deg, rgba(45,55,72,.72) 0%, rgba(30,41,59,.85) 100%);
+      padding:20px;
+      margin-bottom:14px;
+      transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+      position:relative;
+      overflow:hidden;
+    }
+    .quest-card:hover{
+      transform: translateX(8px);
+      border-color: rgba(110,168,255,.28);
+      box-shadow: 0 14px 34px rgba(0,0,0,.34);
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:6px 12px;
+      border-radius:999px;
+      font-weight:900;
+      font-size:18px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.20);
+      margin-bottom:10px;
+    }
+    .pill.green{border-color: rgba(6,199,85,.35)}
+    .pill.orange{border-color: rgba(243,156,18,.40)}
+    .pill.red{border-color: rgba(231,76,60,.45)}
+    .quest-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:18px;
+      flex-wrap:wrap;
+    }
+    .quest-row h3{margin:0 0 10px; font-size:26px;}
+    .quest-desc{opacity:.92; line-height:1.7; margin:0 0 10px;}
+    .quest-meta{display:flex; gap:14px; flex-wrap:wrap; opacity:.92; font-size:18px;}
+    .quest-side{min-width:240px; text-align:right;}
+    .quest-reward{color:var(--gold); font-weight:900; font-size:34px; margin-bottom:10px;}
+
+    /* My quests */
+    .my-quests{
+      margin-top:18px;
+      padding:18px;
+      border-radius:18px;
+      border:1px dashed rgba(255,255,255,.18);
+      background: rgba(255,255,255,.04);
+    }
+    .my-quests h4{margin:0 0 10px; font-size:22px;}
+    .my-quest-item{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      margin-bottom:10px;
+    }
+    .my-quest-item:last-child{margin-bottom:0}
+    .my-quest-item .name{font-weight:900}
+    .my-quest-item .mini{opacity:.9; font-size:18px}
+    .my-quest-actions{display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;}
+    .btnMini{
+      border-radius:14px;
+      padding:10px 12px;
+      font-size:18px;
+      font-weight:900;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      cursor:pointer;
+    }
+    .btnMini:hover{border-color: rgba(50,224,196,.45);}
+    .btnMini.danger{border-color: rgba(255,92,122,.35); background: rgba(255,92,122,.10);}
+    .btnMini.danger:hover{border-color: rgba(255,92,122,.55);}
+
+    /* Tools */
+    .toolbox{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap:18px;
+      margin-top:18px;
+    }
+    .tool-card{padding:22px;}
+    .tool-card h3{margin:0 0 10px; font-size:26px;}
+    .codebox{
+      padding:14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.22);
+      word-break:break-all;
+      font-size:18px;
+    }
+
+    /* Toast */
+    .toast{
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      max-width: min(520px, calc(100vw - 36px));
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(17,24,42,.92);
+      box-shadow: 0 18px 60px rgba(0,0,0,.45);
+      display:none;
+      z-index: 99;
+      font-size:20px;
+      line-height:1.5;
+      white-space:pre-line;
+    }
+    .toast.ok{border-color: rgba(50,224,196,.35);}
+    .toast.error{border-color: rgba(255,92,122,.35); background: rgba(255,92,122,.10);}
+
+    /* Footer */
+    footer{
+      margin-top:40px;
+      padding:34px 0;
+      border-top:1px solid rgba(255,255,255,.10);
+      opacity:.95;
+    }
+    .footer-grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:18px;
+      margin-bottom:14px;
+    }
+    .footer-grid h3{margin:0 0 10px; font-size:22px;}
+    .footer-link{color:var(--text); text-decoration:underline; text-underline-offset:3px; display:inline-block; margin:6px 0;}
+    .footer-bottom{opacity:.9; font-size:18px;}
+
+    /* Responsive */
+    @media (max-width: 900px){
+      .profile-row{grid-template-columns: 1fr; }
+      .nav-links{justify-content:flex-start}
+      .quest-side{text-align:left}
+      .footer-grid{grid-template-columns: 1fr}
+    }
+  </style>
 </head>
+
 <body>
-    <!-- RPG主題導覽列 -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <a href="index.html" class="logo">
-                <img src="logo.png" alt="星火廣告" class="logo-img">
-                <div class="logo-text">星火廣告</div>
-            </a>
-            <div class="nav-links">
-                <a href="dashboard.html" class="nav-link"><i class="fas fa-home"></i> 公會大廳</a>
-                <a href="#quests" class="nav-link"><i class="fas fa-tasks"></i> 任務大廳</a>
-                <a href="#achievements" class="nav-link"><i class="fas fa-trophy"></i> 成就殿堂</a>
-                <a href="#tools" class="nav-link"><i class="fas fa-tools"></i> 冒險工具</a>
-                <a href="index.html" class="nav-link"><i class="fas fa-sign-out-alt"></i> 返回首頁</a>
-            </div>
-        </div>
-    </nav>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a class="brand" href="index.html">
+        <img src="./picture/logo.png" alt="星火廣告 Logo">
+        <span>星火廣告</span>
+      </a>
 
-    <!-- 公會大廳標題區 -->
-    <section class="dashboard-header">
-        <div class="container">
-            <div style="text-align: center;">
-                <h1 class="welcome-title">🏰 歡迎回來，<span id="userName">冒險者</span>！</h1>
-                <p class="welcome-subtitle">先鋒推廣公會 - 你的賺錢冒險基地</p>
-                
-                <div class="level-badge">
-                    <span class="level-number">Lv. <span id="userLevel">5</span></span>
-                    <span>冒險者</span>
-                    <span>|</span>
-                    <span><i class="fas fa-coins" style="color: #FFD700;"></i> <span id="totalEarned">8,450</span> 金幣</span>
-                </div>
-            </div>
-        </div>
-    </section>
+      <div class="nav-links">
+        <a href="#top" class="nav-link"><i class="fas fa-home"></i> 公會大廳</a>
+        <a href="#quests" class="nav-link"><i class="fas fa-tasks"></i> 任務大廳</a>
+        <a href="#tools" class="nav-link"><i class="fas fa-tools"></i> 冒險工具</a>
+        <a href="index.html" class="nav-link"><i class="fas fa-house"></i> 返回首頁</a>
+        <a href="#" class="nav-link danger" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> 登出</a>
+      </div>
+    </div>
+  </nav>
 
-    <!-- 即時狀態面板 -->
-    <section class="section" style="background: transparent; padding-top: 40px;">
-        <div class="container">
-            <h2 class="section-title-rpg">⚡ 冒險者狀態</h2>
-            
-            <!-- 經驗值進度條 -->
-            <div class="xp-container">
-                <div class="xp-label">
-                    <span>經驗值</span>
-                    <span><span id="currentXP">1,250</span> / <span id="nextLevelXP">2,000</span> XP</span>
-                </div>
-                <div class="xp-bar">
-                    <div class="xp-fill" id="xpFill" style="width: 62.5%;"></div>
-                </div>
-            </div>
-            
-            <!-- 狀態卡片網格 -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon">💰</div>
-                    <div class="stat-value" id="todayEarnings">$ 420</div>
-                    <p>今日收益</p>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-icon">📈</div>
-                    <div class="stat-value" id="monthEarnings">$ 8,450</div>
-                    <p>本月累計</p>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-icon">✅</div>
-                    <div class="stat-value" id="completedQuests">18</div>
-                    <p>已完成任務</p>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-icon">⏱️</div>
-                    <div class="stat-value" id="activeDays">24</div>
-                    <p>冒險天數</p>
-                </div>
-            </div>
-        </div>
-    </section>
+  <!-- Header -->
+  <section class="dashboard-header" id="top">
+    <div class="container header-inner">
+      <h1 class="welcome-title">🏰 歡迎回來，<span id="userName">冒險者</span>！</h1>
+      <p class="welcome-subtitle">星火廣告會員中心｜你的推廣冒險基地</p>
 
-    <!-- 任務大廳 -->
-    <section class="quest-hall" id="quests">
-        <div class="container">
-            <h2 class="section-title-rpg">📋 任務大廳</h2>
-            
-            <!-- 任務列表 -->
-            <div id="questList">
-                <!-- 任務1 -->
-                <div class="quest-card difficulty-beginner">
-                    <span class="quest-difficulty difficulty-beginner">新手任務</span>
-                    <div style="display: flex; justify-content: space-between; align-items: start;">
-                        <div>
-                            <h3 style="margin: 0 0 10px 0; color: white;">🚗 分享車輛貼文到FB</h3>
-                            <p style="color: #94a3b8; margin: 5px 0; line-height: 1.6;">
-                                將指定車輛貼文分享到3個相關FB社團，並截圖回報
-                            </p>
-                            <div style="display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap;">
-                                <span style="color: #cbd5e1; font-size: 0.9rem;">
-                                    <i class="far fa-clock"></i> 剩餘: 2天
-                                </span>
-                                <span style="color: #cbd5e1; font-size: 0.9rem;">
-                                    <i class="fas fa-users"></i> 42人已完成
-                                </span>
-                                <span style="color: #cbd5e1; font-size: 0.9rem;">
-                                    <i class="fas fa-star"></i> +50 XP
-                                </span>
-                            </div>
-                        </div>
-                        <div style="text-align: right;">
-                            <div class="quest-reward">$ 150</div>
-                            <button class="btn-rpg" onclick="acceptQuest(1)">
-                                ⚔️ 接受任務
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- 任務2 -->
-                <div class="quest-card difficulty-intermediate">
-                    <span class="quest-difficulty difficulty-intermediate">中級任務</span>
-                    <div style="display: flex; justify-content: space-between; align-items: start;">
-                        <div>
-                            <h3 style="margin: 0 0 10px 0; color: white;">📱 LINE群組推廣</h3>
-                            <p style="color: #94a3b8; margin: 5px 0; line-height: 1.6;">
-                                將車輛資訊分享到5個LINE群組，並獲得至少3個有效詢問
-                            </p>
-                            <div style="display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap;">
-                                <span style="color: #cbd5e1; font-size: 0.9rem;">
-                                    <i class="far fa-clock"></i> 剩餘: 5天
-                                </span>
-                                <span style="color: #cbd5e1; font-size: 0.9rem;">
-                                    <i class="fas fa-users"></i> 28人已完成
-                                </span>
-                                <span style="color: #cbd5e1; font-size: 0.9rem;">
-                                    <i class="fas fa-star"></i> +120 XP
-                                </span>
-                            </div>
-                        </div>
-                        <div style="text-align: right;">
-                            <div class="quest-reward">$ 350</div>
-                            <button class="btn-rpg" onclick="acceptQuest(2)">
-                                ⚔️ 接受任務
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- 任務3 -->
-                <div class="quest-card difficulty-advanced">
-                    <span class="quest-difficulty difficulty-advanced">高級任務</span>
-                    <div style="display: flex; justify-content: space-between; align-items: start;">
-                        <div>
-                            <h3 style="margin: 0 0 10px 0; color: white;">🎯 成功引薦買家</h3>
-                            <p style="color: #94a3b8; margin: 5px 0; line-height: 1.6;">
-                                引薦實際買家完成看車，並獲得車商確認
-                            </p>
-                            <div style="display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap;">
-                                <span style="color: #cbd5e1; font-size: 0.9rem;">
-                                    <i class="far fa-clock"></i> 剩餘: 7天
-                                </span>
-                                <span style="color: #cbd5e1; font-size: 0.9rem;">
-                                    <i class="fas fa-users"></i> 15人已完成
-                                </span>
-                                <span style="color: #cbd5e1; font-size: 0.9rem;">
-                                    <i class="fas fa-star"></i> +300 XP
-                                </span>
-                            </div>
-                        </div>
-                        <div style="text-align: right;">
-                            <div class="quest-reward">$ 1,200</div>
-                            <button class="btn-rpg" onclick="acceptQuest(3)">
-                                ⚔️ 接受任務
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+      <div class="level-badge" aria-label="會員狀態">
+        <span class="level-number">Lv. <span id="userLevel">1</span></span>
+        <span id="userRole">冒險者</span>
+        <span class="badge-sep">|</span>
+        <span><i class="fas fa-coins" style="color:#FFD700;"></i> <span id="totalEarned">0</span> 金幣</span>
+      </div>
 
-    <!-- 成就殿堂 -->
-    <section class="achievement-hall" id="achievements">
-        <div class="container">
-            <h2 class="section-title-rpg">🏆 成就殿堂</h2>
-            
-            <div class="badge-grid">
-                <!-- 已解鎖成就 -->
-                <div class="badge badge-bronze">
-                    <div class="badge-icon">🚀</div>
-                    <div style="font-size: 0.8rem; text-align: center;">新手起航</div>
-                </div>
-                
-                <div class="badge badge-bronze">
-                    <div class="badge-icon">💰</div>
-                    <div style="font-size: 0.8rem; text-align: center;">第一桶金</div>
-                </div>
-                
-                <div class="badge badge-silver">
-                    <div class="badge-icon">📈</div>
-                    <div style="font-size: 0.8rem; text-align: center;">月入五千</div>
-                </div>
-                
-                <!-- 鎖定成就 -->
-                <div class="badge badge-locked">
-                    <div class="badge-icon">👑</div>
-                    <div style="font-size: 0.8rem; text-align: center;">王牌推手</div>
-                </div>
-                
-                <div class="badge badge-locked">
-                    <div class="badge-icon">🏅</div>
-                    <div style="font-size: 0.8rem; text-align: center;">任務大師</div>
-                </div>
-                
-                <div class="badge badge-locked">
-                    <div class="badge-icon">💎</div>
-                    <div style="font-size: 0.8rem; text-align: center;">鑽石會員</div>
-                </div>
-            </div>
-        </div>
-    </section>
+      <div class="profile-row">
+        <div class="glass profile-card">
+          <div class="profile-title">
+            <h3>👤 會員資料</h3>
+            <span class="chip"><i class="fas fa-shield-halved"></i> 已登入</span>
+          </div>
 
-    <!-- 冒險工具區 -->
-    <section class="section" id="tools" style="background: transparent;">
-        <div class="container">
-            <h2 class="section-title-rpg">🛠️ 冒險工具</h2>
-            
-            <div class="toolbox">
-                <div class="tool-card">
-                    <h3 style="color: white; margin-bottom: 15px;"><i class="fas fa-link"></i> 推廣連結</h3>
-                    <p style="color: #94a3b8; margin-bottom: 20px;">你的專屬推廣連結，分享即可追蹤成效</p>
-                    <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                        <code style="color: #4db8ff; word-break: break-all;">https://xianfeng.com/ref/你的ID</code>
-                    </div>
-                    <button class="btn-rpg" onclick="copyLink()">
-                        <i class="fas fa-copy"></i> 複製連結
-                    </button>
-                </div>
-                
-                <div class="tool-card">
-                    <h3 style="color: white; margin-bottom: 15px;"><i class="fas fa-wallet"></i> 獎金提領</h3>
-                    <p style="color: #94a3b8; margin-bottom: 20px;">可提領金額：<strong style="color: #FFD700;">$ 3,250</strong></p>
-                    <p style="color: #94a3b8; margin-bottom: 20px; font-size: 0.9rem;">
-                        最低提領：$ 500<br>
-                        每月15日處理提領申請
-                    </p>
-                    <button class="btn-rpg" onclick="withdrawFunds()">
-                        <i class="fas fa-money-check-alt"></i> 申請提領
-                    </button>
-                </div>
-                
-                <div class="tool-card">
-                    <h3 style="color: white; margin-bottom: 15px;"><i class="fas fa-chart-line"></i> 數據報表</h3>
-                    <p style="color: #94a3b8; margin-bottom: 20px;">查看你的推廣成效與收益分析</p>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn-rpg" style="background: linear-gradient(135deg, #06C755, #05a244);">
-                            <i class="fas fa-calendar-alt"></i> 本週報表
-                        </button>
-                        <button class="btn-rpg" style="background: linear-gradient(135deg, #9d4edd, #7b2cbf);">
-                            <i class="fas fa-chart-bar"></i> 分析圖表
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+          <div class="kv">
+            <div class="k">使用者名稱</div><div class="v" id="kvUsername">-</div>
+            <div class="k">姓名</div><div class="v" id="kvName">-</div>
+            <div class="k">Email</div><div class="v" id="kvEmail">-</div>
+          </div>
 
-    <!-- 頁尾 -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-grid">
-                <div class="footer-section">
-                    <h3>快速連結</h3>
-                    <div class="footer-links">
-                        <a href="index.html" class="footer-link">網站首頁</a>
-                        <a href="dashboard.html" class="footer-link">公會大廳</a>
-                        <a href="#quests" class="footer-link">任務大廳</a>
-                    </div>
-                </div>
-                
-                <div class="footer-section">
-                    <h3>支援中心</h3>
-                    <div class="contact-info">
-                        <p><i class="fas fa-question-circle"></i> <span>任務問題諮詢</span></p>
-                        <p>
-                            <i class="fab fa-line"></i> 
-                            <span>官方客服：</span>
-                            <strong>@206zsrzq</strong>
-                        </p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="footer-bottom">
-                <p>© 2025 星火廣告. 版權所有。</p>
-                <p style="margin-top: 10px;">冒險者公會系統 v1.0 | 本日登入：<span id="loginCount">1,248</span> 位冒險者</p>
-            </div>
+          <div class="actions">
+            <button class="btn secondary" id="copyRefBtn"><i class="fas fa-copy"></i> 複製推廣連結</button>
+            <button class="btn secondary" id="scrollQuestBtn"><i class="fas fa-flag"></i> 看任務</button>
+          </div>
         </div>
-    </footer>
 
-    <!-- RPG儀表板腳本 -->
-    <script>
-        // 初始化用戶資料
-        function loadUserData() {
-            // 從 localStorage 讀取用戶資料
-            const savedUser = localStorage.getItem('currentUser');
-            let userData;
-            
-            if (savedUser) {
-                userData = JSON.parse(savedUser);
-            } else {
-                // 預設用戶資料（如果沒有登入資料）
-                userData = {
-                    name: '先鋒冒險者',
-                    level: 5,
-                    xp: 1250,
-                    totalEarned: 8450,
-                    todayEarnings: 420,
-                    monthEarnings: 8450,
-                    completedQuests: 18,
-                    activeDays: 24,
-                    nextLevelXP: 2000
-                };
-                localStorage.setItem('currentUser', JSON.stringify(userData));
-            }
-            
-            // 更新頁面資料
-            document.getElementById('userName').textContent = userData.name;
-            document.getElementById('userLevel').textContent = userData.level;
-            document.getElementById('totalEarned').textContent = userData.totalEarned.toLocaleString();
-            document.getElementById('todayEarnings').textContent = '$ ' + userData.todayEarnings.toLocaleString();
-            document.getElementById('monthEarnings').textContent = '$ ' + userData.monthEarnings.toLocaleString();
-            document.getElementById('completedQuests').textContent = userData.completedQuests;
-            document.getElementById('activeDays').textContent = userData.activeDays;
-            document.getElementById('currentXP').textContent = userData.xp.toLocaleString();
-            document.getElementById('nextLevelXP').textContent = userData.nextLevelXP.toLocaleString();
-            
-            // 計算經驗值百分比
-            const xpPercent = (userData.xp / userData.nextLevelXP * 100).toFixed(1);
-            document.getElementById('xpFill').style.width = ${xpPercent}%;
-        }
-        
-        // 接受任務功能
-        function acceptQuest(questId) {
-            const questNames = ['分享車輛貼文到FB', 'LINE群組推廣', '成功引薦買家'];
-            const questRewards = [150, 350, 1200];
-            
-            const questName = questNames[questId - 1];
-            const questReward = questRewards[questId - 1];
-            
-            // 確認對話框
-            const confirmMsg = 確定要接受任務嗎？\n\n任務：${questName}\n獎勵：$${questReward}\n\n接受後任務將出現在「進行中」列表;
-            
-            if (confirm(confirmMsg)) {
-                // 更新用戶資料
-                const userData = JSON.parse(localStorage.getItem('currentUser') || '{}');
-                
-                // 顯示成功訊息
-                alert(✅ 任務接受成功！\n\n"${questName}" 已加入你的任務列表\n記得在時限內完成並回報哦！);
-                
-                // 這裡可以添加實際的任務接受邏輯
-                console.log(任務 ${questId} 已接受);
-            }
-        }
-        
-        // 複製推廣連結
-        function copyLink() {
-            const link = 'https://xianfeng.com/ref/' + (Math.random().toString(36).substring(2, 10));
-            
-            // 使用現代 clipboard API
-            navigator.clipboard.writeText(link).then(() => {
-                alert('✅ 推廣連結已複製到剪貼簿！\n\n' + link);
-            }).catch(err => {
-                // 備用方案
-                const textArea = document.createElement('textarea');
-                textArea.value = link;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-                alert('✅ 推廣連結已複製到剪貼簿！\n\n' + link);
-            });
-        }
-        
-        // 提領獎金
-        function withdrawFunds() {
-            const userData = JSON.parse(localStorage.getItem('currentUser') || '{}');
-            const available = 3250; // 可提領金額
-            
-            if (available < 500) {
-                alert('💰 提領金額不足\n\n目前可提領：$' + available + '\n最低提領門檻：$500\n\n請繼續完成任務賺取更多獎金！');
-                return;
-            }
-            
-            const amount = prompt(請輸入提領金額 (最低 $500，最高 $${available})：, available);
-            
-            if (amount && amount >= 500 && amount <= available) {
-                alert(✅ 提領申請已提交！\n\n金額：$${amount}\n處理時間：1-3個工作日\n\n款項將匯入你預設的銀行帳戶);
-            } else if (amount) {
-                alert('❌ 金額輸入錯誤\n請確認金額在 $500 ~ $' + available + ' 之間');
-            }
-        }
-        
-        // 登出功能
-        function logout() {
-            if (confirm('確定要登出冒險者公會嗎？')) {
-                localStorage.removeItem('currentUser');
-                localStorage.removeItem('isLoggedIn');
-                alert('👋 已成功登出，期待再次冒險！');
-                window.location.href = 'index.html';
-            }
-        }
-        
-        // 頁面載入時初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            loadUserData();
-            
-            // 檢查登入狀態
-            const isLoggedIn = localStorage.getItem('isLoggedIn');
-            if (!isLoggedIn) {
-                // 如果未登入，導向註冊頁
-                alert('請先登入冒險者公會！');
-                window.location.href = 'signup.html';
-            }
-            
-            // 添加登出按鈕事件
-            const logoutBtn = document.querySelector('a[href="index.html"]');
-            if (logoutBtn && logoutBtn.innerHTML.includes('返回首頁')) {
-                logoutBtn.onclick = function(e) {
-                    e.preventDefault();
-                    logout();
-                };
-            }
-        });
-        
-        // 動態更新登入人數（模擬）
-        setInterval(() => {
-            const countElem = document.getElementById('loginCount');
-            if (countElem) {
-                const current = parseInt(countElem.textContent.replace(/,/g, ''));
-                const change = Math.floor(Math.random() * 10) - 3; // -3 到 +6
-                const newCount = Math.max(1200, current + change);
-                countElem.textContent = newCount.toLocaleString();
-            }
-        }, 30000); // 每30秒更新一次
-    </script>
+        <div class="glass profile-card">
+          <div class="profile-title">
+            <h3>⚡ 經驗值</h3>
+            <span class="chip"><i class="fas fa-bolt"></i> 成長中</span>
+          </div>
+
+          <div class="xp-container">
+            <div class="xp-label">
+              <span>經驗值</span>
+              <span><span id="currentXP">0</span> / <span id="nextLevelXP">100</span> XP</span>
+            </div>
+            <div class="xp-bar"><div class="xp-fill" id="xpFill"></div></div>
+          </div>
+
+          <div style="margin-top:14px; opacity:.95; font-size:18px; line-height:1.6">
+            這一頁的數據目前先用「前端示範值」顯示；下一步我們可以接 Google Sheet/資料庫做真實報表。
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title">⚡ 冒險者狀態</h2>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">💰</div>
+          <div class="stat-value" id="todayEarnings">$ 0</div>
+          <div class="stat-label">今日收益</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">📈</div>
+          <div class="stat-value" id="monthEarnings">$ 0</div>
+          <div class="stat-label">本月累計</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">✅</div>
+          <div class="stat-value" id="completedQuests">0</div>
+          <div class="stat-label">已完成任務</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">⏱️</div>
+          <div class="stat-value" id="activeDays">0</div>
+          <div class="stat-label">活躍天數</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quests -->
+  <section class="quest-hall" id="quests">
+    <div class="container">
+      <div class="glass quest-wrap">
+        <h2 class="section-title" style="margin-bottom:10px;">📋 任務大廳</h2>
+        <div style="text-align:center; opacity:.95; font-size:18px; margin-bottom:18px;">
+          點「接受任務」後會加入下方「我的任務」，示範版先存本機（localStorage）。
+        </div>
+
+        <div id="questList">
+          <div class="quest-card">
+            <span class="pill green">新手任務</span>
+            <div class="quest-row">
+              <div>
+                <h3>🚗 分享車輛貼文到 FB</h3>
+                <p class="quest-desc">將指定車輛貼文分享到 3 個相關 FB 社團，並截圖回報。</p>
+                <div class="quest-meta">
+                  <span><i class="far fa-clock"></i> 剩餘：2 天</span>
+                  <span><i class="fas fa-users"></i> 42 人已完成</span>
+                  <span><i class="fas fa-star"></i> +50 XP</span>
+                </div>
+              </div>
+              <div class="quest-side">
+                <div class="quest-reward">$ 150</div>
+                <button class="btn" onclick="acceptQuest(1)">⚔️ 接受任務</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="quest-card">
+            <span class="pill orange">中級任務</span>
+            <div class="quest-row">
+              <div>
+                <h3>📱 LINE 群組推廣</h3>
+                <p class="quest-desc">將車輛資訊分享到 5 個 LINE 群組，並獲得至少 3 個有效詢問。</p>
+                <div class="quest-meta">
+                  <span><i class="far fa-clock"></i> 剩餘：5 天</span>
+                  <span><i class="fas fa-users"></i> 28 人已完成</span>
+                  <span><i class="fas fa-star"></i> +120 XP</span>
+                </div>
+              </div>
+              <div class="quest-side">
+                <div class="quest-reward">$ 350</div>
+                <button class="btn" onclick="acceptQuest(2)">⚔️ 接受任務</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="quest-card">
+            <span class="pill red">高級任務</span>
+            <div class="quest-row">
+              <div>
+                <h3>🎯 成功引薦買家</h3>
+                <p class="quest-desc">引薦實際買家完成看車，並獲得車商確認。</p>
+                <div class="quest-meta">
+                  <span><i class="far fa-clock"></i> 剩餘：7 天</span>
+                  <span><i class="fas fa-users"></i> 15 人已完成</span>
+                  <span><i class="fas fa-star"></i> +300 XP</span>
+                </div>
+              </div>
+              <div class="quest-side">
+                <div class="quest-reward">$ 1,200</div>
+                <button class="btn" onclick="acceptQuest(3)">⚔️ 接受任務</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="my-quests" id="myQuestsBox">
+          <h4>🧾 我的任務（進行中）</h4>
+          <div id="myQuestsList" style="opacity:.95; font-size:18px;">
+            目前沒有任務。去上面接受一個任務吧！
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tools -->
+  <section class="section" id="tools">
+    <div class="container">
+      <h2 class="section-title">🛠️ 冒險工具</h2>
+
+      <div class="toolbox">
+        <div class="glass tool-card">
+          <h3><i class="fas fa-link"></i> 推廣連結</h3>
+          <p style="opacity:.92; margin-top:0; line-height:1.7;">
+            你的專屬推廣連結（固定不變），分享即可追蹤成效。
+          </p>
+          <div class="codebox" id="refLinkBox">-</div>
+          <div style="margin-top:14px;">
+            <button class="btn" id="copyRefBtn2"><i class="fas fa-copy"></i> 複製連結</button>
+          </div>
+        </div>
+
+        <div class="glass tool-card">
+          <h3><i class="fas fa-wallet"></i> 獎金提領（示範）</h3>
+          <p style="opacity:.92; margin-top:0; line-height:1.7;">
+            這一塊下一步可接真實金額與提領申請。現在先示範 UI。
+          </p>
+          <div class="codebox">可提領金額：<b style="color:#FFD700;">$ 3,250</b><br>最低提領：$ 500</div>
+          <div style="margin-top:14px;">
+            <button class="btn" id="withdrawBtn"><i class="fas fa-money-check-alt"></i> 申請提領</button>
+          </div>
+        </div>
+
+        <div class="glass tool-card">
+          <h3><i class="fas fa-chart-line"></i> 數據報表（示範）</h3>
+          <p style="opacity:.92; margin-top:0; line-height:1.7;">
+            我們可以把 Google Sheet 的任務/收益接進來，做成真實報表。
+          </p>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn secondary" id="weeklyBtn"><i class="fas fa-calendar-alt"></i> 本週報表</button>
+            <button class="btn secondary" id="chartBtn"><i class="fas fa-chart-bar"></i> 分析圖表</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <h3>快速連結</h3>
+          <a href="index.html" class="footer-link">網站首頁</a><br>
+          <a href="#top" class="footer-link">公會大廳</a><br>
+          <a href="#quests" class="footer-link">任務大廳</a>
+        </div>
+        <div>
+          <h3>支援中心</h3>
+          <div style="opacity:.92; font-size:18px; line-height:1.8;">
+            <div><i class="fas fa-question-circle"></i> 任務問題諮詢</div>
+            <div><i class="fab fa-line"></i> 官方客服：<b>@206zsrzq</b></div>
+            <div style="margin-top:10px;">本日登入：<span id="loginCount">1,248</span> 位冒險者</div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        © 2025 星火廣告. 版權所有。
+      </div>
+    </div>
+  </footer>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ===== helpers =====
+    function toast(text, type){
+      const el = document.getElementById('toast');
+      el.className = 'toast ' + (type || '');
+      el.textContent = text;
+      el.style.display = 'block';
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => { el.style.display = 'none'; }, 2600);
+    }
+
+    function safeParse(json, fallback){
+      try { return JSON.parse(json); } catch(e){ return fallback; }
+    }
+
+    function requireLogin(){
+      const token = localStorage.getItem('xinghuo_token');
+      const userRaw = localStorage.getItem('xinghuo_user');
+      const user = safeParse(userRaw, null);
+
+      if(!token || !user){
+        // 未登入 -> 回登入頁
+        location.href = './login.html';
+        return null;
+      }
+      return { token, user };
+    }
+
+    function computeDemoStats(user){
+      // 目前沒有真實報表來源：先用固定示範值 + user_id 做穩定的假數據（每個人看起來不同但不會亂跳）
+      const seed = (user?.user_id || user?.username || 'seed').split('').reduce((a,c)=>a + c.charCodeAt(0), 0);
+      const level = Math.max(1, Math.min(30, Math.floor(seed % 12) + 1));
+      const nextLevelXP = 2000;
+      const xp = Math.min(nextLevelXP, 200 + (seed % 1600));
+      const totalEarned = 1000 + (seed % 50000);
+      const todayEarnings = 50 + (seed % 900);
+      const monthEarnings = 800 + (seed % 80000);
+      const completedQuests = (seed % 40);
+      const activeDays = 1 + (seed % 60);
+
+      return { level, xp, nextLevelXP, totalEarned, todayEarnings, monthEarnings, completedQuests, activeDays };
+    }
+
+    function setText(id, text){
+      const el = document.getElementById(id);
+      if(el) el.textContent = text;
+    }
+
+    function setHTML(id, html){
+      const el = document.getElementById(id);
+      if(el) el.innerHTML = html;
+    }
+
+    // ===== referral link =====
+    function buildRefLink(user){
+      const uid = user?.user_id || user?.username || 'unknown';
+      // 你之後要追蹤 ref，就在 index.html 讀 ?ref=
+      return `https://xinghuoad.xyz/?ref=${encodeURIComponent(uid)}`;
+    }
+
+    async function copyToClipboard(text){
+      try{
+        await navigator.clipboard.writeText(text);
+        toast('✅ 已複製到剪貼簿', 'ok');
+      }catch(e){
+        // fallback
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        toast('✅ 已複製到剪貼簿', 'ok');
+      }
+    }
+
+    // ===== quests (local demo) =====
+    const QUESTS = [
+      { id: 1, name: '分享車輛貼文到 FB', reward: 150, xp: 50 },
+      { id: 2, name: 'LINE 群組推廣', reward: 350, xp: 120 },
+      { id: 3, name: '成功引薦買家', reward: 1200, xp: 300 },
+    ];
+
+    function getMyQuests(){
+      return safeParse(localStorage.getItem('xinghuo_my_quests'), []);
+    }
+    function setMyQuests(list){
+      localStorage.setItem('xinghuo_my_quests', JSON.stringify(list));
+      renderMyQuests();
+    }
+    function renderMyQuests(){
+      const list = getMyQuests();
+      if(!list.length){
+        setHTML('myQuestsList', '目前沒有任務。去上面接受一個任務吧！');
+        return;
+      }
+
+      const html = list.map(q => {
+        const statusText = q.status === 'done' ? '✅ 已完成（示範）' : '⏳ 進行中';
+        return `
+          <div class="my-quest-item">
+            <div>
+              <div class="name">${q.name}</div>
+              <div class="mini">${statusText} · 獎勵 $${q.reward} · +${q.xp} XP</div>
+            </div>
+            <div class="my-quest-actions">
+              ${q.status !== 'done' ? `<button class="btnMini" onclick="markQuestDone(${q.id})">標記完成</button>` : ''}
+              <button class="btnMini danger" onclick="removeQuest(${q.id})">移除</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      setHTML('myQuestsList', html);
+    }
+
+    function acceptQuest(questId){
+      const q = QUESTS.find(x => x.id === questId);
+      if(!q) return;
+
+      const list = getMyQuests();
+      if(list.some(x => x.id === q.id)){
+        toast('你已接受過此任務了', 'error');
+        return;
+      }
+
+      const ok = confirm(`確定要接受任務嗎？\n\n任務：${q.name}\n獎勵：$${q.reward}\nXP：+${q.xp}\n\n接受後將加入「我的任務」。`);
+      if(!ok) return;
+
+      list.push({ ...q, status: 'doing', accepted_at: new Date().toISOString() });
+      setMyQuests(list);
+      toast('✅ 任務已加入「我的任務」', 'ok');
+      document.getElementById('myQuestsBox')?.scrollIntoView({ behavior:'smooth', block:'start' });
+    }
+
+    function markQuestDone(id){
+      const list = getMyQuests().map(q => q.id === id ? ({...q, status:'done', done_at: new Date().toISOString()}) : q);
+      setMyQuests(list);
+      toast('✅ 已標記完成（示範）', 'ok');
+    }
+
+    function removeQuest(id){
+      const ok = confirm('確定要移除此任務嗎？');
+      if(!ok) return;
+      const list = getMyQuests().filter(q => q.id !== id);
+      setMyQuests(list);
+      toast('已移除任務', 'ok');
+    }
+
+    // ===== withdraw demo =====
+    function withdrawFunds(){
+      const available = 3250;
+      if(available < 500){
+        toast(`提領金額不足（目前 $${available}，最低 $500）`, 'error');
+        return;
+      }
+      const amountStr = prompt(`請輸入提領金額（最低 $500，最高 $${available}）：`, String(available));
+      if(!amountStr) return;
+
+      const amount = Number(amountStr);
+      if(!Number.isFinite(amount) || amount < 500 || amount > available){
+        toast('❌ 金額輸入錯誤，請確認範圍', 'error');
+        return;
+      }
+      toast(`✅ 已提交提領申請：$${amount}\n（示範流程，下一步可接真實申請）`, 'ok');
+    }
+
+    // ===== logout =====
+    function logout(){
+      const ok = confirm('確定要登出嗎？');
+      if(!ok) return;
+
+      localStorage.removeItem('xinghuo_token');
+      localStorage.removeItem('xinghuo_user');
+
+      // 你的示範任務資料也一起清掉（你不想清也可拿掉）
+      localStorage.removeItem('xinghuo_my_quests');
+
+      toast('👋 已登出', 'ok');
+      setTimeout(() => { location.href = './index.html'; }, 450);
+    }
+
+    // ===== init =====
+    document.addEventListener('DOMContentLoaded', () => {
+      const session = requireLogin();
+      if(!session) return;
+
+      const { user } = session;
+      const stats = computeDemoStats(user);
+
+      // Header
+      setText('userName', user?.username || '冒險者');
+      setText('kvUsername', user?.username || '-');
+      setText('kvName', user?.name || '(未填)');
+      setText('kvEmail', user?.email || '(未填)');
+
+      setText('userLevel', String(stats.level));
+      setText('totalEarned', Number(stats.totalEarned).toLocaleString());
+
+      // XP
+      setText('currentXP', Number(stats.xp).toLocaleString());
+      setText('nextLevelXP', Number(stats.nextLevelXP).toLocaleString());
+      const xpPercent = Math.max(0, Math.min(100, (stats.xp / stats.nextLevelXP) * 100));
+      document.getElementById('xpFill').style.width = xpPercent.toFixed(1) + '%';
+
+      // Stats cards
+      setText('todayEarnings', '$ ' + Number(stats.todayEarnings).toLocaleString());
+      setText('monthEarnings', '$ ' + Number(stats.monthEarnings).toLocaleString());
+      setText('completedQuests', String(stats.completedQuests));
+      setText('activeDays', String(stats.activeDays));
+
+      // Referral link
+      const refLink = buildRefLink(user);
+      setText('refLinkBox', refLink);
+
+      // Buttons
+      document.getElementById('logoutBtn')?.addEventListener('click', (e) => { e.preventDefault(); logout(); });
+      document.getElementById('withdrawBtn')?.addEventListener('click', withdrawFunds);
+
+      const copyFn = () => copyToClipboard(refLink);
+      document.getElementById('copyRefBtn')?.addEventListener('click', copyFn);
+      document.getElementById('copyRefBtn2')?.addEventListener('click', copyFn);
+
+      document.getElementById('scrollQuestBtn')?.addEventListener('click', () => {
+        document.getElementById('quests')?.scrollIntoView({ behavior:'smooth', block:'start' });
+      });
+
+      document.getElementById('weeklyBtn')?.addEventListener('click', () => toast('📅 本週報表（示範）\n下一步可接真實資料', 'ok'));
+      document.getElementById('chartBtn')?.addEventListener('click', () => toast('📊 分析圖表（示範）\n下一步可加入圖表/報表頁', 'ok'));
+
+      // My quests
+      renderMyQuests();
+
+      // Simulated login count
+      setInterval(() => {
+        const el = document.getElementById('loginCount');
+        if(!el) return;
+        const current = parseInt(String(el.textContent).replace(/,/g,''), 10) || 1248;
+        const change = Math.floor(Math.random() * 10) - 3; // -3..+6
+        const next = Math.max(1200, current + change);
+        el.textContent = next.toLocaleString();
+      }, 30000);
+    });
+  </script>
 </body>
 </html>
