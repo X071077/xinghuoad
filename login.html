@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>星火廣告｜登入</title>
+  <meta name="description" content="星火廣告｜會員登入" />
+  <style>
+    :root{
+      --bg: #0b0f19;
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.74);
+      --shadow: 0 18px 60px rgba(0,0,0,.28);
+      --radius: 16px;
+      --max: 1100px;
+      --danger: rgba(255,120,120,.95);
+      --ok: rgba(120,255,200,.92);
+    }
+
+    *{ box-sizing:border-box; }
+    html{ scroll-behavior:smooth; }
+
+    body{
+      margin:0;
+      font-family: "DFKai-SB","BiauKai","KaiTi","STKaiti","Noto Serif TC",serif;
+      font-size: 20px;
+      font-weight: 700;
+      text-align: center;
+      color: var(--text);
+      line-height: 1.75;
+      background: var(--bg);
+      position: relative;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    body::before{
+      content:"";
+      position: fixed;
+      inset: 0;
+      background-image: url("picture/p1.png");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transform: scale(1.02);
+      z-index: -3;
+    }
+
+    body::after{
+      content:"";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(900px 600px at 20% 0%, rgba(255,255,255,.08), transparent 60%),
+        radial-gradient(800px 520px at 80% 15%, rgba(255,255,255,.06), transparent 55%),
+        linear-gradient(180deg, rgba(0,0,0,.52) 0%, rgba(0,0,0,.60) 45%, rgba(0,0,0,.70) 100%);
+      z-index: -2;
+      pointer-events: none;
+    }
+
+    a{ color:inherit; text-decoration:none; }
+    .container{ width:min(var(--max), calc(100% - 40px)); margin:0 auto; }
+
+    header{
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(11,15,25,.78);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,.14);
+    }
+    .header-inner{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      padding: 14px 0;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width: 160px;
+    }
+    .logo{
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.16);
+      box-shadow: var(--shadow);
+      background-image: url("picture/logo.png");
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: contain;
+      background-color: rgba(255,255,255,.08);
+      flex: 0 0 auto;
+    }
+    .brand b{
+      font-weight: 800;
+      letter-spacing:.2px;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    nav{
+      display:flex;
+      align-items:center;
+      gap: 18px;
+      flex-wrap: wrap;
+      justify-content:center;
+      flex: 1;
+    }
+    nav a{
+      padding: 10px 12px;
+      border-radius: 12px;
+      color: var(--muted);
+      border: 1px solid transparent;
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    nav a:hover{
+      color: var(--text);
+      border-color: rgba(255,255,255,.16);
+      background: rgba(255,255,255,.04);
+    }
+
+    .actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width: 160px;
+      justify-content:flex-end;
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding: 12px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      cursor:pointer;
+      user-select:none;
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .btn:hover{ background: rgba(255,255,255,.10); }
+    .btn.primary{
+      background: rgba(255,255,255,.14);
+      border-color: rgba(255,255,255,.18);
+    }
+
+    main{ padding: 74px 0 80px; }
+    .card{
+      width: min(720px, 100%);
+      margin: 0 auto;
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      overflow: hidden;
+      position: relative;
+      text-align: left;
+    }
+    .card::before{
+      content:"";
+      position:absolute;
+      inset:-60px;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.10) 0%, transparent 35%, transparent 100%),
+        linear-gradient(315deg, rgba(255,255,255,.06) 0%, transparent 40%, transparent 100%);
+      opacity: .55;
+      z-index: 0;
+      pointer-events:none;
+    }
+    .card-inner{
+      position: relative;
+      z-index: 1;
+      padding: 26px 22px 24px;
+      text-align: center;
+    }
+    .title{
+      margin: 0 0 8px 0;
+      font-size: 34px;
+      font-weight: 900;
+      letter-spacing: .3px;
+      line-height: 1.25;
+    }
+    .subtitle{
+      margin: 0 0 18px 0;
+      color: var(--muted);
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1.6;
+    }
+
+    form{
+      display: grid;
+      gap: 12px;
+      margin-top: 10px;
+      text-align: left;
+    }
+    .field{
+      display:grid;
+      gap: 8px;
+    }
+    label{
+      font-size: 18px;
+      font-weight: 900;
+      color: rgba(255,255,255,.88);
+    }
+    input{
+      width: 100%;
+      padding: 14px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.22);
+      color: var(--text);
+      outline: none;
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+    input::placeholder{ color: rgba(255,255,255,.45); font-weight: 800; }
+    input:focus{
+      border-color: rgba(255,255,255,.28);
+      background: rgba(0,0,0,.26);
+    }
+
+    .row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 2px;
+    }
+    .remember{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 18px;
+      font-weight: 900;
+      user-select: none;
+    }
+    .remember input{
+      width: 18px;
+      height: 18px;
+      accent-color: rgba(255,255,255,.9);
+    }
+    .hint a{
+      color: rgba(255,255,255,.88);
+      border-bottom: 1px solid rgba(255,255,255,.25);
+      padding-bottom: 2px;
+    }
+    .hint a:hover{ border-bottom-color: rgba(255,255,255,.55); }
+
+    .msg{
+      display:none;
+      margin-top: 10px;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(0,0,0,.20);
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1.6;
+      text-align: center;
+    }
+    .msg.show{ display:block; }
+    .msg.err{
+      border-color: rgba(255,120,120,.35);
+      color: var(--danger);
+      background: rgba(255,120,120,.08);
+    }
+    .msg.ok{
+      border-color: rgba(120,255,200,.28);
+      color: var(--ok);
+      background: rgba(120,255,200,.08);
+    }
+
+    .submit{
+      margin-top: 6px;
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.14);
+      color: var(--text);
+      font-size: 20px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .submit:hover{ background: rgba(255,255,255,.18); }
+    .submit:disabled{
+      opacity: .7;
+      cursor: not-allowed;
+    }
+
+    .divider{
+      margin: 18px 0 12px;
+      border-top: 1px solid rgba(255,255,255,.12);
+    }
+
+    .bottom-links{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 12px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 18px;
+      font-weight: 900;
+      text-align: center;
+    }
+    .bottom-links a{
+      color: rgba(255,255,255,.88);
+      border-bottom: 1px solid rgba(255,255,255,.25);
+      padding-bottom: 2px;
+    }
+    .bottom-links a:hover{ border-bottom-color: rgba(255,255,255,.55); }
+
+    @media (max-width: 900px){
+      .brand, .actions{ min-width:auto; }
+      nav{ display:none; }
+      main{ padding: 56px 0 70px; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="container">
+      <div class="header-inner">
+        <a class="brand" href="index.html" aria-label="回到首頁">
+          <div class="logo" aria-hidden="true"></div>
+          <b>星火廣告</b>
+        </a>
+
+        <nav aria-label="站內導覽">
+          <a href="index.html#hero">選擇身分</a>
+          <a href="index.html#intro">關於我們</a>
+          <a href="index.html#testimonials">分享區</a>
+          <a href="pact.html">使用協議</a>
+          <a href="index.html#footer">聯絡資訊</a>
+        </nav>
+
+        <div class="actions">
+          <a class="btn" href="signup.html">註冊</a>
+          <a class="btn primary" href="login.html">登入</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <section class="card" aria-label="登入卡片">
+        <div class="card-inner">
+          <h1 class="title">會員登入</h1>
+          <p class="subtitle">請使用 Email 與密碼登入。</p>
+
+          <div id="msg" class="msg" role="status" aria-live="polite"></div>
+
+          <form id="loginForm" autocomplete="on">
+            <div class="field">
+              <label for="email">Email</label>
+              <input id="email" name="email" type="email" inputmode="email" autocomplete="email"
+                     placeholder="example@email.com" required />
+            </div>
+
+            <div class="field">
+              <label for="password">密碼</label>
+              <input id="password" name="password" type="password" autocomplete="current-password"
+                     placeholder="至少 6 碼" minlength="6" required />
+            </div>
+
+            <div class="row">
+              <label class="remember">
+                <input id="remember" type="checkbox" checked />
+                記住我
+              </label>
+              <div class="hint">
+                <a href="signup.html">還沒有帳號？前往註冊</a>
+              </div>
+            </div>
+
+            <button id="submitBtn" class="submit" type="submit">登入</button>
+          </form>
+
+          <div class="divider"></div>
+
+          <div class="bottom-links">
+            <span>登入即表示你同意</span>
+            <a href="pact.html">平台使用協議</a>
+            <span>。</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Netlify Identity Widget（必要） -->
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+  <script>
+    // --- helpers ---
+    const msgEl = document.getElementById("msg");
+    const form = document.getElementById("loginForm");
+    const submitBtn = document.getElementById("submitBtn");
+
+    function showMsg(text, type){
+      msgEl.textContent = text;
+      msgEl.className = "msg show " + (type || "");
+    }
+    function clearMsg(){
+      msgEl.textContent = "";
+      msgEl.className = "msg";
+    }
+    function setLoading(isLoading){
+      submitBtn.disabled = !!isLoading;
+      submitBtn.textContent = isLoading ? "登入中…" : "登入";
+    }
+
+    // --- init Netlify Identity ---
+    if (window.netlifyIdentity) {
+      netlifyIdentity.init();
+
+      // 若已登入，直接回首頁（避免重複登入）
+      netlifyIdentity.on("init", (user) => {
+        if (user) window.location.href = "index.html";
+      });
+
+      netlifyIdentity.on("error", (err) => {
+        console.error(err);
+      });
+    } else {
+      showMsg("Identity 載入失敗，請確認網路或稍後再試。", "err");
+    }
+
+    // --- login ---
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      clearMsg();
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const remember = document.getElementById("remember").checked;
+
+      if (!email || !email.includes("@")) return showMsg("請輸入正確的 Email。", "err");
+      if (!password || password.length < 6) return showMsg("請輸入至少 6 碼的密碼。", "err");
+
+      if (!window.netlifyIdentity || !netlifyIdentity.gotrue) {
+        return showMsg("Identity 尚未準備好，請重新整理頁面再試。", "err");
+      }
+
+      try {
+        setLoading(true);
+
+        // 使用 GoTrue（Netlify Identity 背後服務）登入
+        await netlifyIdentity.gotrue.login(email, password, remember);
+
+        showMsg("登入成功，準備跳轉…", "ok");
+        window.location.href = "index.html";
+      } catch (err) {
+        console.error(err);
+        showMsg(err?.message || "登入失敗，請確認帳號密碼是否正確。", "err");
+      } finally {
+        setLoading(false);
+      }
+    });
+  </script>
+</body>
+</html>
