@@ -3,9 +3,6 @@ const { google } = require("googleapis");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 
-// Node 18+ on Netlify has global fetch; if you are on older runtime, you may need node-fetch.
-const RESEND_API_URL = "https://api.resend.com/emails";
-
 function reply(statusCode, data) {
   return {
     statusCode,
@@ -59,17 +56,7 @@ function verifyPassword(password, pepper, stored) {
 
 function isValidEmail(email) {
   const e = String(email || "").trim().toLowerCase();
-  // 簡單但夠用的格式檢查
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-}
-
-function random6Digits() {
-  // 000000 - 999999
-  return String(Math.floor(Math.random() * 1000000)).padStart(6, "0");
-}
-
-function sha256(s) {
-  return crypto.createHash("sha256").update(String(s)).digest("hex");
 }
 
 // -------------------- Upstash REST helpers --------------------
@@ -89,10 +76,8 @@ async function upstashPost(path) {
     headers: { Authorization: `Bearer ${token}` },
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(`Upstash error (${res.status}): ${JSON.stringify(data)}`);
-  }
-  return data; // { result: ... }
+  if (!res.ok) throw new Error(`Upstash error (${res.status}): ${JSON.stringify(data)}`);
+  return data;
 }
 
 async function upstashGet(key) {
@@ -100,61 +85,9 @@ async function upstashGet(key) {
   return data?.result ?? null;
 }
 
-async function upstashSetEx(key, ttlSeconds, value) {
-  // SETEX key ttl value
-  const data = await upstashPost(`setex/${encodeURIComponent(key)}/${ttlSeconds}/${encodeURIComponent(value)}`);
-  return data?.result ?? null;
-}
-
 async function upstashDel(key) {
   const data = await upstashPost(`del/${encodeURIComponent(key)}`);
   return data?.result ?? null;
-}
-
-async function upstashIncr(key, ttlSecondsIfNew) {
-  // 先 INCR，再用 SETEX 方式補 TTL（簡化處理：每次 incr 都重設 TTL）
-  const data = await upstashPost(`incr/${encodeURIComponent(key)}`);
-  const v = data?.result ?? 0;
-  // 重設 TTL，避免 attempts 永久存在
-  await upstashSetEx(key, ttlSecondsIfNew, String(v));
-  return Number(v);
-}
-
-// -------------------- Resend helper --------------------
-function getResendEnv() {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) throw new Error("Missing env var: RESEND_API_KEY");
-
-  // 建議你在 Netlify 也加一個 RESEND_FROM，例如：no-reply@xinghuoad.xyz
-  // 若沒設定，就用 onboarding@resend.dev（但是否能寄給任意收件人取決於 Resend 帳號/設定）
-  const from = process.env.RESEND_FROM || "onboarding@resend.dev";
-  return { apiKey, from };
-}
-
-async function sendEmailViaResend({ to, subject, text, html }) {
-  const { apiKey, from } = getResendEnv();
-
-  const res = await fetch(RESEND_API_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from,
-      to,
-      subject,
-      text,
-      html,
-    }),
-  });
-
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const msg = data?.message || data?.error || JSON.stringify(data);
-    throw new Error(`Resend send failed: ${msg}`);
-  }
-  return data;
 }
 
 // -------------------- Google Sheets --------------------
@@ -209,51 +142,13 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body || "{}");
     const action = body?.action;
 
-    // 支援 actions: register / login / send_email_code
-    if (!action || !["register", "login", "send_email_code"].includes(action)) {
-      return reply(400, { error: "Invalid action. Use register, login, or send_email_code." });
+    if (!action || !["register", "login"].includes(action)) {
+      return reply(400, { error: "Invalid action. Use register or login." });
     }
 
     const pepper = process.env.AUTH_PEPPER || "";
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) return reply(500, { error: "Missing JWT_SECRET" });
-
-    // ---------- send_email_code ----------
-    if (action === "send_email_code") {
-      const email = String(body?.email || "").trim().toLowerCase();
-      if (!isValidEmail(email)) return reply(400, { error: "invalid email" });
-
-      // 60 秒冷卻，避免濫用
-      const coolKey = `emailcode:cool:${email}`;
-      const cool = await upstashGet(coolKey);
-      if (cool) return reply(429, { error: "請稍等 60 秒再重新發送驗證碼" });
-
-      const code = random6Digits();
-      const codeHash = sha256(code + pepper);
-      const ttl = 10 * 60; // 10 分鐘
-
-      const codeKey = `emailcode:code:${email}`;
-      const attemptsKey = `emailcode:attempts:${email}`;
-
-      await upstashSetEx(codeKey, ttl, codeHash);
-      await upstashSetEx(coolKey, 60, "1");
-      await upstashSetEx(attemptsKey, ttl, "0");
-
-      const subject = "星火廣告｜Email 驗證碼";
-      const text = `你的驗證碼是：${code}\n有效時間：10 分鐘\n若非本人操作請忽略此信。`;
-      const html = `
-        <div style="font-family:Arial,sans-serif;line-height:1.7">
-          <h2>星火廣告 Email 驗證碼</h2>
-          <p>你的驗證碼是：</p>
-          <div style="font-size:28px;font-weight:800;letter-spacing:4px;margin:12px 0">${code}</div>
-          <p>有效時間：<b>10 分鐘</b></p>
-          <p style="color:#666">若非本人操作請忽略此信。</p>
-        </div>
-      `;
-
-      await sendEmailViaResend({ to: email, subject, text, html });
-      return reply(200, { ok: true, message: "驗證碼已寄出（10 分鐘內有效）" });
-    }
 
     // ---------- register / login 共同檢查 ----------
     const username = String(body?.username || "").trim();
@@ -266,7 +161,6 @@ exports.handler = async (event) => {
     const { headers, rows } = await loadAllRows(sheets, sheetId, tab);
     const headerIdx = buildHeaderIndex(headers);
 
-    // 必要欄位
     const mustHave = ["username", "password_hash", "user_id"];
     for (const k of mustHave) {
       if (headerIdx[k] === undefined) return reply(500, { error: `Sheet missing header: ${k}` });
@@ -286,37 +180,22 @@ exports.handler = async (event) => {
     if (action === "register") {
       const name = String(body?.name || "").trim();
       const email = String(body?.email || "").trim().toLowerCase();
-      const code = String(body?.code || "").trim();
 
       if (!isValidEmail(email)) return reply(400, { error: "invalid email" });
-      if (!/^\d{6}$/.test(code)) return reply(400, { error: "invalid code (need 6 digits)" });
 
-      // Google Sheet 必須要有 email 欄
       if (headerIdx["email"] === undefined) {
         return reply(500, { error: "Sheet missing header: email（請在 users Sheet 加一欄表頭 email）" });
       }
 
       if (foundRowIndex !== -1) return reply(409, { error: "username already exists" });
 
-      // 驗證碼校驗
-      const emailKey = `emailcode:code:${email}`;
-      const attemptsKey = `emailcode:attempts:${email}`;
+      // ✅ 改成：檢查 otp-verify 成功後寫入的旗標
+      const verifiedKey = `otp_verified:${email}`;
+      const verified = await upstashGet(verifiedKey);
+      if (!verified) return reply(400, { error: "請先完成 Email 驗證" });
 
-      const storedHash = await upstashGet(emailKey);
-      if (!storedHash) return reply(400, { error: "驗證碼不存在或已過期，請重新取得驗證碼" });
-
-      const attempts = await upstashIncr(attemptsKey, 10 * 60);
-      if (attempts > 5) {
-        await upstashDel(emailKey);
-        return reply(429, { error: "驗證失敗次數過多，請重新取得驗證碼" });
-      }
-
-      const ok = sha256(code + pepper) === String(storedHash);
-      if (!ok) return reply(400, { error: "驗證碼錯誤" });
-
-      // 驗證成功 → 刪掉驗證碼
-      await upstashDel(emailKey);
-      await upstashDel(attemptsKey);
+      // 用過就刪，避免重複利用
+      await upstashDel(verifiedKey);
 
       const user_id = makeUserId();
       const password_hash = makePasswordHash(password, pepper);
@@ -367,6 +246,6 @@ exports.handler = async (event) => {
     const token = jwt.sign({ user_id: uid, username: u }, jwtSecret, { expiresIn: "30d" });
     return reply(200, { ok: true, user: { user_id: uid, username: u }, token });
   } catch (err) {
-    return reply(500, { error: "server_error", detail: String(err && err.message ? err.message : err) });
+    return reply(500, { error: "server_error", detail: String(err?.message || err) });
   }
 };

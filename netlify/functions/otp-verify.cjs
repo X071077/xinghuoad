@@ -21,7 +21,6 @@ async function upstashGet(key) {
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
   if (!base || !token) throw new Error("Missing UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN");
 
-  // Upstash REST: /get/<key>
   const url = `${base}/get/${encodeURIComponent(key)}`;
   const res = await fetch(url, {
     method: "GET",
@@ -30,7 +29,6 @@ async function upstashGet(key) {
   const json = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(`Upstash get failed: ${res.status} ${JSON.stringify(json)}`);
 
-  // Upstash 回傳通常是 { result: "xxxx" } 或 { result: null }
   return json.result ?? null;
 }
 
@@ -39,6 +37,21 @@ async function upstashDel(key) {
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
   const url = `${base}/del/${encodeURIComponent(key)}`;
   await fetch(url, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+}
+
+async function upstashSet(key, value, exSeconds) {
+  const base = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!base || !token) throw new Error("Missing UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN");
+
+  // Upstash REST: /set/<key>/<value>?EX=600
+  const url = `${base}/set/${encodeURIComponent(key)}/${encodeURIComponent(value)}?EX=${exSeconds}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(`Upstash set failed: ${res.status} ${JSON.stringify(json)}`);
 }
 
 exports.handler = async (event) => {
@@ -59,8 +72,11 @@ exports.handler = async (event) => {
     if (!saved) return reply(400, { ok: false, error: "code_expired_or_not_found" });
     if (String(saved) !== c) return reply(400, { ok: false, error: "code_mismatch" });
 
-    // 通過後刪掉，避免重複使用
+    // 通過後刪掉 OTP，避免重複使用
     await upstashDel(key);
+
+    // ✅ 新增：寫入「已驗證」旗標（10 分鐘）
+    await upstashSet(`otp_verified:${e}`, "1", 600);
 
     return reply(200, { ok: true });
   } catch (err) {
