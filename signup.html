@@ -27,7 +27,6 @@
       --shadow: 0 24px 90px rgba(0,0,0,.55);
     }
 
-    /* ✅ 你指定：字體 125% */
     html{ font-size:125%; }
 
     *{ box-sizing:border-box; }
@@ -43,11 +42,9 @@
       position:relative;
       overflow-x:hidden;
 
-      /* ✅ 背景底圖 */
       background: url("picture/P1.png") center / cover no-repeat fixed;
     }
 
-    /* ✅ 霧面：同底圖 + blur 疊上去 */
     body::before{
       content:"";
       position:fixed;
@@ -60,7 +57,6 @@
       pointer-events:none;
     }
 
-    /* ✅ 暗化提升可讀性 */
     body::after{
       content:"";
       position:fixed;
@@ -81,7 +77,6 @@
       overflow:hidden;
     }
 
-    /* 霓虹細邊光 */
     .card::after{
       content:"";
       position:absolute;
@@ -118,7 +113,6 @@
       min-width:0;
     }
 
-    /* ✅ Logo：contain + 內距，不裁切 */
     .logo{
       width:46px;
       height:46px;
@@ -160,7 +154,6 @@
 
     .body{ padding:22px 26px 26px; }
 
-    /* ✅ Step：兩塊同寬 + 只顯示標題 */
     .steps{
       display:flex;
       align-items:stretch;
@@ -226,7 +219,6 @@
       .steps{ flex-direction:column; }
     }
 
-    /* 狀態列 */
     .status{
       display:none;
       margin: 14px 0 0;
@@ -260,7 +252,6 @@
       margin-top:2px;
     }
 
-    /* 區塊容器 */
     .section{
       margin-top:16px;
       padding:16px;
@@ -342,24 +333,48 @@
     .btn:hover{ transform: translateY(-2px); filter: brightness(1.06); box-shadow: 0 18px 46px rgba(77,184,255,.18); }
     .btn:active{ transform: translateY(0); }
 
-    .btnGhost{
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.16);
-      box-shadow: none;
-      width:auto;
-    }
-
-    /* ✅ Email 同行按鈕：稍微放大 */
-    .btnInline{
-      padding:12px 18px;
+    /* ✅ 發送驗證碼：實心藍色填充 */
+    .btnSendFill{
+      border:0;
+      cursor:pointer;
       border-radius:12px;
+      padding:12px 18px;
+      font-weight:900;
       font-size:.96rem;
+      color:#fff;
+
+      /* 藍色漸層（比紫色更乾淨） */
+      background: linear-gradient(135deg, rgba(77,184,255,1), rgba(33,140,255,1));
+      box-shadow: 0 14px 38px rgba(77,184,255,.20);
+
+      transition: transform .15s ease, filter .15s ease, box-shadow .15s ease;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      user-select:none;
+
       min-height:46px;
       white-space:nowrap;
     }
+    .btnSendFill:hover{
+      transform: translateY(-1px);
+      filter: brightness(1.06);
+      box-shadow: 0 18px 46px rgba(77,184,255,.24);
+    }
+    .btnSendFill:active{
+      transform: translateY(0);
+      filter: brightness(0.98);
+    }
+    .btnSendFill:disabled{
+      opacity:.55;
+      cursor:not-allowed;
+      transform:none !important;
+      filter:none !important;
+      box-shadow:none;
+    }
 
-    .btn:disabled,
-    .btnGhost:disabled{
+    .btn:disabled{
       opacity:.55;
       cursor:not-allowed;
       transform:none !important;
@@ -375,7 +390,7 @@
       display:none;
     }
     .btn.loading .spinner,
-    .btnGhost.loading .spinner{ display:inline-block; }
+    .btnSendFill.loading .spinner{ display:inline-block; }
     @keyframes spin{ to{ transform: rotate(360deg); } }
 
     .eye{
@@ -389,13 +404,8 @@
       background: rgba(0,0,0,.18);
     }
 
-    /* ✅ OTP：單一 input（隱藏字），用 6 格顯示層精準置中 */
-    .otpField{
-      position:relative;
-      width:100%;
-    }
-
-    /* 真正輸入用 input（可貼上/可退格/可輸入） */
+    /* OTP */
+    .otpField{ position:relative; width:100%; }
     .otpInput{
       position:absolute;
       inset:0;
@@ -404,14 +414,12 @@
       border:0;
       outline:0;
       background:transparent;
-      color:transparent;     /* 不顯示原文字（避免 1 0 1 0 1 0 問題） */
+      color:transparent;
       caret-color:transparent;
       font-size:1rem;
       font-weight:800;
-      letter-spacing:0;
     }
 
-    /* 顯示層：6 格 */
     .otpBoxes{
       display:grid;
       grid-template-columns: repeat(6, 1fr);
@@ -423,8 +431,8 @@
     .otpBox{
       height:40px;
       border-radius:12px;
-      border:1px solid rgba(255,255,255,.22); /* ✅ 更清楚 */
-      background: rgba(255,255,255,.045);     /* ✅ 更實一點 */
+      border:1px solid rgba(255,255,255,.22);
+      background: rgba(255,255,255,.045);
       box-shadow: inset 0 -10px 22px rgba(0,0,0,.18);
       display:flex;
       align-items:center;
@@ -437,7 +445,6 @@
       user-select:none;
     }
 
-    /* active 格（下一個要輸入的位置） */
     .otpBox.active{
       border-color: rgba(77,184,255,.55);
       box-shadow:
@@ -448,13 +455,11 @@
       transform: translateY(-1px);
     }
 
-    /* 已填格：稍微更亮 */
     .otpBox.filled{
       border-color: rgba(255,255,255,.30);
       background: rgba(255,255,255,.06);
     }
 
-    /* OTP 行：驗證碼 : 驗證 = 2 : 1 */
     .otpRow{
       display:grid;
       grid-template-columns: 2fr 1fr;
@@ -462,15 +467,13 @@
       align-items:stretch;
     }
 
-    /* 讓 OTP 的格子高度跟 field 視覺一致 */
     .otpFieldWrap{
       min-height:52px;
-      padding:6px 6px; /* 讓格子有呼吸空間 */
+      padding:6px 6px;
     }
     .otpFieldWrap .otpBox{ height:40px; }
 
     @media (max-width: 460px){
-      /* 非常小的螢幕保護一下（仍保持 2:1，但 gap 縮小） */
       .otpRow{ gap:10px; }
       .otpBoxes{ gap:8px; }
       .otpBox{ border-radius:10px; height:38px; font-size:.98rem; }
@@ -517,9 +520,6 @@
       line-height:1.6;
     }
 
-    a{ color:#fff; text-decoration:none; font-weight:900; }
-    a:hover{ text-decoration:underline; }
-
     .fadeSlide{ animation: fadeSlide .22s ease both; }
     @keyframes fadeSlide{
       from{ opacity:0; transform: translateY(6px); }
@@ -544,7 +544,6 @@
       </div>
 
       <div class="body">
-        <!-- Steps -->
         <div class="steps">
           <div class="step active" id="step1Box">
             <div class="badge" id="step1Badge">1</div>
@@ -556,25 +555,23 @@
           </div>
         </div>
 
-        <!-- Status -->
         <div class="status" id="status">
           <div class="ico" id="statusIco">i</div>
           <div id="statusText"></div>
         </div>
 
-        <!-- Step 1 -->
         <div class="section fadeSlide" id="step1">
           <div style="display:flex; align-items:center; justify-content:flex-end; margin-bottom:10px;">
             <div class="verifiedTag" id="verifiedTag">已驗證</div>
           </div>
 
           <div class="grid">
-            <!-- Email + Send (同一行) -->
             <div>
               <label for="email">Email</label>
               <div class="field">
                 <input id="email" type="email" placeholder="例如：name@gmail.com" autocomplete="email" required>
-                <button type="button" class="btnGhost btnInline" id="sendCodeBtn">
+                <!-- ✅ 改成實心藍色 -->
+                <button type="button" class="btnSendFill" id="sendCodeBtn">
                   <span class="spinner" aria-hidden="true"></span>
                   <span id="sendCodeText">發送驗證碼</span>
                 </button>
@@ -585,15 +582,12 @@
               </div>
             </div>
 
-            <!-- ✅ OTP：驗證碼(2) + 驗證(1) -->
             <div>
               <label for="otpInput">驗證碼</label>
 
               <div class="otpRow">
-                <!-- 左：驗證碼 -->
                 <div class="field otpFieldWrap" id="otpWrap" role="group" aria-label="驗證碼輸入">
                   <div class="otpField">
-                    <!-- 真正輸入用的 input（隱藏文字） -->
                     <input
                       id="otpInput"
                       class="otpInput"
@@ -603,19 +597,13 @@
                       aria-label="請輸入 6 位數驗證碼"
                     />
 
-                    <!-- 顯示層：6 格 -->
                     <div class="otpBoxes" aria-hidden="true" id="otpBoxes">
-                      <div class="otpBox" data-i="0"></div>
-                      <div class="otpBox" data-i="1"></div>
-                      <div class="otpBox" data-i="2"></div>
-                      <div class="otpBox" data-i="3"></div>
-                      <div class="otpBox" data-i="4"></div>
-                      <div class="otpBox" data-i="5"></div>
+                      <div class="otpBox"></div><div class="otpBox"></div><div class="otpBox"></div>
+                      <div class="otpBox"></div><div class="otpBox"></div><div class="otpBox"></div>
                     </div>
                   </div>
                 </div>
 
-                <!-- 右：驗證 -->
                 <button type="button" class="btn" id="verifyBtn" disabled>
                   <span class="spinner" aria-hidden="true"></span>
                   驗證
@@ -625,7 +613,6 @@
           </div>
         </div>
 
-        <!-- Step 2 -->
         <div class="section" id="step2" style="display:none;">
           <form id="signupForm" class="grid" autocomplete="on">
             <div>
@@ -658,7 +645,7 @@
                 <span class="spinner" aria-hidden="true"></span>
                 完成註冊
               </button>
-              <button type="button" class="btn btnGhost" onclick="location.href='login.html'">
+              <button type="button" class="btn" onclick="location.href='login.html'">
                 前往登入
               </button>
             </div>
@@ -736,15 +723,11 @@
         step2Box.classList.remove("active");
         step1.style.display = "block";
         step2.style.display = "none";
-        step1.classList.add("fadeSlide");
-        setTimeout(()=>step1.classList.remove("fadeSlide"), 250);
       }else{
         step1Box.classList.remove("active");
         step2Box.classList.add("active");
         step1.style.display = "none";
         step2.style.display = "block";
-        step2.classList.add("fadeSlide");
-        setTimeout(()=>step2.classList.remove("fadeSlide"), 250);
       }
     }
 
@@ -763,7 +746,6 @@
       emailEl.style.opacity = ".92";
       sendCodeBtn.disabled = true;
 
-      // 鎖 OTP
       otpInput.disabled = true;
       verifyBtn.disabled = true;
 
@@ -771,21 +753,24 @@
       showStatus("ok", "Email 驗證成功，請完成帳號資料後送出註冊。");
     }
 
-    // 密碼顯示/隱藏
     togglePw?.addEventListener("click", () => {
       const now = pw.type === "password" ? "text" : "password";
       pw.type = now;
       togglePw.textContent = (now === "password") ? "顯示" : "隱藏";
     });
 
-    // ---------- OTP 顯示層邏輯 ----------
     function getOtpDigits(){
       return String(otpInput.value || "").replace(/\D/g, "").slice(0, 6);
     }
 
+    function refreshVerifyState(){
+      const emailOk = isValidEmail(emailEl.value.trim().toLowerCase());
+      const codeOk = /^\d{6}$/.test(getOtpDigits());
+      verifyBtn.disabled = !(emailOk && codeOk) || isVerified;
+    }
+
     function paintOtp(){
       const digits = getOtpDigits();
-      // 同步回 input（防止輸入非數字）
       otpInput.value = digits;
 
       otpBoxes.forEach((box, i) => {
@@ -795,48 +780,25 @@
         box.classList.remove("active");
       });
 
-      // active 格：下一個要輸入的位置（滿 6 碼則停在最後一格）
       const idx = Math.min(digits.length, 5);
       otpBoxes[idx].classList.add("active");
 
       refreshVerifyState();
     }
 
-    function refreshVerifyState(){
-      const emailOk = isValidEmail(emailEl.value.trim().toLowerCase());
-      const codeOk = /^\d{6}$/.test(getOtpDigits());
-      verifyBtn.disabled = !(emailOk && codeOk) || isVerified;
-    }
-
-    // 點任何位置都 focus input
     otpWrap.addEventListener("click", () => {
       if(!isVerified && !otpInput.disabled) otpInput.focus();
     });
-
-    // 支援點某一格也 focus
     otpBoxesWrap.addEventListener("click", () => {
       if(!isVerified && !otpInput.disabled) otpInput.focus();
     });
 
     otpInput.addEventListener("input", paintOtp);
-    otpInput.addEventListener("keydown", (e) => {
-      // 讓 backspace 行為更自然（其實原生已可用，但我們確保只留數字）
-      if(e.key === " "){
-        e.preventDefault();
-      }
-    });
-
-    // 允許貼上（原生即可，input 事件會處理）
-    otpInput.addEventListener("paste", () => {
-      setTimeout(paintOtp, 0);
-    });
-
+    otpInput.addEventListener("paste", () => setTimeout(paintOtp, 0));
     emailEl.addEventListener("input", refreshVerifyState);
 
-    // init OTP
     paintOtp();
 
-    // ---------- Cooldown ----------
     let cooldownTimer = null;
     function startCooldown(sec){
       let left = sec;
@@ -858,7 +820,6 @@
       }, 1000);
     }
 
-    // ---------- Send OTP ----------
     sendCodeBtn.addEventListener("click", async () => {
       clearStatus();
       const email = emailEl.value.trim().toLowerCase();
@@ -896,7 +857,6 @@
       }
     });
 
-    // ---------- Verify OTP ----------
     verifyBtn.addEventListener("click", async () => {
       clearStatus();
 
@@ -937,7 +897,6 @@
       }
     });
 
-    // ---------- Register (Step 2) ----------
     $("signupForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       clearStatus();
@@ -1000,7 +959,6 @@
       }
     });
 
-    // init verify state
     refreshVerifyState();
   </script>
 </body>
