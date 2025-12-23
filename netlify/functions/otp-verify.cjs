@@ -28,7 +28,6 @@ async function upstashGet(key) {
   });
   const json = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(`Upstash get failed: ${res.status} ${JSON.stringify(json)}`);
-
   return json.result ?? null;
 }
 
@@ -44,7 +43,7 @@ async function upstashSet(key, value, exSeconds) {
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
   if (!base || !token) throw new Error("Missing UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN");
 
-  // Upstash REST: /set/<key>/<value>?EX=600
+  // /set/<key>/<value>?EX=1800
   const url = `${base}/set/${encodeURIComponent(key)}/${encodeURIComponent(value)}?EX=${exSeconds}`;
   const res = await fetch(url, {
     method: "POST",
@@ -72,11 +71,13 @@ exports.handler = async (event) => {
     if (!saved) return reply(400, { ok: false, error: "code_expired_or_not_found" });
     if (String(saved) !== c) return reply(400, { ok: false, error: "code_mismatch" });
 
-    // 通過後刪掉 OTP，避免重複使用
+    // 通過後刪掉 OTP（避免重複使用）
     await upstashDel(key);
 
-    // ✅ 新增：寫入「已驗證」旗標（10 分鐘）
-    await upstashSet(`otp_verified:${e}`, "1", 600);
+    // ✅ 寫入 otp_verified（給註冊用），並設定 TTL
+    // 你要調整 TTL 就改這行（秒）
+    const OTP_VERIFIED_TTL_SECONDS = 30 * 60; // 30 分鐘
+    await upstashSet(`otp_verified:${e}`, "1", OTP_VERIFIED_TTL_SECONDS);
 
     return reply(200, { ok: true });
   } catch (err) {
