@@ -1,8 +1,11 @@
 <!-- =========================
      index.html (updated)
-     ✅ Header 手機版改成「Logo + 漢堡選單」，避免蓋住整個螢幕
-     ✅ 桌機版維持原本橫排導覽
-     ✅ 圖片路徑統一移到 /picture 資料夾（沿用你原本設定）
+     ✅ Header「選擇身分」→ 改為「會員中心」並導向 dashboard.html
+     ✅ Footer「選擇身分」→ 改為「會員中心」並導向 dashboard.html
+     ✅ 「推廣夥伴區」按鈕 → 導向 dashboard.html
+     ✅ 首頁右上角：未登入顯示「註冊/登入」；已登入顯示「使用者名稱/登出」
+     ✅ 登出行為與 dashboard 同步：清除 xinghuo_token / xinghuo_user / xinghuo_my_quests
+     ✅ 其餘風格/圖片路徑/功能不動
      ========================= -->
 <!doctype html>
 <html lang="zh-Hant">
@@ -165,6 +168,21 @@
     .btn.primary{
       background: rgba(255,255,255,.14);
       border-color: rgba(255,255,255,.18);
+    }
+
+    /* ✅ tiny style for username badge (uses same btn look) */
+    .btn.user{
+      background: rgba(255,255,255,.08);
+      border-color: rgba(255,255,255,.16);
+      cursor: default;
+    }
+    .btn.logout{
+      background: rgba(255,92,122,.10);
+      border-color: rgba(255,92,122,.28);
+    }
+    .btn.logout:hover{
+      background: rgba(255,92,122,.18);
+      border-color: rgba(255,92,122,.40);
     }
 
     section{ padding: 74px 0; }
@@ -593,7 +611,8 @@
         <!-- ✅ 桌機橫排 / 手機下拉面板 -->
         <div class="navPanel" id="navPanel">
           <nav aria-label="站內導覽">
-            <a href="#hero">選擇身分</a>
+            <!-- ✅ 改：會員中心 → dashboard -->
+            <a href="dashboard.html">會員中心</a>
             <a href="#intro">關於我們</a>
             <a href="#testimonials">分享區</a>
             <a href="pact.html">使用協議</a>
@@ -601,8 +620,17 @@
           </nav>
 
           <div class="actions">
-            <a class="btn" href="signup.html">註冊</a>
-            <a class="btn primary" href="login.html">登入</a>
+            <!-- ✅ 未登入顯示 -->
+            <div id="guestActions" style="display:flex; gap:10px; align-items:center;">
+              <a class="btn" href="signup.html">註冊</a>
+              <a class="btn primary" href="login.html">登入</a>
+            </div>
+
+            <!-- ✅ 已登入顯示 -->
+            <div id="userActions" style="display:none; gap:10px; align-items:center;">
+              <span class="btn user" id="navUsername" aria-label="目前登入使用者">使用者</span>
+              <button class="btn logout" id="logoutBtn" type="button">登出</button>
+            </div>
           </div>
         </div>
       </div>
@@ -621,7 +649,8 @@
             <div class="hero-body">
               <h1 class="hero-card-title">讓分享有價值</h1>
               <div class="hero-cta-row">
-                <a class="btn primary" href="partners.html">推廣夥伴區</a>
+                <!-- ✅ 改：推廣夥伴區 → dashboard -->
+                <a class="btn primary" href="dashboard.html">推廣夥伴區</a>
               </div>
             </div>
           </div>
@@ -634,6 +663,7 @@
             <div class="hero-body">
               <h1 class="hero-card-title">讓好車被看見</h1>
               <div class="hero-cta-row">
+                <!-- ✅ 不改（依你要求只改推廣夥伴） -->
                 <a class="btn primary" href="dealers.html">車行業務區</a>
               </div>
             </div>
@@ -712,7 +742,8 @@
         <div class="footer-card">
           <h3 class="footer-title">快速連結</h3>
           <div class="footer-links">
-            <a href="#hero">選擇身分</a>
+            <!-- ✅ 改：會員中心 → dashboard -->
+            <a href="dashboard.html">會員中心</a>
             <a href="#intro">關於我們</a>
             <a href="#testimonials">分享區</a>
             <a href="pact.html">使用協議</a>
@@ -763,6 +794,64 @@
         document.body.classList.remove("menu-open");
         menuBtn?.setAttribute("aria-expanded", "false");
       });
+    });
+
+    // =========================
+    // ✅ Login state on index (match dashboard)
+    // =========================
+    function safeParse(json, fallback){
+      try { return JSON.parse(json); } catch(e){ return fallback; }
+    }
+
+    function isLoggedIn(){
+      const token = localStorage.getItem('xinghuo_token');
+      const userRaw = localStorage.getItem('xinghuo_user');
+      const user = safeParse(userRaw, null);
+      if(!token || !user) return null;
+      return { token, user };
+    }
+
+    function setHeaderAuthUI(){
+      const guest = document.getElementById('guestActions');
+      const authed = document.getElementById('userActions');
+      const nameEl = document.getElementById('navUsername');
+
+      const session = isLoggedIn();
+      if(!session){
+        if(guest) guest.style.display = 'flex';
+        if(authed) authed.style.display = 'none';
+        return;
+      }
+
+      const username = session.user?.username || session.user?.name || '使用者';
+      if(nameEl) nameEl.textContent = username;
+
+      if(guest) guest.style.display = 'none';
+      if(authed) authed.style.display = 'flex';
+    }
+
+    function logout(){
+      const ok = confirm('確定要登出嗎？');
+      if(!ok) return;
+
+      localStorage.removeItem('xinghuo_token');
+      localStorage.removeItem('xinghuo_user');
+      localStorage.removeItem('xinghuo_my_quests'); // ✅ 與 dashboard 同步
+
+      // 關掉手機選單 + 更新 UI
+      document.body.classList.remove("menu-open");
+      menuBtn?.setAttribute("aria-expanded", "false");
+      setHeaderAuthUI();
+
+      // 保持一致：回首頁（你已在首頁，這行會刷新狀態）
+      location.href = './index.html';
+    }
+
+    document.getElementById('logoutBtn')?.addEventListener('click', logout);
+
+    // init
+    document.addEventListener('DOMContentLoaded', () => {
+      setHeaderAuthUI();
     });
   </script>
 </body>

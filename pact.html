@@ -171,6 +171,21 @@
       border-color: rgba(255,255,255,.18);
     }
 
+    /* ✅ 登入後：顯示使用者/登出（沿用 index 的邏輯，不改版面） */
+    .btn.user{
+      background: rgba(255,255,255,.08);
+      border-color: rgba(255,255,255,.16);
+      cursor: default;
+    }
+    .btn.logout{
+      background: rgba(255,92,122,.10);
+      border-color: rgba(255,92,122,.28);
+    }
+    .btn.logout:hover{
+      background: rgba(255,92,122,.18);
+      border-color: rgba(255,92,122,.40);
+    }
+
     .menuBtn{
       display:none;
       width:44px; height:44px;
@@ -393,7 +408,8 @@
 
         <div class="navPanel" id="navPanel">
           <nav aria-label="站內導覽">
-            <a href="index.html#hero">選擇身分</a>
+            <!-- ✅ 改：會員中心 → dashboard -->
+            <a href="dashboard.html">會員中心</a>
             <a href="index.html#intro">關於我們</a>
             <a href="index.html#testimonials">分享區</a>
             <a class="active" href="pact.html">使用協議</a>
@@ -401,8 +417,17 @@
           </nav>
 
           <div class="actions">
-            <a class="btn" href="signup.html">註冊</a>
-            <a class="btn primary" href="login.html">登入</a>
+            <!-- ✅ 未登入顯示 -->
+            <div id="guestActions" style="display:flex; gap:10px; align-items:center;">
+              <a class="btn" href="signup.html">註冊</a>
+              <a class="btn primary" href="login.html">登入</a>
+            </div>
+
+            <!-- ✅ 已登入顯示 -->
+            <div id="userActions" style="display:none; gap:10px; align-items:center;">
+              <span class="btn user" id="navUsername" aria-label="目前登入使用者">使用者</span>
+              <button class="btn logout" id="logoutBtn" type="button">登出</button>
+            </div>
           </div>
         </div>
       </div>
@@ -558,7 +583,7 @@
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
 
-    // 手機 header menu toggle（同 index）
+    // ===== Mobile header menu toggle（同 index） =====
     const menuBtn = document.getElementById("menuBtn");
     const navPanel = document.getElementById("navPanel");
 
@@ -572,6 +597,61 @@
         document.body.classList.remove("menu-open");
         menuBtn?.setAttribute("aria-expanded", "false");
       });
+    });
+
+    // =========================
+    // ✅ Login state on pact (match dashboard)
+    // =========================
+    function safeParse(json, fallback){
+      try { return JSON.parse(json); } catch(e){ return fallback; }
+    }
+
+    function isLoggedIn(){
+      const token = localStorage.getItem('xinghuo_token');
+      const userRaw = localStorage.getItem('xinghuo_user');
+      const user = safeParse(userRaw, null);
+      if(!token || !user) return null;
+      return { token, user };
+    }
+
+    function setHeaderAuthUI(){
+      const guest = document.getElementById('guestActions');
+      const authed = document.getElementById('userActions');
+      const nameEl = document.getElementById('navUsername');
+
+      const session = isLoggedIn();
+      if(!session){
+        if(guest) guest.style.display = 'flex';
+        if(authed) authed.style.display = 'none';
+        return;
+      }
+
+      const username = session.user?.username || session.user?.name || '使用者';
+      if(nameEl) nameEl.textContent = username;
+
+      if(guest) guest.style.display = 'none';
+      if(authed) authed.style.display = 'flex';
+    }
+
+    function logout(){
+      const ok = confirm('確定要登出嗎？');
+      if(!ok) return;
+
+      localStorage.removeItem('xinghuo_token');
+      localStorage.removeItem('xinghuo_user');
+      localStorage.removeItem('xinghuo_my_quests'); // ✅ 與 dashboard 同步
+
+      document.body.classList.remove("menu-open");
+      menuBtn?.setAttribute("aria-expanded", "false");
+      setHeaderAuthUI();
+
+      location.href = './index.html';
+    }
+
+    document.getElementById('logoutBtn')?.addEventListener('click', logout);
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setHeaderAuthUI();
     });
   </script>
 </body>
