@@ -69,11 +69,11 @@ const DEFAULT_DATA = {
     level: 0,
     xp: 0,
     nextLevelXP: 100,
-    totalEarned: 0,        // 金幣
-    todayEarnings: 0,      // 今日收益
-    monthEarnings: 0,      // 本月累積
-    completedQuests: 0,    // 已完成任務
-    activeDays: 0,         // 活躍天數
+    totalEarned: 0,
+    todayEarnings: 0,
+    monthEarnings: 0,
+    completedQuests: 0,
+    activeDays: 0,
   },
 };
 
@@ -86,21 +86,18 @@ function normalizeIncomingData(incoming) {
     ...(statsIn && typeof statsIn === "object" ? statsIn : {}),
   };
 
-  // 強制數字化（避免傳字串）
   for (const k of Object.keys(stats)) {
     const v = Number(stats[k]);
     stats[k] = Number.isFinite(v) ? v : DEFAULT_DATA.stats[k];
   }
 
   const my_quests = Array.isArray(myQuestsIn) ? myQuestsIn : DEFAULT_DATA.my_quests;
-
   return { my_quests, stats };
 }
 
-// ===== Google Sheets =====
 async function getSheets() {
   const sheetId = process.env.GOOGLE_SHEET_ID;
-  const tab = process.env.GOOGLE_DASHBOARD_TAB; // 你建立好的 dashboard 分頁名
+  const tab = process.env.GOOGLE_DASHBOARD_TAB; // dashboard 分頁名
   const saJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
 
   if (!sheetId || !tab || !saJson) {
@@ -164,7 +161,6 @@ exports.handler = async (event) => {
       if (cell === uid) { foundRowIndex = i; break; }
     }
 
-    // ---------- GET: 如果找不到該 user_id，就自動建立全 0 初始資料 ----------
     if (action === "get") {
       if (foundRowIndex === -1) {
         const initData = DEFAULT_DATA;
@@ -195,7 +191,6 @@ exports.handler = async (event) => {
       return reply(200, { ok: true, data, updated_at: updatedAt || null });
     }
 
-    // ---------- SAVE: 存回雲端（登出時呼叫） ----------
     if (action === "save") {
       const incoming = body?.data ?? {};
       const data = normalizeIncomingData(incoming);
@@ -219,7 +214,7 @@ exports.handler = async (event) => {
         return reply(200, { ok: true, updated_at: updatedAt });
       }
 
-      const sheetRowNumber = foundRowIndex + 2; // + header row
+      const sheetRowNumber = foundRowIndex + 2;
       const colData = colToA1(headerIdx["data_json"]);
       const colUpdated = colToA1(headerIdx["updated_at"]);
 
@@ -238,4 +233,3 @@ exports.handler = async (event) => {
     return reply(500, { error: "server_error", detail: String(err?.message || err) });
   }
 };
-	

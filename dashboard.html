@@ -49,6 +49,7 @@
       backdrop-filter: blur(10px);
     }
 
+    /* Navbar */
     .navbar{
       position:fixed; top:0; left:0; right:0; z-index:50;
       background: rgba(15, 23, 42, 0.75);
@@ -129,6 +130,7 @@
       background: rgba(50,224,196,.10);
     }
 
+    /* Header */
     .dashboard-header{
       margin-top:92px;
       padding:54px 0 34px;
@@ -178,6 +180,7 @@
     }
     .badge-sep{opacity:.6}
 
+    /* Quick Profile Card */
     .profile-row{
       margin-top:24px;
       display:grid;
@@ -226,6 +229,7 @@
       margin-top:14px;
     }
 
+    /* Buttons */
     .btn{
       border:0;
       cursor:pointer;
@@ -247,6 +251,7 @@
     }
     .btn.secondary:hover{border-color: rgba(50,224,196,.45);}
 
+    /* XP */
     .xp-container{margin-top:18px;}
     .xp-label{
       display:flex; justify-content:space-between; gap:10px;
@@ -278,6 +283,7 @@
     }
     @keyframes xpShine { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
 
+    /* Stats */
     .section-title{
       margin:0 0 18px;
       font-size:34px;
@@ -316,6 +322,7 @@
     .stat-value{font-size:44px; font-weight:900; margin:6px 0 4px;}
     .stat-label{opacity:.9; font-weight:700;}
 
+    /* Quests */
     .quest-hall{padding:34px 0;}
     .quest-wrap{padding:28px;}
     .quest-card{
@@ -361,6 +368,7 @@
     .quest-side{min-width:240px; text-align:right;}
     .quest-reward{color:var(--gold); font-weight:900; font-size:34px; margin-bottom:10px;}
 
+    /* My quests */
     .my-quests{
       margin-top:18px;
       padding:18px;
@@ -398,6 +406,7 @@
     .btnMini.danger{border-color: rgba(255,92,122,.35); background: rgba(255,92,122,.10);}
     .btnMini.danger:hover{border-color: rgba(255,92,122,.55);}
 
+    /* Tools */
     .toolbox{
       display:grid;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -415,6 +424,7 @@
       font-size:18px;
     }
 
+    /* Toast */
     .toast{
       position: fixed;
       right: 18px;
@@ -434,6 +444,7 @@
     .toast.ok{border-color: rgba(50,224,196,.35);}
     .toast.error{border-color: rgba(255,92,122,.35); background: rgba(255,92,122,.10);}
 
+    /* Footer */
     footer{
       margin-top:40px;
       padding:34px 0;
@@ -450,6 +461,7 @@
     .footer-link{color:var(--text); text-decoration:underline; text-underline-offset:3px; display:inline-block; margin:6px 0;}
     .footer-bottom{opacity:.9; font-size:18px;}
 
+    /* ✅ Responsive + dropdown menu (mobile) */
     @media (max-width: 900px){
       .profile-row{grid-template-columns: 1fr; }
       .quest-side{text-align:left}
@@ -473,11 +485,34 @@
         backdrop-filter: blur(10px);
       }
       .nav-links.open{ display:flex; }
-      .nav-link{
-        width:100%;
-        justify-content:flex-start;
-      }
+      .nav-link{ width:100%; justify-content:flex-start; }
     }
+
+    /* ===== Loading skeleton (避免閃爍) ===== */
+    .is-loading .skeleton{
+      position: relative;
+      color: transparent !important;
+      user-select: none;
+    }
+    .is-loading .skeleton::before{
+      content:"";
+      display:block;
+      height: 1em;
+      border-radius: 12px;
+      background: rgba(255,255,255,.10);
+    }
+    .is-loading .skeleton.wide::before{ width: 90%; }
+    .is-loading .skeleton.mid::before{ width: 65%; }
+    .is-loading .skeleton.narrow::before{ width: 40%; }
+    .is-loading .skeleton::after{
+      content:"";
+      position:absolute; inset:0;
+      border-radius: 12px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
+      transform: translateX(-100%);
+      animation: sk 1.1s infinite;
+    }
+    @keyframes sk { 100% { transform: translateX(100%); } }
   </style>
 </head>
 
@@ -512,23 +547,24 @@
       <p class="welcome-subtitle">星火廣告會員中心｜你的推廣冒險基地</p>
 
       <div class="level-badge" aria-label="會員狀態">
-        <span class="level-number">Lv. <span id="userLevel">0</span></span>
+        <span class="level-number">Lv. <span id="userLevel" class="skeleton narrow">0</span></span>
         <span id="userRole">冒險者</span>
         <span class="badge-sep">|</span>
-        <span><i class="fas fa-coins" style="color:#FFD700;"></i> <span id="totalEarned">0</span> 金幣</span>
+        <span><i class="fas fa-coins" style="color:#FFD700;"></i> <span id="totalEarned" class="skeleton mid">0</span> 金幣</span>
       </div>
 
       <div class="profile-row">
         <div class="glass profile-card">
           <div class="profile-title">
             <h3>👤 會員資料</h3>
-            <span class="chip"><i class="fas fa-shield-halved"></i> 已登入</span>
+            <!-- ✅ 雲端同步狀態 Badge -->
+            <span class="chip" id="syncBadge"><i class="fas fa-cloud"></i> 同步中…</span>
           </div>
 
           <div class="kv">
             <div class="k">使用者名稱</div><div class="v" id="kvUsername">-</div>
-            <div class="k">姓名</div><div class="v" id="kvName">-</div>
-            <div class="k">Email</div><div class="v" id="kvEmail">-</div>
+            <div class="k">姓名</div><div class="v" id="kvName" class="skeleton mid">(未填)</div>
+            <div class="k">Email</div><div class="v" id="kvEmail" class="skeleton wide">(未填)</div>
           </div>
 
           <div class="actions">
@@ -546,13 +582,13 @@
           <div class="xp-container">
             <div class="xp-label">
               <span>經驗值</span>
-              <span><span id="currentXP">0</span> / <span id="nextLevelXP">100</span> XP</span>
+              <span><span id="currentXP" class="skeleton mid">0</span> / <span id="nextLevelXP" class="skeleton mid">100</span> XP</span>
             </div>
             <div class="xp-bar"><div class="xp-fill" id="xpFill"></div></div>
           </div>
 
           <div style="margin-top:14px; opacity:.95; font-size:18px; line-height:1.6">
-            ✅ 此頁面已改為「雲端資料」為主：新註冊第一次登入會自動建立全 0 初始數據。
+            ✅ 新註冊第一次登入：自動建立全 0 初始數據（Lv.0、0 金幣、0/100 XP、收益/任務/活躍皆為 0）。
           </div>
         </div>
       </div>
@@ -567,25 +603,25 @@
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-icon">💰</div>
-          <div class="stat-value" id="todayEarnings">$ 0</div>
+          <div class="stat-value skeleton mid" id="todayEarnings">$ 0</div>
           <div class="stat-label">今日收益</div>
         </div>
 
         <div class="stat-card">
           <div class="stat-icon">📈</div>
-          <div class="stat-value" id="monthEarnings">$ 0</div>
+          <div class="stat-value skeleton mid" id="monthEarnings">$ 0</div>
           <div class="stat-label">本月累計</div>
         </div>
 
         <div class="stat-card">
           <div class="stat-icon">✅</div>
-          <div class="stat-value" id="completedQuests">0</div>
+          <div class="stat-value skeleton narrow" id="completedQuests">0</div>
           <div class="stat-label">已完成任務</div>
         </div>
 
         <div class="stat-card">
           <div class="stat-icon">⏱️</div>
-          <div class="stat-value" id="activeDays">0</div>
+          <div class="stat-value skeleton narrow" id="activeDays">0</div>
           <div class="stat-label">活躍天數</div>
         </div>
       </div>
@@ -776,6 +812,24 @@
       if(el) el.innerHTML = html;
     }
 
+    // ✅ Skeleton 控制（避免閃爍）
+    function setLoading(on){
+      document.body.classList.toggle('is-loading', !!on);
+    }
+
+    // ✅ 雲端同步 Badge
+    function setSyncBadge(state){
+      const el = document.getElementById('syncBadge');
+      if(!el) return;
+      if(state === 'ok'){
+        el.innerHTML = '<i class="fas fa-circle-check"></i> 已同步';
+      }else if(state === 'error'){
+        el.innerHTML = '<i class="fas fa-triangle-exclamation"></i> 同步失敗';
+      }else{
+        el.innerHTML = '<i class="fas fa-cloud"></i> 同步中…';
+      }
+    }
+
     // ===== referral link =====
     function buildRefLink(user){
       const uid = user?.user_id || user?.username || 'unknown';
@@ -798,7 +852,7 @@
     }
 
     // ===== Cloud API (dashboard sheet) =====
-    async function cloudRequest(action, token, data){
+    async function cloudDashboard(action, token, data){
       const res = await fetch('/.netlify/functions/dashboard', {
         method: 'POST',
         headers: {
@@ -806,6 +860,19 @@
           'Authorization': 'Bearer ' + token
         },
         body: JSON.stringify({ action, ...(data ? { data } : {}) })
+      });
+      return await res.json();
+    }
+
+    // ===== Cloud API (users profile: name/email) =====
+    async function cloudProfile(token){
+      const res = await fetch('/.netlify/functions/user-profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({})
       });
       return await res.json();
     }
@@ -937,9 +1004,10 @@
       const session = window.__session;
       if(session?.token){
         try{
+          setSyncBadge('syncing');
+
           const payload = {
             my_quests: getMyQuests(),
-            // 目前 stats 先用畫面顯示值回存（下一步你要真實計算再擴充）
             stats: {
               level: Number(document.getElementById('userLevel')?.textContent || 0),
               xp: Number(String(document.getElementById('currentXP')?.textContent || '0').replace(/,/g,'')),
@@ -952,14 +1020,16 @@
             }
           };
 
-          await cloudRequest('save', session.token, payload);
+          await cloudDashboard('save', session.token, payload);
           toast('☁️ 已同步雲端，準備登出…', 'ok');
+          setSyncBadge('ok');
         }catch(e){
           toast('⚠️ 雲端同步失敗，但仍會登出\n（下次登入可能讀到舊資料）', 'error');
+          setSyncBadge('error');
         }
       }
 
-      // ✅ 依你既定規格：登出要清三個 key
+      // ✅ 依你既定規格：登出清 3 個 key
       localStorage.removeItem('xinghuo_token');
       localStorage.removeItem('xinghuo_user');
       localStorage.removeItem('xinghuo_my_quests');
@@ -967,7 +1037,7 @@
       setTimeout(() => { location.href = './index.html'; }, 450);
     }
 
-    // ===== mobile dropdown =====
+    // ✅ Mobile dropdown menu behavior
     const menuBtn = document.getElementById('menuBtn');
     const navLinks = document.getElementById('navLinks');
 
@@ -985,15 +1055,10 @@
       });
 
       navLinks.addEventListener('click', (e) => e.stopPropagation());
-
       document.addEventListener('click', () => closeMenu());
       document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeMenu(); });
-
       navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
-
-      window.addEventListener('resize', () => {
-        if(window.innerWidth > 900) closeMenu();
-      });
+      window.addEventListener('resize', () => { if(window.innerWidth > 900) closeMenu(); });
     }
 
     // ===== init =====
@@ -1004,13 +1069,15 @@
 
       const { user, token } = session;
 
-      // Profile
+      // 先用 localStorage 的 username 立即顯示
       setText('userName', user?.username || '冒險者');
       setText('kvUsername', user?.username || '-');
-      setText('kvName', user?.name || '(未填)');
-      setText('kvEmail', user?.email || '(未填)');
 
-      // Referral link
+      // 先進入 loading 狀態（骨架 + badge）
+      setLoading(true);
+      setSyncBadge('syncing');
+
+      // Referral link（這個不需要等雲端）
       const refLink = buildRefLink(user);
       setText('refLinkBox', refLink);
 
@@ -1029,28 +1096,54 @@
       document.getElementById('weeklyBtn')?.addEventListener('click', () => toast('📅 本週報表（示範）\n下一步可接真實資料', 'ok'));
       document.getElementById('chartBtn')?.addEventListener('click', () => toast('📊 分析圖表（示範）\n下一步可加入圖表/報表頁', 'ok'));
 
-      // ✅ 登入後：先從雲端讀回（若是新用戶，後端已自動建立全 0）
+      // ✅ 同步讀取：dashboard 資料 + users profile(name/email)
+      let okDashboard = false;
+      let okProfile = false;
+
       try{
-        const r = await cloudRequest('get', token);
-        if(r?.ok){
-          const data = r.data || {};
-          const stats = data.stats || { level:0,xp:0,nextLevelXP:100,totalEarned:0,todayEarnings:0,monthEarnings:0,completedQuests:0,activeDays:0 };
+        const [rDash, rProfile] = await Promise.allSettled([
+          cloudDashboard('get', token),
+          cloudProfile(token),
+        ]);
+
+        // dashboard data
+        if(rDash.status === 'fulfilled' && rDash.value?.ok){
+          okDashboard = true;
+          const data = rDash.value.data || {};
+          applyStats(data.stats || {});
           const myQuests = Array.isArray(data.my_quests) ? data.my_quests : [];
-
-          applyStats(stats);
-
-          // 任務寫入本機快取，讓現有 UI/功能直接用（登出時再存回雲端）
           localStorage.setItem('xinghuo_my_quests', JSON.stringify(myQuests));
           renderMyQuests();
         }else{
-          // 雲端回應不 ok：保底顯示全 0 + 本機任務
+          // 保底全 0
           applyStats({ level:0,xp:0,nextLevelXP:100,totalEarned:0,todayEarnings:0,monthEarnings:0,completedQuests:0,activeDays:0 });
           renderMyQuests();
         }
+
+        // profile(name/email) from users sheet
+        if(rProfile.status === 'fulfilled' && rProfile.value?.ok){
+          okProfile = true;
+          const u2 = rProfile.value.user || {};
+          setText('kvName', u2.name ? u2.name : '(未填)');
+          setText('kvEmail', u2.email ? u2.email : '(未填)');
+
+          // 更新 localStorage 的 user（讓其他頁面也能用到）
+          const merged = { ...user, ...u2 };
+          localStorage.setItem('xinghuo_user', JSON.stringify(merged));
+        }else{
+          setText('kvName', user?.name ? user.name : '(未填)');
+          setText('kvEmail', user?.email ? user.email : '(未填)');
+        }
+
       }catch(e){
-        // 雲端失敗：保底顯示全 0 + 本機任務
+        // 全部失敗保底
         applyStats({ level:0,xp:0,nextLevelXP:100,totalEarned:0,todayEarnings:0,monthEarnings:0,completedQuests:0,activeDays:0 });
         renderMyQuests();
+        setText('kvName', user?.name ? user.name : '(未填)');
+        setText('kvEmail', user?.email ? user.email : '(未填)');
+      }finally{
+        setLoading(false);
+        setSyncBadge((okDashboard && okProfile) ? 'ok' : 'error');
       }
 
       // Simulated login count
