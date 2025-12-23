@@ -1,7 +1,8 @@
 <!-- =========================
      index.html (updated)
-     ✅ 已移除 Glide 連結：登入按鈕改成 login.html
-     ✅ 圖片路徑統一移到 /picture 資料夾
+     ✅ Header 手機版改成「Logo + 漢堡選單」，避免蓋住整個螢幕
+     ✅ 桌機版維持原本橫排導覽
+     ✅ 圖片路徑統一移到 /picture 資料夾（沿用你原本設定）
      ========================= -->
 <!doctype html>
 <html lang="zh-Hant">
@@ -77,6 +78,7 @@
       justify-content:space-between;
       gap:16px;
       padding: 14px 0;
+      position: relative; /* ✅ 給手機下拉面板定位 */
     }
     .brand{
       display:flex;
@@ -101,6 +103,15 @@
       letter-spacing:.2px;
       font-size: 22px;
       line-height: 1;
+    }
+
+    /* ✅ 導覽面板：桌機橫排（nav + actions） */
+    .navPanel{
+      display:flex;
+      align-items:center;
+      gap: 18px;
+      flex: 1;
+      justify-content:space-between;
     }
 
     nav{
@@ -148,6 +159,7 @@
       font-size: 20px;
       font-weight: 800;
       line-height: 1;
+      white-space: nowrap;
     }
     .btn:hover{ background: rgba(255,255,255,.10); }
     .btn.primary{
@@ -479,6 +491,88 @@
       .grid.quotes{ grid-template-columns: 1fr; }
       .footer-grid{ grid-template-columns: 1fr; }
     }
+
+    /* =========================
+       ✅ Mobile Menu (NEW)
+       ========================= */
+    .menuBtn{
+      display:none;
+      width:44px; height:44px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      cursor:pointer;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      padding:10px;
+      flex: 0 0 auto;
+    }
+    .menuBtn span{
+      display:block;
+      width:22px;
+      height:2px;
+      background: rgba(255,255,255,.86);
+      border-radius:999px;
+    }
+    .menuBtn:hover{ background: rgba(255,255,255,.10); }
+
+    /* ✅ 手機：header 變緊湊 + 收起 nav/actions（點漢堡才展開） */
+    @media (max-width: 900px){
+      .header-inner{ padding: 10px 0; }
+      .logo{ width:32px; height:32px; border-radius:10px; }
+      .brand b{ font-size:20px; }
+
+      .menuBtn{ display:inline-flex; }
+
+      .navPanel{
+        display:none;
+        position:absolute;
+        left:0; right:0;
+        top:100%;
+        padding: 14px 20px 18px;
+        background: rgba(11,15,25,.92);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid rgba(255,255,255,.14);
+        box-shadow: 0 18px 60px rgba(0,0,0,.28);
+      }
+
+      .navPanel nav{
+        width:100%;
+        display:grid;
+        grid-template-columns: 1fr 1fr;
+        gap:10px;
+        justify-content:stretch;
+      }
+      .navPanel nav a{
+        font-size:18px;
+        padding: 12px 12px;
+        text-align:center;
+        background: rgba(255,255,255,.04);
+        border-color: rgba(255,255,255,.12);
+      }
+
+      .navPanel .actions{
+        width:100%;
+        margin-top:12px;
+        display:grid;
+        grid-template-columns: 1fr 1fr;
+        gap:10px;
+        justify-content:stretch;
+      }
+      .navPanel .btn{
+        width:100%;
+        font-size:18px;
+        padding: 12px 12px;
+      }
+
+      body.menu-open .navPanel{ display:block; }
+    }
+
+    @media (max-width: 520px){
+      .navPanel nav{ grid-template-columns: 1fr; }
+      .navPanel .actions{ grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 
@@ -491,17 +585,25 @@
           <b>星火廣告</b>
         </a>
 
-        <nav aria-label="站內導覽">
-          <a href="#hero">選擇身分</a>
-          <a href="#intro">關於我們</a>
-          <a href="#testimonials">分享區</a>
-          <a href="pact.html">使用協議</a>
-          <a href="#footer">聯絡資訊</a>
-        </nav>
+        <!-- ✅ 手機漢堡按鈕（桌機隱藏） -->
+        <button class="menuBtn" id="menuBtn" type="button" aria-label="開啟選單" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
 
-        <div class="actions">
-          <a class="btn" href="signup.html">註冊</a>
-          <a class="btn primary" href="login.html">登入</a>
+        <!-- ✅ 桌機橫排 / 手機下拉面板 -->
+        <div class="navPanel" id="navPanel">
+          <nav aria-label="站內導覽">
+            <a href="#hero">選擇身分</a>
+            <a href="#intro">關於我們</a>
+            <a href="#testimonials">分享區</a>
+            <a href="pact.html">使用協議</a>
+            <a href="#footer">聯絡資訊</a>
+          </nav>
+
+          <div class="actions">
+            <a class="btn" href="signup.html">註冊</a>
+            <a class="btn primary" href="login.html">登入</a>
+          </div>
         </div>
       </div>
     </div>
@@ -643,6 +745,23 @@
       img.addEventListener("error", () => {
         const wrap = img.closest(".hero-media");
         if (wrap) wrap.classList.add("is-missing");
+      });
+    });
+
+    // ===== Mobile header menu toggle =====
+    const menuBtn = document.getElementById("menuBtn");
+    const navPanel = document.getElementById("navPanel");
+
+    menuBtn?.addEventListener("click", () => {
+      const open = document.body.classList.toggle("menu-open");
+      menuBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+
+    // 點選單連結後自動收起（手機更順）
+    navPanel?.querySelectorAll("a").forEach(a => {
+      a.addEventListener("click", () => {
+        document.body.classList.remove("menu-open");
+        menuBtn?.setAttribute("aria-expanded", "false");
       });
     });
   </script>
