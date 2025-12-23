@@ -36,10 +36,9 @@
         radial-gradient(900px 500px at 90% 10%, rgba(110,168,255,.16), transparent 55%),
         var(--bg);
       color:var(--text);
-      font-size:24px; /* 1.5倍基準字 */
+      font-size:24px;
     }
 
-    /* Layout helpers */
     .container{width:min(1100px, 92%); margin:0 auto;}
     .section{padding:44px 0;}
     .glass{
@@ -50,7 +49,6 @@
       backdrop-filter: blur(10px);
     }
 
-    /* Navbar */
     .navbar{
       position:fixed; top:0; left:0; right:0; z-index:50;
       background: rgba(15, 23, 42, 0.75);
@@ -65,7 +63,7 @@
       justify-content:space-between;
       padding:14px 0;
       gap:16px;
-      position:relative; /* ✅ for dropdown positioning */
+      position:relative;
     }
     .brand{
       display:flex; align-items:center; gap:12px;
@@ -96,7 +94,7 @@
       border:1px solid rgba(255,255,255,.10);
       background: rgba(255,255,255,.04);
       transition: transform .2s ease, border-color .2s ease, background .2s ease;
-      font-size:20px; /* 13*1.5 ≈ 19.5 */
+      font-size:20px;
       white-space:nowrap;
     }
     .nav-link:hover{
@@ -113,7 +111,6 @@
       background: rgba(255,92,122,.18);
     }
 
-    /* ✅ Mobile menu button */
     .menu-btn{
       display:none;
       border:1px solid rgba(255,255,255,.10);
@@ -132,7 +129,6 @@
       background: rgba(50,224,196,.10);
     }
 
-    /* Header */
     .dashboard-header{
       margin-top:92px;
       padding:54px 0 34px;
@@ -182,7 +178,6 @@
     }
     .badge-sep{opacity:.6}
 
-    /* Quick Profile Card */
     .profile-row{
       margin-top:24px;
       display:grid;
@@ -231,7 +226,6 @@
       margin-top:14px;
     }
 
-    /* Buttons */
     .btn{
       border:0;
       cursor:pointer;
@@ -253,7 +247,6 @@
     }
     .btn.secondary:hover{border-color: rgba(50,224,196,.45);}
 
-    /* XP */
     .xp-container{margin-top:18px;}
     .xp-label{
       display:flex; justify-content:space-between; gap:10px;
@@ -285,7 +278,6 @@
     }
     @keyframes xpShine { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
 
-    /* Stats */
     .section-title{
       margin:0 0 18px;
       font-size:34px;
@@ -324,7 +316,6 @@
     .stat-value{font-size:44px; font-weight:900; margin:6px 0 4px;}
     .stat-label{opacity:.9; font-weight:700;}
 
-    /* Quests */
     .quest-hall{padding:34px 0;}
     .quest-wrap{padding:28px;}
     .quest-card{
@@ -370,7 +361,6 @@
     .quest-side{min-width:240px; text-align:right;}
     .quest-reward{color:var(--gold); font-weight:900; font-size:34px; margin-bottom:10px;}
 
-    /* My quests */
     .my-quests{
       margin-top:18px;
       padding:18px;
@@ -408,7 +398,6 @@
     .btnMini.danger{border-color: rgba(255,92,122,.35); background: rgba(255,92,122,.10);}
     .btnMini.danger:hover{border-color: rgba(255,92,122,.55);}
 
-    /* Tools */
     .toolbox{
       display:grid;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -426,7 +415,6 @@
       font-size:18px;
     }
 
-    /* Toast */
     .toast{
       position: fixed;
       right: 18px;
@@ -446,7 +434,6 @@
     .toast.ok{border-color: rgba(50,224,196,.35);}
     .toast.error{border-color: rgba(255,92,122,.35); background: rgba(255,92,122,.10);}
 
-    /* Footer */
     footer{
       margin-top:40px;
       padding:34px 0;
@@ -463,16 +450,11 @@
     .footer-link{color:var(--text); text-decoration:underline; text-underline-offset:3px; display:inline-block; margin:6px 0;}
     .footer-bottom{opacity:.9; font-size:18px;}
 
-    /* ✅ Responsive + dropdown menu (mobile) */
     @media (max-width: 900px){
       .profile-row{grid-template-columns: 1fr; }
       .quest-side{text-align:left}
       .footer-grid{grid-template-columns: 1fr}
-
-      /* show 3-dots button */
       .menu-btn{ display:inline-flex; align-items:center; justify-content:center; }
-
-      /* dropdown panel */
       .nav-links{
         position:absolute;
         top: calc(100% + 10px);
@@ -491,7 +473,6 @@
         backdrop-filter: blur(10px);
       }
       .nav-links.open{ display:flex; }
-
       .nav-link{
         width:100%;
         justify-content:flex-start;
@@ -509,7 +490,6 @@
         <span>星火廣告</span>
       </a>
 
-      <!-- ✅ mobile 3-dots button -->
       <button class="menu-btn" id="menuBtn" type="button"
         aria-label="開啟選單" aria-expanded="false" aria-controls="navLinks">
         <i class="fas fa-ellipsis-vertical"></i>
@@ -532,7 +512,7 @@
       <p class="welcome-subtitle">星火廣告會員中心｜你的推廣冒險基地</p>
 
       <div class="level-badge" aria-label="會員狀態">
-        <span class="level-number">Lv. <span id="userLevel">1</span></span>
+        <span class="level-number">Lv. <span id="userLevel">0</span></span>
         <span id="userRole">冒險者</span>
         <span class="badge-sep">|</span>
         <span><i class="fas fa-coins" style="color:#FFD700;"></i> <span id="totalEarned">0</span> 金幣</span>
@@ -572,7 +552,7 @@
           </div>
 
           <div style="margin-top:14px; opacity:.95; font-size:18px; line-height:1.6">
-            這一頁的數據目前先用「前端示範值」顯示；下一步我們可以接 Google Sheet/資料庫做真實報表。
+            ✅ 此頁面已改為「雲端資料」為主：新註冊第一次登入會自動建立全 0 初始數據。
           </div>
         </div>
       </div>
@@ -618,7 +598,7 @@
       <div class="glass quest-wrap">
         <h2 class="section-title" style="margin-bottom:10px;">📋 任務大廳</h2>
         <div style="text-align:center; opacity:.95; font-size:18px; margin-bottom:18px;">
-          點「接受任務」後會加入下方「我的任務」，示範版先存本機（localStorage）。
+          點「接受任務」後會加入下方「我的任務」。登出時會自動存到雲端；下次登入自動讀回。
         </div>
 
         <div id="questList">
@@ -721,7 +701,7 @@
         <div class="glass tool-card">
           <h3><i class="fas fa-chart-line"></i> 數據報表（示範）</h3>
           <p style="opacity:.92; margin-top:0; line-height:1.7;">
-            我們可以把 Google Sheet 的任務/收益接進來，做成真實報表。
+            下一步可把 dashboard sheet 的 stats 做成真實報表。
           </p>
           <div style="display:flex; gap:10px; flex-wrap:wrap;">
             <button class="btn secondary" id="weeklyBtn"><i class="fas fa-calendar-alt"></i> 本週報表</button>
@@ -757,7 +737,6 @@
     </div>
   </footer>
 
-  <!-- Toast -->
   <div class="toast" id="toast"></div>
 
   <script>
@@ -781,26 +760,10 @@
       const user = safeParse(userRaw, null);
 
       if(!token || !user){
-        // 未登入 -> 回登入頁
         location.href = './login.html';
         return null;
       }
       return { token, user };
-    }
-
-    function computeDemoStats(user){
-      // 目前沒有真實報表來源：先用固定示範值 + user_id 做穩定的假數據（每個人看起來不同但不會亂跳）
-      const seed = (user?.user_id || user?.username || 'seed').split('').reduce((a,c)=>a + c.charCodeAt(0), 0);
-      const level = Math.max(1, Math.min(30, Math.floor(seed % 12) + 1));
-      const nextLevelXP = 2000;
-      const xp = Math.min(nextLevelXP, 200 + (seed % 1600));
-      const totalEarned = 1000 + (seed % 50000);
-      const todayEarnings = 50 + (seed % 900);
-      const monthEarnings = 800 + (seed % 80000);
-      const completedQuests = (seed % 40);
-      const activeDays = 1 + (seed % 60);
-
-      return { level, xp, nextLevelXP, totalEarned, todayEarnings, monthEarnings, completedQuests, activeDays };
     }
 
     function setText(id, text){
@@ -816,7 +779,6 @@
     // ===== referral link =====
     function buildRefLink(user){
       const uid = user?.user_id || user?.username || 'unknown';
-      // 你之後要追蹤 ref，就在 index.html 讀 ?ref=
       return `https://xinghuoad.xyz/?ref=${encodeURIComponent(uid)}`;
     }
 
@@ -825,7 +787,6 @@
         await navigator.clipboard.writeText(text);
         toast('✅ 已複製到剪貼簿', 'ok');
       }catch(e){
-        // fallback
         const ta = document.createElement('textarea');
         ta.value = text;
         document.body.appendChild(ta);
@@ -836,7 +797,48 @@
       }
     }
 
-    // ===== quests (local demo) =====
+    // ===== Cloud API (dashboard sheet) =====
+    async function cloudRequest(action, token, data){
+      const res = await fetch('/.netlify/functions/dashboard', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({ action, ...(data ? { data } : {}) })
+      });
+      return await res.json();
+    }
+
+    function applyStats(stats){
+      const s = stats || {};
+      const level = Number(s.level) || 0;
+      const xp = Number(s.xp) || 0;
+      const nextLevelXP = Number(s.nextLevelXP) || 100;
+
+      const totalEarned = Number(s.totalEarned) || 0;
+      const todayEarnings = Number(s.todayEarnings) || 0;
+      const monthEarnings = Number(s.monthEarnings) || 0;
+      const completedQuests = Number(s.completedQuests) || 0;
+      const activeDays = Number(s.activeDays) || 0;
+
+      setText('userLevel', String(level));
+      setText('totalEarned', totalEarned.toLocaleString());
+
+      setText('currentXP', xp.toLocaleString());
+      setText('nextLevelXP', nextLevelXP.toLocaleString());
+
+      const xpPercent = Math.max(0, Math.min(100, (xp / Math.max(1, nextLevelXP)) * 100));
+      const fill = document.getElementById('xpFill');
+      if(fill) fill.style.width = xpPercent.toFixed(1) + '%';
+
+      setText('todayEarnings', '$ ' + todayEarnings.toLocaleString());
+      setText('monthEarnings', '$ ' + monthEarnings.toLocaleString());
+      setText('completedQuests', String(completedQuests));
+      setText('activeDays', String(activeDays));
+    }
+
+    // ===== quests (local cache; cloud sync at login/logout) =====
     const QUESTS = [
       { id: 1, name: '分享車輛貼文到 FB', reward: 150, xp: 50 },
       { id: 2, name: 'LINE 群組推廣', reward: 350, xp: 120 },
@@ -927,22 +929,45 @@
       toast(`✅ 已提交提領申請：$${amount}\n（示範流程，下一步可接真實申請）`, 'ok');
     }
 
-    // ===== logout =====
-    function logout(){
+    // ===== logout (cloud save -> clear localStorage -> go index) =====
+    async function logout(){
       const ok = confirm('確定要登出嗎？');
       if(!ok) return;
 
+      const session = window.__session;
+      if(session?.token){
+        try{
+          const payload = {
+            my_quests: getMyQuests(),
+            // 目前 stats 先用畫面顯示值回存（下一步你要真實計算再擴充）
+            stats: {
+              level: Number(document.getElementById('userLevel')?.textContent || 0),
+              xp: Number(String(document.getElementById('currentXP')?.textContent || '0').replace(/,/g,'')),
+              nextLevelXP: Number(String(document.getElementById('nextLevelXP')?.textContent || '100').replace(/,/g,'')),
+              totalEarned: Number(String(document.getElementById('totalEarned')?.textContent || '0').replace(/,/g,'')),
+              todayEarnings: Number(String(document.getElementById('todayEarnings')?.textContent || '0').replace(/[^\d]/g,'')) || 0,
+              monthEarnings: Number(String(document.getElementById('monthEarnings')?.textContent || '0').replace(/[^\d]/g,'')) || 0,
+              completedQuests: Number(String(document.getElementById('completedQuests')?.textContent || '0').replace(/,/g,'')) || 0,
+              activeDays: Number(String(document.getElementById('activeDays')?.textContent || '0').replace(/,/g,'')) || 0,
+            }
+          };
+
+          await cloudRequest('save', session.token, payload);
+          toast('☁️ 已同步雲端，準備登出…', 'ok');
+        }catch(e){
+          toast('⚠️ 雲端同步失敗，但仍會登出\n（下次登入可能讀到舊資料）', 'error');
+        }
+      }
+
+      // ✅ 依你既定規格：登出要清三個 key
       localStorage.removeItem('xinghuo_token');
       localStorage.removeItem('xinghuo_user');
-
-      // 你的示範任務資料也一起清掉（你不想清也可拿掉）
       localStorage.removeItem('xinghuo_my_quests');
 
-      toast('👋 已登出', 'ok');
       setTimeout(() => { location.href = './index.html'; }, 450);
     }
 
-    // ✅ Mobile dropdown menu behavior
+    // ===== mobile dropdown =====
     const menuBtn = document.getElementById('menuBtn');
     const navLinks = document.getElementById('navLinks');
 
@@ -964,43 +989,26 @@
       document.addEventListener('click', () => closeMenu());
       document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeMenu(); });
 
-      // 點選單內連結後自動收起
       navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
 
-      // 轉回桌機寬度時保證收起
       window.addEventListener('resize', () => {
         if(window.innerWidth > 900) closeMenu();
       });
     }
 
     // ===== init =====
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       const session = requireLogin();
       if(!session) return;
+      window.__session = session;
 
-      const { user } = session;
-      const stats = computeDemoStats(user);
+      const { user, token } = session;
 
-      // Header
+      // Profile
       setText('userName', user?.username || '冒險者');
       setText('kvUsername', user?.username || '-');
       setText('kvName', user?.name || '(未填)');
       setText('kvEmail', user?.email || '(未填)');
-
-      setText('userLevel', String(stats.level));
-      setText('totalEarned', Number(stats.totalEarned).toLocaleString());
-
-      // XP
-      setText('currentXP', Number(stats.xp).toLocaleString());
-      setText('nextLevelXP', Number(stats.nextLevelXP).toLocaleString());
-      const xpPercent = Math.max(0, Math.min(100, (stats.xp / stats.nextLevelXP) * 100));
-      document.getElementById('xpFill').style.width = xpPercent.toFixed(1) + '%';
-
-      // Stats cards
-      setText('todayEarnings', '$ ' + Number(stats.todayEarnings).toLocaleString());
-      setText('monthEarnings', '$ ' + Number(stats.monthEarnings).toLocaleString());
-      setText('completedQuests', String(stats.completedQuests));
-      setText('activeDays', String(stats.activeDays));
 
       // Referral link
       const refLink = buildRefLink(user);
@@ -1021,15 +1029,36 @@
       document.getElementById('weeklyBtn')?.addEventListener('click', () => toast('📅 本週報表（示範）\n下一步可接真實資料', 'ok'));
       document.getElementById('chartBtn')?.addEventListener('click', () => toast('📊 分析圖表（示範）\n下一步可加入圖表/報表頁', 'ok'));
 
-      // My quests
-      renderMyQuests();
+      // ✅ 登入後：先從雲端讀回（若是新用戶，後端已自動建立全 0）
+      try{
+        const r = await cloudRequest('get', token);
+        if(r?.ok){
+          const data = r.data || {};
+          const stats = data.stats || { level:0,xp:0,nextLevelXP:100,totalEarned:0,todayEarnings:0,monthEarnings:0,completedQuests:0,activeDays:0 };
+          const myQuests = Array.isArray(data.my_quests) ? data.my_quests : [];
+
+          applyStats(stats);
+
+          // 任務寫入本機快取，讓現有 UI/功能直接用（登出時再存回雲端）
+          localStorage.setItem('xinghuo_my_quests', JSON.stringify(myQuests));
+          renderMyQuests();
+        }else{
+          // 雲端回應不 ok：保底顯示全 0 + 本機任務
+          applyStats({ level:0,xp:0,nextLevelXP:100,totalEarned:0,todayEarnings:0,monthEarnings:0,completedQuests:0,activeDays:0 });
+          renderMyQuests();
+        }
+      }catch(e){
+        // 雲端失敗：保底顯示全 0 + 本機任務
+        applyStats({ level:0,xp:0,nextLevelXP:100,totalEarned:0,todayEarnings:0,monthEarnings:0,completedQuests:0,activeDays:0 });
+        renderMyQuests();
+      }
 
       // Simulated login count
       setInterval(() => {
         const el = document.getElementById('loginCount');
         if(!el) return;
         const current = parseInt(String(el.textContent).replace(/,/g,''), 10) || 1248;
-        const change = Math.floor(Math.random() * 10) - 3; // -3..+6
+        const change = Math.floor(Math.random() * 10) - 3;
         const next = Math.max(1200, current + change);
         el.textContent = next.toLocaleString();
       }, 30000);
