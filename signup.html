@@ -1,4 +1,4 @@
-<!doctype html>
+<!doctype html> 
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8" />
@@ -262,15 +262,6 @@
 
     .grid{ display:grid; gap:12px; }
 
-    .row2{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:12px;
-    }
-    @media (max-width: 560px){
-      .row2{ grid-template-columns: 1fr; }
-    }
-
     label{
       display:block;
       font-weight:900;
@@ -342,18 +333,14 @@
       font-weight:900;
       font-size:.96rem;
       color:#fff;
-
-      /* 藍色漸層（比紫色更乾淨） */
       background: linear-gradient(135deg, rgba(77,184,255,1), rgba(33,140,255,1));
       box-shadow: 0 14px 38px rgba(77,184,255,.20);
-
       transition: transform .15s ease, filter .15s ease, box-shadow .15s ease;
       display:flex;
       align-items:center;
       justify-content:center;
       gap:10px;
       user-select:none;
-
       min-height:46px;
       white-space:nowrap;
     }
@@ -393,15 +380,22 @@
     .btnSendFill.loading .spinner{ display:inline-block; }
     @keyframes spin{ to{ transform: rotate(360deg); } }
 
+    /* ✅ 顯示/隱藏：強制橫向不換行 */
     .eye{
       cursor:pointer;
       font-weight:900;
       color: rgba(255,255,255,.86);
       user-select:none;
-      padding:6px 8px;
+      padding:6px 10px;
       border-radius:10px;
       border:1px solid rgba(255,255,255,.14);
       background: rgba(0,0,0,.18);
+      white-space: nowrap;              /* ✅ 不拆字 */
+      display: inline-flex;             /* ✅ 橫向 */
+      align-items: center;
+      justify-content: center;
+      min-width: 3.2em;                 /* ✅ 避免太窄導致直排 */
+      flex: 0 0 auto;
     }
 
     /* OTP */
@@ -520,6 +514,15 @@
       line-height:1.6;
     }
 
+    /* ✅ 條款連結：可點、開新頁 */
+    .fineLink{
+      color: rgba(255,255,255,.92);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      font-weight: 900;
+    }
+    .fineLink:hover{ opacity: .92; }
+
     .fadeSlide{ animation: fadeSlide .22s ease both; }
     @keyframes fadeSlide{
       from{ opacity:0; transform: translateY(6px); }
@@ -560,6 +563,7 @@
           <div id="statusText"></div>
         </div>
 
+        <!-- Step 1 -->
         <div class="section fadeSlide" id="step1">
           <div style="display:flex; align-items:center; justify-content:flex-end; margin-bottom:10px;">
             <div class="verifiedTag" id="verifiedTag">已驗證</div>
@@ -570,7 +574,6 @@
               <label for="email">Email</label>
               <div class="field">
                 <input id="email" type="email" placeholder="例如：name@gmail.com" autocomplete="email" required>
-                <!-- ✅ 改成實心藍色 -->
                 <button type="button" class="btnSendFill" id="sendCodeBtn">
                   <span class="spinner" aria-hidden="true"></span>
                   <span id="sendCodeText">發送驗證碼</span>
@@ -613,6 +616,7 @@
           </div>
         </div>
 
+        <!-- Step 2 -->
         <div class="section" id="step2" style="display:none;">
           <form id="signupForm" class="grid" autocomplete="on">
             <div>
@@ -622,36 +626,35 @@
               </div>
             </div>
 
-            <div class="row2">
-              <div>
-                <label for="username">帳號（username）</label>
-                <div class="field">
-                  <input id="username" name="username" minlength="3" placeholder="至少 3 個字" autocomplete="username" required>
-                </div>
-              </div>
-
-              <div>
-                <label for="password">密碼</label>
-                <div class="field">
-                  <input id="password" name="password" type="password" minlength="6"
-                         placeholder="至少 6 個字" autocomplete="new-password" required>
-                  <span class="eye" id="togglePw">顯示</span>
-                </div>
+            <!-- ✅ 帳號、密碼分兩行（不再左右分欄） -->
+            <div>
+              <label for="username">帳號（username）</label>
+              <div class="field">
+                <input id="username" name="username" minlength="3" placeholder="至少 3 個字" autocomplete="username" required>
               </div>
             </div>
 
+            <div>
+              <label for="password">密碼</label>
+              <div class="field">
+                <input id="password" name="password" type="password" minlength="6"
+                       placeholder="至少 6 個字" autocomplete="new-password" required>
+                <span class="eye" id="togglePw">顯示</span>
+              </div>
+            </div>
+
+            <!-- ✅ 只留一個按鈕；完成註冊 -> 註冊 -->
             <div class="actions">
               <button type="submit" class="btn" id="signupBtn">
                 <span class="spinner" aria-hidden="true"></span>
-                完成註冊
-              </button>
-              <button type="button" class="btn" onclick="location.href='login.html'">
-                前往登入
+                註冊
               </button>
             </div>
 
             <div class="fine">
-              註冊即代表你同意平台規則與使用條款（內容以站內公告為準）。
+              註冊即代表你同意
+              <a class="fineLink" href="pact.html" target="_blank" rel="noopener noreferrer">平台規則與使用條款</a>
+              （內容以站內公告為準）。
             </div>
           </form>
         </div>
