@@ -6,150 +6,365 @@
   <title>登入｜星火廣告</title>
   <meta name="description" content="星火廣告會員登入" />
 
+  <!-- Zen Maru Gothic（與 signup 一致） -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&display=swap" rel="stylesheet">
 
   <style>
     :root{
-      --bg:#0b0f19; --card:#11182a;
-      --text:#ffffff;              /* ✅ 全站亮白 */
-      --muted:#ffffff;             /* ✅ 不再灰 */
-      --line:rgba(255,255,255,.12);
-      --accent:#32e0c4; --danger:#ff5c7a;
-      --radius:16px; --shadow:0 18px 60px rgba(0,0,0,.35);
-      --font: "Zen Maru Gothic", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", Arial;
+      --card:rgba(255,255,255,.06);
+      --text:rgba(255,255,255,.94);
+      --muted:rgba(255,255,255,.72);
+      --muted2:rgba(255,255,255,.58);
+      --brand:#4db8ff;
+      --brand2:#9d4edd;
+      --good:#15e38a;
+      --bad:#ff4d6d;
+
+      --radius:22px;
+      --radius2:16px;
+      --shadow: 0 24px 90px rgba(0,0,0,.55);
     }
 
-    *{box-sizing:border-box}
+    html{ font-size:125%; }
+    *{ box-sizing:border-box; }
 
     body{
-      margin:0; min-height:100vh; font-family:var(--font);
-      background: radial-gradient(1100px 500px at 20% -10%, rgba(50,224,196,.16), transparent 60%),
-                  radial-gradient(900px 500px at 90% 10%, rgba(110,168,255,.16), transparent 55%),
-                  var(--bg);
+      margin:0;
+      min-height:100vh;
+      font-family:"Zen Maru Gothic", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
       color:var(--text);
-      display:flex; align-items:center; justify-content:center;
-      padding:24px;
-      font-size:24px; /* ✅ 16px × 1.5 = 24px（整體放大） */
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:28px;
+      position:relative;
+      overflow-x:hidden;
+
+      background: url("picture/P1.png") center / cover no-repeat fixed;
     }
 
-    .wrap{width:min(680px, 100%);}
-    .brand{display:flex; align-items:center; gap:16px; margin-bottom:18px;}
-
-    .logo{
-      width:78px; height:78px;      /* ✅ 52 × 1.5 */
-      border-radius:24px;           /* ✅ 16 × 1.5 */
-      border:1px solid var(--line);
-      background: rgba(255,255,255,.06);
-      box-shadow: 0 10px 30px rgba(50,224,196,.14);
-      padding:9px;                  /* ✅ 6 × 1.5 */
-      display:block;
-      object-fit: contain;
+    body::before{
+      content:"";
+      position:fixed;
+      inset:-24px;
+      background: url("picture/P1.png") center / cover no-repeat;
+      filter: blur(14px);
+      transform: scale(1.06);
+      opacity: .78;
+      z-index:-2;
+      pointer-events:none;
     }
 
-    .brand h1{font-size:33px; margin:0;}     /* 22 × 1.5 */
-    .brand p{margin:3px 0 0; color:var(--muted); font-size:21px;} /* 14 × 1.5 */
+    body::after{
+      content:"";
+      position:fixed;
+      inset:0;
+      background: rgba(7,10,18,.56);
+      z-index:-1;
+      pointer-events:none;
+    }
+
+    .wrap{ width:min(860px, 100%); }
 
     .card{
-      background: rgba(17,24,42,.86);
-      border:1px solid var(--line);
+      position:relative;
       border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:45px;                 /* 30 × 1.5 */
-      backdrop-filter: blur(10px);
+      border:1px solid rgba(255,255,255,.12);
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      box-shadow: var(--shadow);
+      overflow:hidden;
     }
 
-    .title{font-size:39px; margin:0 0 9px;} /* 26 × 1.5 */
-    .sub{margin:0 0 27px; color:var(--muted); font-size:23px; line-height:1.7;} /* 15 × 1.5 = 22.5 取 23 */
+    .card::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      border-radius:var(--radius);
+      pointer-events:none;
+      background: linear-gradient(135deg, rgba(77,184,255,.22), rgba(157,78,221,.18));
+      mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      padding:1px;
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity:.55;
+    }
 
-    label{display:block; font-size:21px; color:var(--muted); margin:18px 0 9px;} /* 14,12,6 ×1.5 */
+    .header{
+      padding:26px 26px 18px;
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      gap:14px;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.10);
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+    }
+
+    .logo{
+      width:46px;
+      height:46px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.22);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      overflow:hidden;
+      flex:0 0 auto;
+    }
+    .logo img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      display:block;
+      filter: drop-shadow(0 6px 16px rgba(0,0,0,.35));
+    }
+
+    .titles{ min-width:0; }
+    .h1{
+      margin:0;
+      font-weight:900;
+      letter-spacing:.5px;
+      font-size:1.22rem;
+      line-height:1.15;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .sub{
+      margin:.18rem 0 0;
+      color:var(--muted);
+      font-weight:800;
+      font-size:.92rem;
+    }
+
+    .body{ padding:22px 26px 26px; }
+
+    .title{
+      margin:0 0 6px;
+      font-weight:900;
+      letter-spacing:.3px;
+      font-size:1.28rem;
+      line-height:1.2;
+    }
+    .desc{
+      margin:0 0 16px;
+      color:var(--muted);
+      font-weight:800;
+      font-size:.92rem;
+      line-height:1.7;
+    }
+
+    .section{
+      margin-top:16px;
+      padding:16px;
+      border-radius:var(--radius2);
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.14);
+    }
+
+    .grid{ display:grid; gap:12px; }
+
+    label{
+      display:block;
+      font-weight:900;
+      margin:0 0 8px;
+      color:rgba(255,255,255,.92);
+      font-size:.92rem;
+    }
+
+    .field{
+      border:1px solid rgba(255,255,255,.16);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border-radius:14px;
+      padding:10px 12px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+      min-height:52px;
+    }
+    .field:focus-within{
+      border-color: rgba(77,184,255,.38);
+      box-shadow: 0 0 0 1px rgba(77,184,255,.14), 0 18px 55px rgba(77,184,255,.10);
+      transform: translateY(-1px);
+    }
+
     input{
       width:100%;
-      padding:21px 21px;            /* 14 × 1.5 */
-      font-size:24px;               /* 16 × 1.5 */
-      border-radius:18px;           /* 12 × 1.5 */
-      border:1px solid var(--line);
-      background: rgba(255,255,255,.06);
-      color:var(--text);
+      border:0;
       outline:none;
+      background:transparent;
+      color:var(--text);
+      font-size:1rem;
+      font-weight:800;
+      letter-spacing:.2px;
     }
-    input:focus{border-color:rgba(50,224,196,.55); box-shadow:0 0 0 4.5px rgba(50,224,196,.12)}
-    input::placeholder{color:#ffffff; opacity:1;}
+    input::placeholder{
+      color: rgba(255,255,255,.48);
+      font-weight:700;
+    }
+
+    .eye{
+      cursor:pointer;
+      font-weight:900;
+      color: rgba(255,255,255,.86);
+      user-select:none;
+      padding:6px 10px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      white-space:nowrap;
+    }
 
     .btn{
-      width:100%;
-      margin-top:27px;              /* 18 × 1.5 */
-      padding:21px 24px;            /* 14/16 × 1.5 */
-      font-size:24px;               /* 16 × 1.5 */
-      border-radius:18px;           /* 12 × 1.5 */
       border:0;
-      background: linear-gradient(135deg, rgba(50,224,196,.95), rgba(110,168,255,.95));
-      color:#ffffff;                /* ✅ 按鈕字也亮白 */
-      font-weight:800;
       cursor:pointer;
-      text-shadow: 0 1px 2px rgba(0,0,0,.35);
+      border-radius:14px;
+      padding:12px 16px;
+      font-weight:900;
+      font-size:.98rem;
+      color:#fff;
+      background: linear-gradient(135deg, var(--brand), var(--brand2));
+      box-shadow: 0 14px 38px rgba(77,184,255,.16);
+      transition: transform .15s ease, filter .15s ease, box-shadow .15s ease;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      user-select:none;
+      min-height:52px;
+      width:100%;
     }
-    .btn:disabled{opacity:.55; cursor:not-allowed}
+    .btn:hover{ transform: translateY(-2px); filter: brightness(1.06); box-shadow: 0 18px 46px rgba(77,184,255,.18); }
+    .btn:active{ transform: translateY(0); }
+    .btn:disabled{ opacity:.55; cursor:not-allowed; transform:none !important; filter:none !important; }
 
-    .links{
-      display:flex; justify-content:space-between; gap:10px;
-      margin-top:18px;              /* 12 × 1.5 */
-      font-size:20px;               /* 13 × 1.5 ≈ 19.5 */
+    .spinner{
+      width:16px; height:16px;
+      border:2px solid rgba(255,255,255,.35);
+      border-top-color:#fff;
+      border-radius:50%;
+      animation: spin .8s linear infinite;
+      display:none;
     }
-
-    a{
-      color:#ffffff;                /* ✅ 連結字也亮白 */
-      text-decoration:underline;
-      text-underline-offset:3px;
-    }
+    .btn.loading .spinner{ display:inline-block; }
+    @keyframes spin{ to{ transform: rotate(360deg); } }
 
     .msg{
-      margin-top:18px;              /* 12 × 1.5 */
-      padding:15px 18px;            /* 10/12 × 1.5 */
-      border-radius:18px;           /* 12 × 1.5 */
-      border:1px solid var(--line);
-      background: rgba(255,255,255,.06);
-      font-size:20px;               /* 13 × 1.5 ≈ 19.5 */
       display:none;
-      line-height:1.55;
+      margin-top:12px;
+      padding:12px 14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.16);
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      font-weight:900;
+      line-height:1.6;
       white-space:pre-line;
-      color:#ffffff;
     }
-    .msg.error{border-color: rgba(255,92,122,.35); background: rgba(255,92,122,.10); color:#ffffff}
-    .msg.ok{border-color: rgba(50,224,196,.35); background: rgba(50,224,196,.10); color:#ffffff}
+    .msg.show{ display:block; }
+    .msg.ok{
+      border-color: rgba(21,227,138,.28);
+      background: rgba(21,227,138,.08);
+      color:#eafff3;
+    }
+    .msg.error{
+      border-color: rgba(255,77,109,.30);
+      background: rgba(255,77,109,.08);
+      color:#ffeef2;
+    }
+
+    .links{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      margin-top:12px;
+      color: rgba(255,255,255,.70);
+      font-weight:900;
+      font-size:.9rem;
+    }
+    .links a{
+      color: rgba(255,255,255,.80);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .links a:hover{ color:#fff; }
+
+    @media (max-width: 520px){
+      html{ font-size:118%; }
+      .header{ padding:22px 18px 14px; }
+      .body{ padding:18px 18px 20px; }
+      .section{ padding:14px; }
+    }
   </style>
 </head>
+
 <body>
   <div class="wrap">
-    <div class="brand">
-      <img class="logo" src="./picture/logo.png" alt="星火廣告 Logo">
-      <div>
-        <h1>星火廣告</h1>
-        <p>會員登入</p>
-      </div>
-    </div>
-
     <div class="card">
-      <h2 class="title">登入帳號</h2>
-      <p class="sub">請輸入你的帳號與密碼。登入成功後會自動前往會員頁</p>
-
-      <form id="loginForm">
-        <label for="username">帳號</label>
-        <input id="username" name="username" autocomplete="username" required placeholder="例如：bingkuai123" />
-
-        <label for="password">密碼</label>
-        <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="請輸入密碼" />
-
-        <button class="btn" id="submitBtn" type="submit">登入</button>
-
-        <div id="msg" class="msg"></div>
-
-        <div class="links">
-          <a href="./signup.html">還沒有帳號？去註冊</a>
-          <a href="./index.html">回首頁</a>
+      <div class="header">
+        <div class="brand">
+          <div class="logo" aria-hidden="true">
+            <img src="picture/logo.png" alt="星火廣告 Logo">
+          </div>
+          <div class="titles">
+            <p class="h1">星火廣告</p>
+            <p class="sub">會員登入</p>
+          </div>
         </div>
-      </form>
+      </div>
+
+      <div class="body">
+        <div class="section">
+          <h2 class="title">登入帳號</h2>
+          <p class="desc">請輸入你的帳號與密碼。登入成功後會自動前往會員頁</p>
+
+          <form id="loginForm" class="grid" autocomplete="on">
+            <div>
+              <label for="username">帳號</label>
+              <div class="field">
+                <input id="username" name="username" autocomplete="username" required placeholder="例如：bingkuai123" />
+              </div>
+            </div>
+
+            <div>
+              <label for="password">密碼</label>
+              <div class="field">
+                <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="請輸入密碼" />
+                <span class="eye" id="togglePw">顯示</span>
+              </div>
+            </div>
+
+            <button class="btn" id="submitBtn" type="submit">
+              <span class="spinner" aria-hidden="true"></span>
+              登入
+            </button>
+
+            <div id="msg" class="msg"></div>
+
+            <div class="links">
+              <a href="./signup.html">還沒有帳號？去註冊</a>
+              <a href="./index.html">回首頁</a>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -158,32 +373,45 @@
     const btn = document.getElementById('submitBtn');
     const msg = document.getElementById('msg');
 
+    const pw = document.getElementById('password');
+    const togglePw = document.getElementById('togglePw');
+
     function showMessage(text, type){
-      msg.style.display = 'block';
-      msg.className = 'msg ' + (type || '');
+      msg.className = 'msg show ' + (type || '');
       msg.textContent = text;
     }
     function clearMessage(){
-      msg.style.display = 'none';
       msg.className = 'msg';
       msg.textContent = '';
     }
+
+    function setLoading(loading){
+      if(loading) btn.classList.add('loading');
+      else btn.classList.remove('loading');
+      btn.disabled = !!loading;
+    }
+
+    togglePw?.addEventListener("click", () => {
+      const now = pw.type === "password" ? "text" : "password";
+      pw.type = now;
+      togglePw.textContent = (now === "password") ? "顯示" : "隱藏";
+    });
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       clearMessage();
 
       const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
+      const password = pw.value;
 
       if(!username || !password){
         showMessage('請輸入帳號與密碼。', 'error');
         return;
       }
 
-      btn.disabled = true;
-      const oldText = btn.textContent;
-      btn.textContent = '登入中...';
+      setLoading(true);
+      const oldText = btn.childNodes[btn.childNodes.length - 1].textContent;
+      btn.childNodes[btn.childNodes.length - 1].textContent = ' 登入中...';
 
       try{
         const res = await fetch('/.netlify/functions/auth', {
@@ -212,8 +440,8 @@
       }catch(err){
         showMessage('系統連線失敗，請稍後再試。\n' + (err?.message || ''), 'error');
       }finally{
-        btn.disabled = false;
-        btn.textContent = oldText;
+        setLoading(false);
+        btn.childNodes[btn.childNodes.length - 1].textContent = oldText || ' 登入';
       }
     });
   </script>
