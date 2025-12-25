@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>管理員後台 - 星火廣告</title>
+
+  <!-- Icons + Font -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#0b0f19;
+      --card:rgba(17,24,42,.86);
+      --text:#ffffff;
+      --muted:#ffffff;
+      --line:rgba(255,255,255,.12);
+      --accent:#32e0c4;
+      --accent2:#6ea8ff;
+      --danger:#ff5c7a;
+      --gold:#FFD700;
+      --radius:18px;
+      --shadow:0 18px 60px rgba(0,0,0,.35);
+      --font:"Zen Maru Gothic", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", Arial;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0; min-height:100vh;
+      font-family:var(--font);
+      background:
+        radial-gradient(1100px 500px at 20% -10%, rgba(50,224,196,.16), transparent 60%),
+        radial-gradient(900px 500px at 90% 10%, rgba(110,168,255,.16), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      font-size:24px;
+    }
+
+    .container{width:min(1100px, 92%); margin:0 auto;}
+    .section{padding:44px 0;}
+    .glass{
+      background: var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    /* Navbar */
+    .navbar{
+      position:fixed; top:0; left:0; right:0; z-index:50;
+      background: rgba(15, 23, 42, 0.75);
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      backdrop-filter: blur(10px);
+    }
+    .nav-container{
+      width:min(1200px, 92%);
+      margin:0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 0;
+      gap:16px;
+      position:relative;
+    }
+    .brand{
+      display:flex; align-items:center; gap:12px;
+      text-decoration:none; color:var(--text);
+      font-weight:800;
+    }
+    .brand img{
+      width:56px; height:56px;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      padding:7px;
+      object-fit:contain;
+      box-shadow: 0 10px 30px rgba(50,224,196,.14);
+    }
+    .nav-links{
+      display:flex; flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:flex-end;
+    }
+    .nav-link{
+      display:inline-flex; align-items:center; gap:10px;
+      padding:10px 14px;
+      border-radius:14px;
+      color:var(--text);
+      text-decoration:none;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      transition: transform .2s ease, border-color .2s ease, background .2s ease;
+      font-size:20px;
+      white-space:nowrap;
+    }
+    .nav-link:hover{
+      transform: translateY(-2px);
+      border-color: rgba(50,224,196,.45);
+      background: rgba(50,224,196,.10);
+    }
+    .nav-link.danger{
+      border-color: rgba(255,92,122,.35);
+      background: rgba(255,92,122,.10);
+    }
+    .nav-link.danger:hover{
+      border-color: rgba(255,92,122,.55);
+      background: rgba(255,92,122,.18);
+    }
+
+    .menu-btn{
+      display:none;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      border-radius:14px;
+      padding:10px 14px;
+      cursor:pointer;
+      font-size:20px;
+      line-height:1;
+      transition: transform .2s ease, border-color .2s ease, background .2s ease;
+    }
+    .menu-btn:hover{
+      transform: translateY(-2px);
+      border-color: rgba(50,224,196,.45);
+      background: rgba(50,224,196,.10);
+    }
+
+    /* Header */
+    .dashboard-header{
+      margin-top:92px;
+      padding:54px 0 34px;
+      position:relative;
+      overflow:hidden;
+    }
+    .dashboard-header::before{
+      content:"";
+      position:absolute; inset:0;
+      background:
+        radial-gradient(900px 360px at 15% 20%, rgba(255,215,0,.10), transparent 60%),
+        radial-gradient(900px 420px at 90% 30%, rgba(157,78,221,.12), transparent 55%),
+        radial-gradient(900px 520px at 60% 110%, rgba(50,224,196,.10), transparent 60%);
+      pointer-events:none;
+    }
+    .header-inner{
+      position:relative;
+      text-align:center;
+    }
+    .welcome-title{
+      margin:0 0 10px;
+      font-size:44px;
+      font-weight:900;
+      text-shadow: 2px 2px 6px rgba(0,0,0,.45);
+    }
+    .welcome-subtitle{
+      margin:0 0 18px;
+      opacity:.95;
+      font-size:22px;
+    }
+    .level-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:12px;
+      padding:10px 18px;
+      border-radius:999px;
+      border:1px solid rgba(255,215,0,.45);
+      background: rgba(0,0,0,.22);
+      box-shadow: 0 10px 30px rgba(0,0,0,.22);
+      flex-wrap:wrap;
+      justify-content:center;
+    }
+    .level-number{
+      font-size:28px;
+      font-weight:900;
+      color:var(--gold);
+    }
+    .badge-sep{opacity:.6}
+
+    /* Quick Profile Card */
+    .profile-row{
+      margin-top:24px;
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:18px;
+      align-items:stretch;
+    }
+    .profile-card{
+      padding:22px;
+      text-align:left;
+    }
+    .profile-title{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:12px;
+      margin-bottom:14px;
+    }
+    .profile-title h3{
+      margin:0;
+      font-size:26px;
+      font-weight:900;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:6px 12px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      font-size:18px;
+      opacity:.95;
+      white-space:nowrap;
+    }
+    .kv{
+      display:grid;
+      grid-template-columns: 160px 1fr;
+      row-gap:10px;
+      column-gap:10px;
+      font-size:20px;
+      line-height:1.6;
+    }
+    .kv .k{opacity:.85}
+    .kv .v{font-weight:800; word-break:break-word}
+    .actions{
+      display:flex; gap:10px; flex-wrap:wrap;
+      margin-top:14px;
+    }
+
+    /* Buttons */
+    .btn{
+      border:0;
+      cursor:pointer;
+      border-radius:18px;
+      padding:16px 18px;
+      font-size:22px;
+      font-weight:900;
+      color:var(--text);
+      background: linear-gradient(135deg, rgba(50,224,196,.95), rgba(110,168,255,.95));
+      box-shadow: 0 10px 30px rgba(50,224,196,.14);
+      text-shadow: 0 1px 2px rgba(0,0,0,.35);
+      transition: transform .2s ease, box-shadow .2s ease;
+    }
+    .btn:hover{transform: translateY(-2px); box-shadow: 0 14px 38px rgba(50,224,196,.22);}
+    .btn.secondary{
+      background: rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.16);
+      box-shadow: none;
+    }
+    .btn.secondary:hover{border-color: rgba(50,224,196,.45);}
+
+    /* XP */
+    .xp-container{margin-top:18px;}
+    .xp-label{
+      display:flex; justify-content:space-between; gap:10px;
+      font-weight:800;
+      margin-bottom:10px;
+      font-size:20px;
+    }
+    .xp-bar{
+      height:26px;
+      border-radius:999px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+    }
+    .xp-fill{
+      height:100%;
+      width: 0%;
+      border-radius:999px;
+      background: linear-gradient(90deg, #06C755, #32e0c4, #6ea8ff, #9d4edd);
+      transition: width 900ms cubic-bezier(0.34, 1.56, 0.64, 1);
+      position:relative;
+      overflow:hidden;
+    }
+    .xp-fill::after{
+      content:"";
+      position:absolute; inset:0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent);
+      animation: xpShine 2s infinite;
+    }
+    @keyframes xpShine { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
+
+    /* Stats */
+    .section-title{
+      margin:0 0 18px;
+      font-size:34px;
+      font-weight:900;
+      text-align:center;
+    }
+    .stats-grid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap:18px;
+      margin-top:18px;
+    }
+    .stat-card{
+      padding:22px;
+      border-radius:22px;
+      border:1px solid rgba(255,255,255,.12);
+      background: linear-gradient(135deg, rgba(17,24,42,.86) 0%, rgba(45,55,72,.70) 100%);
+      box-shadow: 0 10px 30px rgba(0,0,0,.28);
+      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+      position:relative;
+      overflow:hidden;
+    }
+    .stat-card::before{
+      content:"";
+      position:absolute; top:0; left:0; right:0;
+      height:4px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      opacity:.9;
+    }
+    .stat-card:hover{
+      transform: translateY(-6px);
+      box-shadow: 0 16px 44px rgba(0,0,0,.38);
+      border-color: rgba(50,224,196,.28);
+    }
+    .stat-icon{font-size:34px; margin-bottom:10px;}
+    .stat-value{font-size:44px; font-weight:900; margin:6px 0 4px;}
+    .stat-label{opacity:.9; font-weight:700;}
+
+    /* Quests */
+    .quest-hall{padding:34px 0;}
+    .quest-wrap{padding:28px;}
+    .quest-card{
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.10);
+      background: linear-gradient(135deg, rgba(45,55,72,.72) 0%, rgba(30,41,59,.85) 100%);
+      padding:20px;
+      margin-bottom:14px;
+      transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+      position:relative;
+      overflow:hidden;
+    }
+    .quest-card:hover{
+      transform: translateX(8px);
+      border-color: rgba(110,168,255,.28);
+      box-shadow: 0 14px 34px rgba(0,0,0,.34);
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:6px 12px;
+      border-radius:999px;
+      font-weight:900;
+      font-size:18px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.20);
+      margin-bottom:10px;
+    }
+    .pill.green{border-color: rgba(6,199,85,.35)}
+    .pill.orange{border-color: rgba(243,156,18,.40)}
+    .pill.red{border-color: rgba(231,76,60,.45)}
+    .quest-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:18px;
+      flex-wrap:wrap;
+    }
+    .quest-row h3{margin:0 0 10px; font-size:26px;}
+    .quest-desc{opacity:.92; line-height:1.7; margin:0 0 10px;}
+    .quest-meta{display:flex; gap:14px; flex-wrap:wrap; opacity:.92; font-size:18px;}
+    .quest-side{min-width:240px; text-align:right;}
+    .quest-reward{color:var(--gold); font-weight:900; font-size:34px; margin-bottom:10px;}
+
+    /* My quests */
+    .my-quests{
+      margin-top:18px;
+      padding:18px;
+      border-radius:18px;
+      border:1px dashed rgba(255,255,255,.18);
+      background: rgba(255,255,255,.04);
+    }
+    .my-quests h4{margin:0 0 10px; font-size:22px;}
+    .my-quest-item{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      margin-bottom:10px;
+    }
+    .my-quest-item:last-child{margin-bottom:0}
+    .my-quest-item .name{font-weight:900}
+    .my-quest-item .mini{opacity:.9; font-size:18px}
+    .my-quest-actions{display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;}
+    .btnMini{
+      border-radius:14px;
+      padding:10px 12px;
+      font-size:18px;
+      font-weight:900;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      cursor:pointer;
+    }
+    .btnMini:hover{border-color: rgba(50,224,196,.45);}
+    .btnMini.danger{border-color: rgba(255,92,122,.35); background: rgba(255,92,122,.10);}
+    .btnMini.danger:hover{border-color: rgba(255,92,122,.55);}
+
+    /* Tools */
+    .toolbox{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap:18px;
+      margin-top:18px;
+    }
+    .tool-card{padding:22px;}
+    .tool-card h3{margin:0 0 10px; font-size:26px;}
+    .codebox{
+      padding:14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.22);
+      word-break:break-all;
+      font-size:18px;
+    }
+
+    /* Toast */
+    .toast{
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      max-width: min(520px, calc(100vw - 36px));
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(17,24,42,.92);
+      box-shadow: 0 18px 60px rgba(0,0,0,.45);
+      display:none;
+      z-index: 99;
+      font-size:20px;
+      line-height:1.5;
+      white-space:pre-line;
+    }
+    .toast.ok{border-color: rgba(50,224,196,.35);}
+    .toast.error{border-color: rgba(255,92,122,.35); background: rgba(255,92,122,.10);}
+
+    /* Footer */
+    footer{
+      margin-top:40px;
+      padding:34px 0;
+      border-top:1px solid rgba(255,255,255,.10);
+      opacity:.95;
+    }
+    .footer-grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:18px;
+      margin-bottom:14px;
+    }
+    .footer-grid h3{margin:0 0 10px; font-size:22px;}
+    .footer-link{color:var(--text); text-decoration:underline; text-underline-offset:3px; display:inline-block; margin:6px 0;}
+    .footer-bottom{opacity:.9; font-size:18px;}
+
+    /* ✅ Responsive + dropdown menu (mobile) */
+    @media (max-width: 900px){
+      .profile-row{grid-template-columns: 1fr; }
+      .quest-side{text-align:left}
+      .footer-grid{grid-template-columns: 1fr}
+      .menu-btn{ display:inline-flex; align-items:center; justify-content:center; }
+      .nav-links{
+        position:absolute;
+        top: calc(100% + 10px);
+        left: 0;
+        right: 0;
+        display:none;
+        flex-direction:column;
+        align-items:stretch;
+        justify-content:flex-start;
+        gap:10px;
+        padding:12px;
+        border-radius:16px;
+        border:1px solid rgba(255,255,255,.12);
+        background: rgba(15, 23, 42, 0.92);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+      }
+      .nav-links.open{ display:flex; }
+      .nav-link{ width:100%; justify-content:flex-start; }
+    }
+
+    /* ===== Loading skeleton (避免閃爍) ===== */
+    .is-loading .skeleton{
+      position: relative;
+      color: transparent !important;
+      user-select: none;
+    }
+    .is-loading .skeleton::before{
+      content:"";
+      display:block;
+      height: 1em;
+      border-radius: 12px;
+      background: rgba(255,255,255,.10);
+    }
+    .is-loading .skeleton.wide::before{ width: 90%; }
+    .is-loading .skeleton.mid::before{ width: 65%; }
+    .is-loading .skeleton.narrow::before{ width: 40%; }
+    .is-loading .skeleton::after{
+      content:"";
+      position:absolute; inset:0;
+      border-radius: 12px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
+      transform: translateX(-100%);
+      animation: sk 1.1s infinite;
+    }
+    @keyframes sk { 100% { transform: translateX(100%); } }
+  
+
+    /* Admin additions */
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-top:14px}
+    .toolbar .left{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .field{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .input, .select{
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.14);
+      color: rgba(255,255,255,.92);
+      border-radius: 12px;
+      padding: 10px 12px;
+      outline: none;
+      min-height: 40px;
+    }
+    .input{min-width: 220px}
+    .select{min-width: 160px}
+    .table-wrap{overflow:auto;border-radius:16px;border:1px solid rgba(255,255,255,.10);background: rgba(255,255,255,.04)}
+    table{width:100%;border-collapse:collapse;min-width:820px}
+    th,td{padding:12px 14px;text-align:left;border-bottom:1px solid rgba(255,255,255,.08);font-size:14px}
+    th{color: rgba(255,255,255,.78);font-weight:700}
+    td{color: rgba(255,255,255,.90)}
+    tr:hover td{background: rgba(255,255,255,.03)}
+    .row-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .mini-btn{
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.92);
+      cursor:pointer;
+      font-weight:700;
+      font-size: 13px;
+      display:inline-flex;align-items:center;gap:8px;
+    }
+    .mini-btn:hover{filter:brightness(1.08)}
+    .status-pill{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:6px 10px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      font-weight:800;font-size:12px;color: rgba(255,255,255,.90);
+      white-space:nowrap;
+    }
+    .status-dot{width:8px;height:8px;border-radius:999px;background:rgba(255,255,255,.55)}
+    .muted{color: rgba(255,255,255,.70)}
+    .empty{
+      border:1px dashed rgba(255,255,255,.18);
+      background: rgba(255,255,255,.03);
+      border-radius: 16px;
+      padding: 16px;
+      color: rgba(255,255,255,.78);
+      line-height: 1.6;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a class="brand" href="index.html">
+        <img src="./picture/logo.png" alt="星火廣告 Logo">
+        <span>星火廣告</span>
+      </a>
+
+      <button class="menu-btn" id="menuBtn" type="button"
+        aria-label="開啟選單" aria-expanded="false" aria-controls="navLinks">
+        <i class="fas fa-ellipsis-vertical"></i>
+      </button>
+
+      <div class="nav-links" id="navLinks">
+        <a href="#top" class="nav-link"><i class="fas fa-gauge-high"></i> 總覽</a>
+        <a href="#users" class="nav-link"><i class="fas fa-users"></i> 用戶</a>
+        <a href="#dealers" class="nav-link"><i class="fas fa-car"></i> 車行</a>
+        <a href="#quests" class="nav-link"><i class="fas fa-tasks"></i> 任務</a>
+        <a href="#payouts" class="nav-link"><i class="fas fa-sack-dollar"></i> 提領</a>
+        <a href="#logs" class="nav-link"><i class="fas fa-clipboard-list"></i> 紀錄</a>
+
+        <span class="nav-sep"></span>
+
+        <a href="dashboard.html" class="nav-link"><i class="fas fa-house-user"></i> 會員中心</a>
+        <a href="dealers.html" class="nav-link"><i class="fas fa-shop"></i> 車行頁</a>
+        <a href="index.html" class="nav-link"><i class="fas fa-house"></i> 返回首頁</a>
+
+        <span class="nav-sep"></span>
+
+        <a href="#" class="nav-link nav-user" id="navUser">
+          <i class="fas fa-user-shield"></i> <span id="navUsername">admin</span>
+        </a>
+        <a href="#" class="nav-link nav-logout" id="logoutBtn">
+          <i class="fas fa-right-from-bracket"></i> 登出
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Header -->
+  <section class="dashboard-header" id="top">
+    <div class="container">
+      <div class="hero-card">
+        <div class="hero-left">
+          <div class="hero-kicker">
+            <span class="chip chip-strong"><i class="fas fa-crown"></i> Admin</span>
+
+            <!-- ✅ 雲端同步狀態 Badge -->
+            <span class="chip" id="syncBadge">
+              <span class="dot"></span>
+              <span id="syncText">尚未同步</span>
+            </span>
+          </div>
+
+          <h1 class="hero-title">管理員後台</h1>
+          <p class="hero-sub">
+            用戶 / 車行 / 任務 / 結算 一站式管理。<span class="muted">（Admin 可進入所有頁面功能）</span>
+          </p>
+
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#users"><i class="fas fa-users"></i> 管理用戶</a>
+            <a class="btn" href="#dealers"><i class="fas fa-car"></i> 管理車行</a>
+            <a class="btn" href="#quests"><i class="fas fa-tasks"></i> 管理任務</a>
+          </div>
+        </div>
+
+        <div class="hero-right">
+          <div class="profile-card">
+            <div class="profile-top">
+              <div class="avatar">
+                <i class="fas fa-user-shield"></i>
+              </div>
+              <div class="profile-meta">
+                <div class="profile-name"><span id="adminName" class="skeleton mid">管理員</span></div>
+                <div class="profile-sub">
+                  <span id="adminEmail" class="skeleton long">—</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="profile-stats">
+              <div class="pstat">
+                <div class="pstat-label">總用戶</div>
+                <div class="pstat-value"><span id="statUsers" class="skeleton mid">0</span></div>
+              </div>
+              <div class="pstat">
+                <div class="pstat-label">總車行</div>
+                <div class="pstat-value"><span id="statDealers" class="skeleton mid">0</span></div>
+              </div>
+              <div class="pstat">
+                <div class="pstat-label">待審核</div>
+                <div class="pstat-value"><span id="statPending" class="skeleton mid">0</span></div>
+              </div>
+              <div class="pstat">
+                <div class="pstat-label">待提領</div>
+                <div class="pstat-value"><span id="statPayouts" class="skeleton mid">0</span></div>
+              </div>
+            </div>
+
+            <div class="profile-actions">
+              <button class="btn btn-ghost" id="refreshBtn" type="button">
+                <i class="fas fa-rotate"></i> 重新同步
+              </button>
+              <a class="btn btn-ghost" href="dashboard.html">
+                <i class="fas fa-house-user"></i> 前往會員中心
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Stats Row -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-user-plus"></i></div>
+          <div class="stat-body">
+            <div class="stat-label">今日新增用戶</div>
+            <div class="stat-value"><span id="todayUsers" class="skeleton mid">0</span></div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-id-card"></i></div>
+          <div class="stat-body">
+            <div class="stat-label">待審核車行</div>
+            <div class="stat-value"><span id="pendingDealers" class="skeleton mid">0</span></div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-bullhorn"></i></div>
+          <div class="stat-body">
+            <div class="stat-label">進行中任務</div>
+            <div class="stat-value"><span id="activeQuests" class="skeleton mid">0</span></div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><i class="fas fa-hand-holding-dollar"></i></div>
+          <div class="stat-body">
+            <div class="stat-label">今日提領申請</div>
+            <div class="stat-value"><span id="todayPayouts" class="skeleton mid">0</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Users -->
+  <section class="section" id="users">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="section-title"><i class="fas fa-users"></i> 用戶管理</h2>
+        <p class="section-sub">搜尋、檢視、角色調整、停權/解鎖（UI 已備妥，後端可後續串接）。</p>
+      </div>
+
+      <div class="card">
+        <div class="toolbar">
+          <div class="left">
+            <div class="field">
+              <input class="input" id="userSearch" placeholder="搜尋 user_id / username / email" />
+              <select class="select" id="userRoleFilter">
+                <option value="">全部角色</option>
+                <option value="admin">admin</option>
+                <option value="dealer">dealer</option>
+                <option value="partner">partner</option>
+              </select>
+              <select class="select" id="userStatusFilter">
+                <option value="">全部狀態</option>
+                <option value="active">正常</option>
+                <option value="blocked">停權</option>
+                <option value="pending">待補資料</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="right">
+            <button class="btn btn-primary" id="btnCreateUser" type="button">
+              <i class="fas fa-user-plus"></i> 新增用戶（規劃）
+            </button>
+          </div>
+        </div>
+
+        <div style="height:12px"></div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:220px">user_id</th>
+                <th style="width:160px">username</th>
+                <th style="width:240px">email</th>
+                <th style="width:120px">role</th>
+                <th style="width:140px">狀態</th>
+                <th style="width:240px">操作</th>
+              </tr>
+            </thead>
+            <tbody id="usersTbody">
+              <tr>
+                <td colspan="6">
+                  <div class="empty" id="usersEmpty">
+                    <div><b>尚未載入用戶資料</b></div>
+                    <div class="muted">點「重新同步」或等待後端串接（/.netlify/functions/admin）。</div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="height:14px"></div>
+        <div class="muted" id="usersHint">提示：目前此頁主要提供 UI 與流程結構，資料串接完成後即可上線使用。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Dealers -->
+  <section class="section" id="dealers">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="section-title"><i class="fas fa-car"></i> 車行管理</h2>
+        <p class="section-sub">審核/驗證、方案狀態、停權、資訊補件。</p>
+      </div>
+
+      <div class="card">
+        <div class="toolbar">
+          <div class="left">
+            <div class="field">
+              <input class="input" id="dealerSearch" placeholder="搜尋 車行名稱 / 聯絡 / dealer_id" />
+              <select class="select" id="dealerVerifyFilter">
+                <option value="">全部驗證狀態</option>
+                <option value="unverified">未審核</option>
+                <option value="need_fix">補件中</option>
+                <option value="verified">已通過</option>
+                <option value="rejected">已拒絕</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="right">
+            <a class="btn btn-primary" href="dealers.html">
+              <i class="fas fa-shop"></i> 前往車行頁（Admin 可進）
+            </a>
+          </div>
+        </div>
+
+        <div style="height:12px"></div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:220px">dealer_id</th>
+                <th style="width:220px">車行/店名</th>
+                <th style="width:220px">聯絡方式</th>
+                <th style="width:160px">驗證狀態</th>
+                <th style="width:240px">操作</th>
+              </tr>
+            </thead>
+            <tbody id="dealersTbody">
+              <tr>
+                <td colspan="5">
+                  <div class="empty" id="dealersEmpty">
+                    <div><b>尚未載入車行資料</b></div>
+                    <div class="muted">後端串接完成後，這裡會顯示待審核清單。</div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Quests -->
+  <section class="section" id="quests">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="section-title"><i class="fas fa-tasks"></i> 任務管理</h2>
+        <p class="section-sub">建立/編輯/上架/下架、驗收審核與發放。</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3 class="card-title"><i class="fas fa-circle-plus"></i> 快速建立任務（規劃）</h3>
+          <p class="muted">這裡先做 UI 結構，你之後要串接的欄位我已經留好位置。</p>
+
+          <div style="height:10px"></div>
+
+          <div class="field">
+            <input class="input" id="qTitle" placeholder="任務名稱（例如：分享車源貼文）" />
+            <select class="select" id="qType">
+              <option value="promo">推廣</option>
+              <option value="review">審核/回報</option>
+              <option value="sales">成交</option>
+            </select>
+          </div>
+
+          <div style="height:10px"></div>
+
+          <div class="field">
+            <input class="input" id="qReward" placeholder="獎勵（例如：500 金幣 / 50 XP）" />
+            <input class="input" id="qDeadline" placeholder="期限（例如：2026-01-05）" />
+          </div>
+
+          <div style="height:12px"></div>
+
+          <button class="btn btn-primary" type="button" id="btnCreateQuest">
+            <i class="fas fa-upload"></i> 送出（先做介面）
+          </button>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title"><i class="fas fa-list-check"></i> 任務列表（待串接）</h3>
+          <div class="empty">
+            <div><b>尚未載入任務</b></div>
+            <div class="muted">之後可從你規劃的 quests Sheet / Supabase 讀取，並加上狀態流轉。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Payouts -->
+  <section class="section" id="payouts">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="section-title"><i class="fas fa-sack-dollar"></i> 提領/結算</h2>
+        <p class="section-sub">Partner 提領申請審核、付款證明、對帳。</p>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:220px">request_id</th>
+                <th style="width:220px">user_id</th>
+                <th style="width:140px">金額</th>
+                <th style="width:160px">狀態</th>
+                <th style="width:240px">操作</th>
+              </tr>
+            </thead>
+            <tbody id="payoutsTbody">
+              <tr>
+                <td colspan="5">
+                  <div class="empty">
+                    <div><b>尚未載入提領申請</b></div>
+                    <div class="muted">後端串接後，可顯示「待審核/已付款/退回」並保留操作紀錄。</div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Logs -->
+  <section class="section" id="logs">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="section-title"><i class="fas fa-clipboard-list"></i> 操作紀錄</h2>
+        <p class="section-sub">記錄管理員操作：誰在什麼時間做了什麼變更（待後端）。</p>
+      </div>
+
+      <div class="card">
+        <div class="empty">
+          <div><b>尚未載入紀錄</b></div>
+          <div class="muted">建議後端落地：所有管理操作都寫入 audit_logs（時間、操作者 user_id、行為、差異內容）。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Toast -->
+  <div class="toast-wrap" id="toastWrap" aria-live="polite" aria-atomic="true"></div>
+
+  <script>
+    // ===== Guard: login + role (admin only) =====
+    function requireLogin(){
+      const token = localStorage.getItem('xinghuo_token');
+      const u = JSON.parse(localStorage.getItem('xinghuo_user') || 'null');
+      if (!token || !u) {
+        location.href = './login.html';
+        return null;
+      }
+      return { token, user: u };
+    }
+
+    function guardAdmin(user){
+      const role = (user && user.role) ? String(user.role).toLowerCase() : '';
+      if (role !== 'admin') {
+        location.href = './dashboard.html';
+      }
+    }
+
+    // ===== UI utils =====
+    const $ = (sel) => document.querySelector(sel);
+    const escapeHtml = (s) => String(s ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+
+    function showToast(message, type='info'){
+      const wrap = $('#toastWrap');
+      if(!wrap) return;
+      const iconMap = {
+        success:'fa-circle-check',
+        error:'fa-triangle-exclamation',
+        warn:'fa-circle-exclamation',
+        info:'fa-circle-info'
+      };
+      const el = document.createElement('div');
+      el.className = 'toast ' + (type ? 'toast-' + type : '');
+      el.innerHTML = `
+        <div class="toast-icon"><i class="fas ${iconMap[type] || 'fa-circle-info'}"></i></div>
+        <div class="toast-body">
+          <div class="toast-msg">${escapeHtml(message)}</div>
+        </div>
+        <button class="toast-close" aria-label="關閉"><i class="fas fa-xmark"></i></button>
+      `;
+      wrap.appendChild(el);
+      const close = () => el.remove();
+      el.querySelector('.toast-close')?.addEventListener('click', close);
+      setTimeout(close, 4200);
+    }
+
+    function setSyncBadge(state){
+      const badge = $('#syncBadge');
+      const text = $('#syncText');
+      if(!badge || !text) return;
+      badge.classList.remove('chip-success','chip-warn','chip-danger');
+      if(state === 'syncing'){
+        text.textContent = '同步中';
+        badge.classList.add('chip-warn');
+      } else if(state === 'ok'){
+        text.textContent = '已同步';
+        badge.classList.add('chip-success');
+      } else if(state === 'fail'){
+        text.textContent = '失敗';
+        badge.classList.add('chip-danger');
+      } else {
+        text.textContent = '尚未同步';
+      }
+    }
+
+    function setSkeleton(on){
+      const ids = [
+        '#adminName','#adminEmail',
+        '#statUsers','#statDealers','#statPending','#statPayouts',
+        '#todayUsers','#pendingDealers','#activeQuests','#todayPayouts'
+      ];
+      ids.forEach(id => {
+        const el = $(id);
+        if(!el) return;
+        if(on) el.classList.add('skeleton');
+        else el.classList.remove('skeleton');
+      });
+    }
+
+    // ===== Navbar mobile menu =====
+    (function initMenu(){
+      const btn = $('#menuBtn');
+      const links = $('#navLinks');
+      if(!btn || !links) return;
+      btn.addEventListener('click', () => {
+        const open = links.classList.toggle('open');
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      links.querySelectorAll('a.nav-link').forEach(a => {
+        a.addEventListener('click', () => {
+          links.classList.remove('open');
+          btn.setAttribute('aria-expanded','false');
+        });
+      });
+    })();
+
+    // ===== Logout =====
+    function logout(){
+      localStorage.removeItem('xinghuo_token');
+      localStorage.removeItem('xinghuo_user');
+      localStorage.removeItem('xinghuo_my_quests');
+      location.href = './index.html';
+    }
+    $('#logoutBtn')?.addEventListener('click', (e)=>{ e.preventDefault(); logout(); });
+
+    // ===== Data loading (stub + future API) =====
+    async function fetchAdminSnapshot(token){
+      // 之後你可以建立 /.netlify/functions/admin 來回傳 stats + lists
+      const res = await fetch('/.netlify/functions/admin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({ action: 'snapshot' })
+      });
+      if(!res.ok){
+        const t = await res.text().catch(()=> '');
+        throw new Error('admin api ' + res.status + ': ' + (t || res.statusText));
+      }
+      return await res.json();
+    }
+
+    function renderUsers(users=[]){
+      const tbody = $('#usersTbody');
+      if(!tbody) return;
+      if(!users.length){
+        tbody.innerHTML = `
+          <tr><td colspan="6">
+            <div class="empty">
+              <div><b>目前沒有資料</b></div>
+              <div class="muted">你可以先用 UI；串接完成後這裡會自動顯示。</div>
+            </div>
+          </td></tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = users.map(u => {
+        const role = (u.role || '').toLowerCase();
+        const status = (u.status || 'active').toLowerCase();
+        const statusLabel = status === 'blocked' ? '停權' : (status === 'pending' ? '待補資料' : '正常');
+        const dotColor = status === 'blocked' ? 'rgba(255,70,90,.95)' : (status === 'pending' ? 'rgba(255,190,80,.95)' : 'rgba(90,255,190,.95)');
+        return `
+          <tr data-userid="${escapeHtml(u.user_id || '')}">
+            <td>${escapeHtml(u.user_id || '')}</td>
+            <td>${escapeHtml(u.username || '')}</td>
+            <td>${escapeHtml(u.email || '')}</td>
+            <td><span class="status-pill"><span class="status-dot" style="background:${dotColor}"></span>${escapeHtml(role || '-')}</span></td>
+            <td><span class="status-pill"><span class="status-dot" style="background:${dotColor}"></span>${statusLabel}</span></td>
+            <td>
+              <div class="row-actions">
+                <button class="mini-btn" data-act="view"><i class="fas fa-eye"></i> 檢視</button>
+                <button class="mini-btn" data-act="role"><i class="fas fa-user-tag"></i> 改角色</button>
+                <button class="mini-btn" data-act="block"><i class="fas fa-ban"></i> 停權</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderDealers(dealers=[]){
+      const tbody = $('#dealersTbody');
+      if(!tbody) return;
+      if(!dealers.length){
+        tbody.innerHTML = `
+          <tr><td colspan="5">
+            <div class="empty">
+              <div><b>目前沒有資料</b></div>
+              <div class="muted">串接完成後會顯示待審核車行清單。</div>
+            </div>
+          </td></tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = dealers.map(d => {
+        const v = (d.verify_status || 'unverified').toLowerCase();
+        const map = {
+          unverified: ['未審核','rgba(255,190,80,.95)'],
+          need_fix: ['補件中','rgba(255,190,80,.95)'],
+          verified: ['已通過','rgba(90,255,190,.95)'],
+          rejected: ['已拒絕','rgba(255,70,90,.95)']
+        };
+        const pair = map[v] || ['未審核','rgba(255,190,80,.95)'];
+        const label = pair[0];
+        const color = pair[1];
+        return `
+          <tr data-dealerid="${escapeHtml(d.dealer_id || '')}">
+            <td>${escapeHtml(d.dealer_id || '')}</td>
+            <td>${escapeHtml(d.name || '')}</td>
+            <td>${escapeHtml(d.contact || '')}</td>
+            <td><span class="status-pill"><span class="status-dot" style="background:${color}"></span>${label}</span></td>
+            <td>
+              <div class="row-actions">
+                <button class="mini-btn" data-act="approve"><i class="fas fa-check"></i> 通過</button>
+                <button class="mini-btn" data-act="needfix"><i class="fas fa-file-circle-exclamation"></i> 補件</button>
+                <button class="mini-btn" data-act="reject"><i class="fas fa-xmark"></i> 拒絕</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function applySnapshotUI(snapshot){
+      const s = snapshot?.stats || {};
+      const set = (id, val) => { const el = $(id); if(el) el.textContent = String(val ?? 0); };
+      set('#statUsers', s.users);
+      set('#statDealers', s.dealers);
+      set('#statPending', s.pending);
+      set('#statPayouts', s.payouts);
+      set('#todayUsers', s.todayUsers);
+      set('#pendingDealers', s.pendingDealers);
+      set('#activeQuests', s.activeQuests);
+      set('#todayPayouts', s.todayPayouts);
+
+      renderUsers(snapshot?.users || []);
+      renderDealers(snapshot?.dealers || []);
+    }
+
+    async function syncAll(){
+      const auth = requireLogin();
+      if(!auth) return;
+      guardAdmin(auth.user);
+
+      // profile
+      $('#navUsername').textContent = auth.user.username || auth.user.name || 'admin';
+      $('#adminName').textContent = auth.user.name || auth.user.username || '管理員';
+      $('#adminEmail').textContent = auth.user.email || '-';
+
+      setSkeleton(true);
+      setSyncBadge('syncing');
+
+      try{
+        const snap = await fetchAdminSnapshot(auth.token);
+        applySnapshotUI(snap);
+        setSyncBadge('ok');
+        showToast('同步完成', 'success');
+      } catch (err){
+        setSyncBadge('fail');
+        showToast('尚未串接後端資料（可先使用介面）', 'warn');
+        applySnapshotUI({ stats: { users:0, dealers:0, pending:0, payouts:0, todayUsers:0, pendingDealers:0, activeQuests:0, todayPayouts:0 }, users: [], dealers: [] });
+      } finally{
+        setSkeleton(false);
+      }
+    }
+
+    // actions
+    $('#refreshBtn')?.addEventListener('click', syncAll);
+    $('#btnCreateQuest')?.addEventListener('click', ()=>showToast('此功能為 UI 預留，後端串接後即可使用。','info'));
+    $('#btnCreateUser')?.addEventListener('click', ()=>showToast('此功能為 UI 預留，後端串接後即可使用。','info'));
+
+    // simple client-side filtering
+    function wireFilters(){
+      function filterUsers(){
+        const q = ($('#userSearch')?.value || '').trim().toLowerCase();
+        const role = ($('#userRoleFilter')?.value || '').trim().toLowerCase();
+        const st = ($('#userStatusFilter')?.value || '').trim().toLowerCase();
+        const rows = Array.from($('#usersTbody')?.querySelectorAll('tr') || []);
+        rows.forEach(r => {
+          const text = (r.textContent || '').toLowerCase();
+          let ok = !q || text.includes(q);
+          if(ok && role) ok = text.includes(role);
+          if(ok && st) ok = text.includes(st === 'active' ? '正常' : (st === 'blocked' ? '停權' : '待補資料'));
+          r.style.display = ok ? '' : 'none';
+        });
+      }
+
+      function filterDealers(){
+        const q = ($('#dealerSearch')?.value || '').trim().toLowerCase();
+        const v = ($('#dealerVerifyFilter')?.value || '').trim().toLowerCase();
+        const rows = Array.from($('#dealersTbody')?.querySelectorAll('tr') || []);
+        rows.forEach(r => {
+          const text = (r.textContent || '').toLowerCase();
+          let ok = !q || text.includes(q);
+          if(ok && v) ok = text.includes(v === 'need_fix' ? '補件' : v);
+          r.style.display = ok ? '' : 'none';
+        });
+      }
+
+      $('#userSearch')?.addEventListener('input', filterUsers);
+      $('#userRoleFilter')?.addEventListener('change', filterUsers);
+      $('#userStatusFilter')?.addEventListener('change', filterUsers);
+
+      $('#dealerSearch')?.addEventListener('input', filterDealers);
+      $('#dealerVerifyFilter')?.addEventListener('change', filterDealers);
+    }
+
+    // init
+    (function init(){
+      const auth = requireLogin();
+      if(!auth) return;
+      guardAdmin(auth.user);
+      wireFilters();
+      syncAll();
+    })();
+  </script>
+</body>
+</html>
