@@ -133,40 +133,6 @@ function buildHeaderIndex(headers) {
   return idx;
 }
 
-
-function norm(s) {
-  return String(s || "").trim().toLowerCase();
-}
-
-async function getUserRoleById(sheets, sheetId, user_id) {
-  const rolesTab = process.env.USER_ROLES_SHEET_NAME; // e.g. "user_roles"
-  if (!rolesTab) return "";
-
-  const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: sheetId,
-    range: `${rolesTab}!A:Z`,
-  });
-
-  const values = res.data.values || [];
-  if (values.length < 2) return "";
-
-  const headers = (values[0] || []).map(norm);
-  const rows = values.slice(1);
-
-  const idIdx = headers.indexOf("user_id");
-  const roleIdx = headers.indexOf("role");
-  if (idIdx === -1 || roleIdx === -1) {
-    throw new Error("USER_ROLES sheet missing headers: user_id / role");
-  }
-
-  const target = String(user_id || "").trim();
-  for (const r of rows) {
-    const rid = String(r[idIdx] || "").trim();
-    if (rid === target) return norm(r[roleIdx]);
-  }
-  return "";
-}
-
 // -------------------- Main handler --------------------
 exports.handler = async (event) => {
   try {
@@ -239,6 +205,7 @@ exports.handler = async (event) => {
       newRow[headerIdx["username"]] = u;
       newRow[headerIdx["password_hash"]] = password_hash;
       newRow[headerIdx["email"]] = email;
+      if (headerIdx["role"] !== undefined) newRow[headerIdx["role"]] = "partner";
 
       if (headerIdx["create_at"] !== undefined) newRow[headerIdx["create_at"]] = nowISO();
       if (headerIdx["last_login_at"] !== undefined) newRow[headerIdx["last_login_at"]] = "";
@@ -252,9 +219,8 @@ exports.handler = async (event) => {
         requestBody: { values: [newRow] },
       });
 
-      const role = "partner";
-      const token = jwt.sign({ user_id, username: u, role }, jwtSecret, { expiresIn: "30d" });
-      return reply(200, { ok: true, user: { user_id, username: u, email, role }, token });
+      const token = jwt.sign({ user_id, username: u, role: "partner" }, jwtSecret, { expiresIn: "30d" });
+      return reply(200, { ok: true, user: { user_id, username: u, email, role: "partner" }, token });
     }
 
     // ---------- login ----------
@@ -278,7 +244,7 @@ exports.handler = async (event) => {
     }
 
     const uid = row[headerIdx["user_id"]] || "";
-    const role = (await getUserRoleById(sheets, sheetId, uid)) || "partner";
+    const role = (headerIdx["role"] !== undefined ? String(row[headerIdx["role"]] || "").trim().toLowerCase() : "") || "partner";
     const token = jwt.sign({ user_id: uid, username: u, role }, jwtSecret, { expiresIn: "30d" });
     return reply(200, { ok: true, user: { user_id: uid, username: u, role }, token });
   } catch (err) {
