@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dealer 任務發布 - 星火廣告</title>
+  <meta name="description" content="Dealer 發布推廣任務：上傳 1-3 張車圖、填寫車輛資訊、選擇預算方案" />
+  <style>
+    :root{
+      --bg:#0b0f19;
+      --card:rgba(255,255,255,.06);
+      --text:rgba(255,255,255,.92);
+      --muted:rgba(255,255,255,.70);
+      --line:rgba(255,255,255,.10);
+      --shadow:0 18px 60px rgba(0,0,0,.28);
+      --radius:16px;
+      --max:1100px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", Arial, sans-serif;
+      background: radial-gradient(1200px 500px at 20% -10%, rgba(124,92,255,.18), transparent 60%),
+                  radial-gradient(900px 450px at 100% 10%, rgba(0,194,255,.16), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+    }
+    a{color:inherit; text-decoration:none}
+    .wrap{max-width:var(--max); margin:0 auto; padding:24px}
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 16px; border:1px solid var(--line); border-radius:var(--radius);
+      background:rgba(255,255,255,.04); box-shadow:var(--shadow);
+    }
+    .brand{display:flex; gap:10px; align-items:center}
+    .brand img{width:34px; height:34px; border-radius:10px; object-fit:cover}
+    .brand .t1{font-weight:800; letter-spacing:.5px}
+    .brand .t2{font-size:12px; color:var(--muted); margin-top:2px}
+    .actions{display:flex; gap:10px; align-items:center}
+    .pill{
+      padding:8px 10px; border:1px solid var(--line); border-radius:999px;
+      background:rgba(255,255,255,.04); color:var(--muted); font-size:13px;
+    }
+    .btn{
+      padding:10px 12px; border-radius:12px; border:1px solid rgba(124,92,255,.35);
+      background:linear-gradient(135deg, rgba(124,92,255,.85), rgba(0,194,255,.55));
+      color:white; font-weight:700; cursor:pointer;
+    }
+    .btn:disabled{opacity:.5; cursor:not-allowed}
+    .btn-ghost{
+      padding:10px 12px; border-radius:12px; border:1px solid var(--line);
+      background:rgba(255,255,255,.04); color:var(--text); cursor:pointer;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:16px;
+      margin-top:16px;
+    }
+    @media (max-width: 900px){ .grid{grid-template-columns:1fr} }
+
+    .card{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:16px;
+    }
+    .h{
+      font-size:18px; font-weight:900; margin:0 0 8px 0;
+      letter-spacing:.3px;
+    }
+    .sub{color:var(--muted); font-size:13px; margin:0 0 14px 0}
+    label{display:block; font-size:13px; color:var(--muted); margin:10px 0 6px}
+    input[type="text"], textarea, select{
+      width:100%;
+      padding:12px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.25);
+      color:var(--text);
+      outline:none;
+    }
+    textarea{min-height:160px; resize:vertical}
+    .row{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+    @media (max-width: 520px){ .row{grid-template-columns:1fr} }
+
+    .hint{font-size:12px; color:var(--muted); margin-top:6px; line-height:1.5}
+    .err{color:#ffb3b3; font-size:13px; margin-top:10px}
+    .ok{color:#b8ffcc; font-size:13px; margin-top:10px}
+    .previews{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:10px}
+    .previews img{width:100%; aspect-ratio: 4/3; object-fit:cover; border-radius:14px; border:1px solid var(--line)}
+    .kv{display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--line)}
+    .kv:last-child{border-bottom:none}
+    .kv b{color:var(--text)}
+    .kv span{color:var(--muted)}
+    .small{font-size:12px; color:var(--muted); line-height:1.55}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <img src="picture/logo.png" alt="logo">
+        <div>
+          <div class="t1">星火廣告｜Dealer 任務發布</div>
+          <div class="t2">上傳 1–3 張車圖 + 車輛資訊，選擇預算方案後發布任務</div>
+        </div>
+      </div>
+      <div class="actions">
+        <div class="pill" id="who">未登入</div>
+        <button class="btn-ghost" id="logoutBtn">登出</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2 class="h">建立新任務</h2>
+        <p class="sub">圖片會上傳到 Supabase Storage（public-assets），任務資料寫入 Google Sheets（tasks）。</p>
+
+        <label>預算方案</label>
+        <select id="plan">
+          <option value="3000">3000（3 天 / 名額 20）</option>
+          <option value="5000">5000（7 天 / 名額 50）</option>
+          <option value="15000">15000（30 天 / 名額無上限）</option>
+        </select>
+
+        <div class="row">
+          <div>
+            <label>任務圖片（1–3 張）</label>
+            <input id="photos" type="file" accept="image/*" multiple />
+            <div class="hint">最多 3 張。建議每張小於 3MB，避免上傳太慢。</div>
+          </div>
+          <div>
+            <label>任務標題（可留空）</label>
+            <input id="title" type="text" placeholder="例：2018 Altis 1.8 經典版" />
+            <div class="hint">MVP 先不強制。空白會用車輛資訊前幾個字當標題。</div>
+          </div>
+        </div>
+
+        <div class="previews" id="previews" style="display:none;"></div>
+
+        <label>車輛資訊文字（必填）</label>
+        <textarea id="vehicleText" placeholder="年份 / 版本 / 配備 / 里程 / 車況 / 是否重大事故 / 聯絡方式..."></textarea>
+
+        <div class="row" style="margin-top:14px;">
+          <button class="btn" id="submitBtn">發布任務</button>
+          <button class="btn-ghost" id="resetBtn" type="button">清空</button>
+        </div>
+
+        <div id="msg"></div>
+      </div>
+
+      <div class="card">
+        <h2 class="h">方案摘要</h2>
+        <div class="kv"><b>3000</b><span>3 天｜名額 20</span></div>
+        <div class="kv"><b>5000</b><span>7 天｜名額 50</span></div>
+        <div class="kv"><b>15000</b><span>30 天｜名額無上限</span></div>
+        <p class="small" style="margin-top:12px;">
+          注意：此頁只做「發布任務」。夥伴接取 / 回傳 / 管理員審核與發獎勵，會在後續頁面串接。<br>
+          目前發布會呼叫 <code>/.netlify/functions/tasks-create</code>（下一個我們會給你這支 function）。
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { uploadImage } from "./assets/js/uploader.js";
+
+    // ===== 既有登入規則（沿用你的 localStorage） =====
+    function getToken() {
+      return localStorage.getItem("xinghuo_token") || "";
+    }
+    function getUser() {
+      try { return JSON.parse(localStorage.getItem("xinghuo_user") || "null"); }
+      catch { return null; }
+    }
+    function requireLogin() {
+      const token = getToken();
+      const user = getUser();
+      if (!token || !user) {
+        location.href = "login.html";
+        return null;
+      }
+      return { token, user };
+    }
+
+    // 登出：清你指定的三個 localStorage 並回首頁
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      localStorage.removeItem("xinghuo_token");
+      localStorage.removeItem("xinghuo_user");
+      localStorage.removeItem("xinghuo_my_quests");
+      location.href = "index.html";
+    });
+
+    // ===== 讀取公開設定：Supabase URL / Anon key =====
+    async function loadPublicConfig() {
+      const r = await fetch("/.netlify/functions/public-config");
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.ok) throw new Error(j.error || "public-config failed");
+      window.SUPABASE_URL = j.supabaseUrl;
+      window.SUPABASE_ANON_KEY = j.supabaseAnonKey;
+    }
+
+    function genId(prefix) {
+      // 簡單可用：用 crypto.randomUUID（若支援）或 fallback
+      if (crypto && crypto.randomUUID) return `${prefix}_${crypto.randomUUID()}`;
+      return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+    }
+
+    function planToMeta(plan) {
+      const p = String(plan);
+      if (p === "3000") return { duration_days: 3, quota: 20 };
+      if (p === "5000") return { duration_days: 7, quota: 50 };
+      return { duration_days: 30, quota: -1 }; // 15000
+    }
+
+    const ctx = requireLogin();
+    if (!ctx) throw new Error("Not logged in");
+
+    const who = document.getElementById("who");
+    who.textContent = ctx.user?.username || ctx.user?.name || "已登入";
+
+    const elPlan = document.getElementById("plan");
+    const elPhotos = document.getElementById("photos");
+    const elTitle = document.getElementById("title");
+    const elVehicleText = document.getElementById("vehicleText");
+    const elPreviews = document.getElementById("previews");
+    const elMsg = document.getElementById("msg");
+    const elSubmit = document.getElementById("submitBtn");
+    const elReset = document.getElementById("resetBtn");
+
+    function setMsg(type, text) {
+      elMsg.innerHTML = type === "ok"
+        ? `<div class="ok">${text}</div>`
+        : `<div class="err">${text}</div>`;
+    }
+
+    function clearForm() {
+      elPlan.value = "3000";
+      elPhotos.value = "";
+      elTitle.value = "";
+      elVehicleText.value = "";
+      elPreviews.style.display = "none";
+      elPreviews.innerHTML = "";
+      elMsg.innerHTML = "";
+    }
+    elReset.addEventListener("click", clearForm);
+
+    // 圖片預覽
+    elPhotos.addEventListener("change", () => {
+      const files = Array.from(elPhotos.files || []);
+      if (files.length > 3) {
+        setMsg("err", "最多只能選 3 張圖片。請重新選擇。");
+        elPhotos.value = "";
+        elPreviews.style.display = "none";
+        elPreviews.innerHTML = "";
+        return;
+      }
+      if (files.length === 0) {
+        elPreviews.style.display = "none";
+        elPreviews.innerHTML = "";
+        return;
+      }
+      elPreviews.innerHTML = "";
+      for (const f of files) {
+        const img = document.createElement("img");
+        img.src = URL.createObjectURL(f);
+        elPreviews.appendChild(img);
+      }
+      elPreviews.style.display = "grid";
+    });
+
+    // 初始化：載入 Supabase 公開設定
+    await loadPublicConfig();
+
+    // 發布任務
+    elSubmit.addEventListener("click", async () => {
+      try {
+        elSubmit.disabled = true;
+        elReset.disabled = true;
+        setMsg("ok", "處理中：檢查資料…");
+
+        const plan = elPlan.value;
+        const { duration_days, quota } = planToMeta(plan);
+
+        const vehicle_text = (elVehicleText.value || "").trim();
+        if (!vehicle_text) {
+          setMsg("err", "請填寫車輛資訊文字。");
+          return;
+        }
+
+        const files = Array.from(elPhotos.files || []);
+        if (files.length < 1 || files.length > 3) {
+          setMsg("err", "請上傳 1–3 張圖片。");
+          return;
+        }
+
+        const task_id = genId("task");
+        const title = (elTitle.value || "").trim();
+
+        // 先上傳圖片（public-assets/tasks/<task_id>/...）
+        setMsg("ok", "上傳圖片中…");
+        const photo_paths = [];
+        for (const f of files) {
+          const p = await uploadImage({
+            bucket: "public-assets",
+            prefix: "tasks",
+            id: task_id,
+            file: f,
+          });
+          photo_paths.push(p); // 形如：public-assets/tasks/<task_id>/xxx.jpg
+        }
+
+        // 寫入 tasks（下一個我們會做 tasks-create function）
+        setMsg("ok", "寫入任務資料中…");
+        const r = await fetch("/.netlify/functions/tasks-create", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + getToken(),
+          },
+          body: JSON.stringify({
+            task_id,
+            title,
+            vehicle_text,
+            budget_plan: Number(plan),
+            duration_days,
+            quota,
+            photo_paths, // array，後端會轉成你 tasks.photo_paths（逗號字串）
+          }),
+        });
+
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok || !j.ok) {
+          throw new Error(j.error || "tasks-create failed");
+        }
+
+        setMsg("ok", `✅ 任務已發布成功！task_id：${j.task_id}`);
+        // 清空表單
+        clearForm();
+      } catch (e) {
+        setMsg("err", "❌ 發布失敗：" + (e?.message || "未知錯誤"));
+      } finally {
+        elSubmit.disabled = false;
+        elReset.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

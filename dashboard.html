@@ -355,6 +355,7 @@
     .pill.green{border-color: rgba(6,199,85,.35)}
     .pill.orange{border-color: rgba(243,156,18,.40)}
     .pill.red{border-color: rgba(231,76,60,.45)}
+    .pill.blue{border-color: rgba(110,168,255,.45)}
     .quest-row{
       display:flex;
       justify-content:space-between;
@@ -368,6 +369,21 @@
     .quest-side{min-width:240px; text-align:right;}
     .quest-reward{color:var(--gold); font-weight:900; font-size:34px; margin-bottom:10px;}
 
+    .quest-photos{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .quest-photos img{
+      width:120px;
+      height:90px;
+      object-fit:cover;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+    }
+
     /* My quests */
     .my-quests{
       margin-top:18px;
@@ -379,7 +395,7 @@
     .my-quests h4{margin:0 0 10px; font-size:22px;}
     .my-quest-item{
       display:flex;
-      align-items:center;
+      align-items:flex-start;
       justify-content:space-between;
       gap:12px;
       padding:12px;
@@ -390,8 +406,8 @@
     }
     .my-quest-item:last-child{margin-bottom:0}
     .my-quest-item .name{font-weight:900}
-    .my-quest-item .mini{opacity:.9; font-size:18px}
-    .my-quest-actions{display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;}
+    .my-quest-item .mini{opacity:.9; font-size:18px; line-height:1.6}
+    .my-quest-actions{display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; align-items:center;}
     .btnMini{
       border-radius:14px;
       padding:10px 12px;
@@ -401,10 +417,39 @@
       background: rgba(255,255,255,.06);
       color:var(--text);
       cursor:pointer;
+      white-space:nowrap;
     }
     .btnMini:hover{border-color: rgba(50,224,196,.45);}
     .btnMini.danger{border-color: rgba(255,92,122,.35); background: rgba(255,92,122,.10);}
     .btnMini.danger:hover{border-color: rgba(255,92,122,.55);}
+    .btnMini.primary{
+      border-color: rgba(50,224,196,.35);
+      background: rgba(50,224,196,.16);
+    }
+
+    .submit-panel{
+      margin-top:10px;
+      padding:12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+    }
+    .submit-panel input[type="text"], .submit-panel input[type="file"]{
+      width:100%;
+      margin-top:10px;
+      padding:10px 10px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.22);
+      color: var(--text);
+      font-size:18px;
+    }
+    .submit-panel .hint{
+      font-size:16px;
+      opacity:.9;
+      margin-top:8px;
+      line-height:1.6;
+    }
 
     /* Tools */
     .toolbox{
@@ -634,72 +679,34 @@
       <div class="glass quest-wrap">
         <h2 class="section-title" style="margin-bottom:10px;">📋 任務大廳</h2>
         <div style="text-align:center; opacity:.95; font-size:18px; margin-bottom:18px;">
-          點「接受任務」後會加入下方「我的任務」。登出時會自動存到雲端；下次登入自動讀回。
+          點「接受任務」會立即佔用名額；可在下方「我的任務」放棄或提交回傳（截圖 + 連結）。
         </div>
 
+        <!-- ✅ 這裡改成：從 tasks-list 動態載入 -->
         <div id="questList">
           <div class="quest-card">
-            <span class="pill green">新手任務</span>
+            <span class="pill blue">載入中</span>
             <div class="quest-row">
               <div>
-                <h3>🚗 分享車輛貼文到 FB</h3>
-                <p class="quest-desc">將指定車輛貼文分享到 3 個相關 FB 社團，並截圖回報。</p>
+                <h3 class="skeleton wide">任務載入中…</h3>
+                <p class="quest-desc skeleton wide">請稍候</p>
                 <div class="quest-meta">
-                  <span><i class="far fa-clock"></i> 剩餘：2 天</span>
-                  <span><i class="fas fa-users"></i> 42 人已完成</span>
-                  <span><i class="fas fa-star"></i> +50 XP</span>
+                  <span class="skeleton mid">-</span>
                 </div>
               </div>
               <div class="quest-side">
-                <div class="quest-reward">$ 150</div>
-                <button class="btn" onclick="acceptQuest(1)">⚔️ 接受任務</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="quest-card">
-            <span class="pill orange">中級任務</span>
-            <div class="quest-row">
-              <div>
-                <h3>📱 LINE 群組推廣</h3>
-                <p class="quest-desc">將車輛資訊分享到 5 個 LINE 群組，並獲得至少 3 個有效詢問。</p>
-                <div class="quest-meta">
-                  <span><i class="far fa-clock"></i> 剩餘：5 天</span>
-                  <span><i class="fas fa-users"></i> 28 人已完成</span>
-                  <span><i class="fas fa-star"></i> +120 XP</span>
-                </div>
-              </div>
-              <div class="quest-side">
-                <div class="quest-reward">$ 350</div>
-                <button class="btn" onclick="acceptQuest(2)">⚔️ 接受任務</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="quest-card">
-            <span class="pill red">高級任務</span>
-            <div class="quest-row">
-              <div>
-                <h3>🎯 成功引薦買家</h3>
-                <p class="quest-desc">引薦實際買家完成看車，並獲得車商確認。</p>
-                <div class="quest-meta">
-                  <span><i class="far fa-clock"></i> 剩餘：7 天</span>
-                  <span><i class="fas fa-users"></i> 15 人已完成</span>
-                  <span><i class="fas fa-star"></i> +300 XP</span>
-                </div>
-              </div>
-              <div class="quest-side">
-                <div class="quest-reward">$ 1,200</div>
-                <button class="btn" onclick="acceptQuest(3)">⚔️ 接受任務</button>
+                <div class="quest-reward skeleton narrow">$ -</div>
+                <button class="btn" disabled>⚔️ 接受任務</button>
               </div>
             </div>
           </div>
         </div>
 
+        <!-- ✅ 我的任務：改成真實 claim 狀態 -->
         <div class="my-quests" id="myQuestsBox">
           <h4>🧾 我的任務（進行中）</h4>
           <div id="myQuestsList" style="opacity:.95; font-size:18px;">
-            目前沒有任務。去上面接受一個任務吧！
+            讀取中…
           </div>
         </div>
       </div>
@@ -905,79 +912,6 @@
       setText('activeDays', String(activeDays));
     }
 
-    // ===== quests (local cache; cloud sync at login/logout) =====
-    const QUESTS = [
-      { id: 1, name: '分享車輛貼文到 FB', reward: 150, xp: 50 },
-      { id: 2, name: 'LINE 群組推廣', reward: 350, xp: 120 },
-      { id: 3, name: '成功引薦買家', reward: 1200, xp: 300 },
-    ];
-
-    function getMyQuests(){
-      return safeParse(localStorage.getItem('xinghuo_my_quests'), []);
-    }
-    function setMyQuests(list){
-      localStorage.setItem('xinghuo_my_quests', JSON.stringify(list));
-      renderMyQuests();
-    }
-    function renderMyQuests(){
-      const list = getMyQuests();
-      if(!list.length){
-        setHTML('myQuestsList', '目前沒有任務。去上面接受一個任務吧！');
-        return;
-      }
-
-      const html = list.map(q => {
-        const statusText = q.status === 'done' ? '✅ 已完成（示範）' : '⏳ 進行中';
-        return `
-          <div class="my-quest-item">
-            <div>
-              <div class="name">${q.name}</div>
-              <div class="mini">${statusText} · 獎勵 $${q.reward} · +${q.xp} XP</div>
-            </div>
-            <div class="my-quest-actions">
-              ${q.status !== 'done' ? `<button class="btnMini" onclick="markQuestDone(${q.id})">標記完成</button>` : ''}
-              <button class="btnMini danger" onclick="removeQuest(${q.id})">移除</button>
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      setHTML('myQuestsList', html);
-    }
-
-    function acceptQuest(questId){
-      const q = QUESTS.find(x => x.id === questId);
-      if(!q) return;
-
-      const list = getMyQuests();
-      if(list.some(x => x.id === q.id)){
-        toast('你已接受過此任務了', 'error');
-        return;
-      }
-
-      const ok = confirm(`確定要接受任務嗎？\n\n任務：${q.name}\n獎勵：$${q.reward}\nXP：+${q.xp}\n\n接受後將加入「我的任務」。`);
-      if(!ok) return;
-
-      list.push({ ...q, status: 'doing', accepted_at: new Date().toISOString() });
-      setMyQuests(list);
-      toast('✅ 任務已加入「我的任務」', 'ok');
-      document.getElementById('myQuestsBox')?.scrollIntoView({ behavior:'smooth', block:'start' });
-    }
-
-    function markQuestDone(id){
-      const list = getMyQuests().map(q => q.id === id ? ({...q, status:'done', done_at: new Date().toISOString()}) : q);
-      setMyQuests(list);
-      toast('✅ 已標記完成（示範）', 'ok');
-    }
-
-    function removeQuest(id){
-      const ok = confirm('確定要移除此任務嗎？');
-      if(!ok) return;
-      const list = getMyQuests().filter(q => q.id !== id);
-      setMyQuests(list);
-      toast('已移除任務', 'ok');
-    }
-
     // ===== withdraw demo =====
     function withdrawFunds(){
       const available = 3250;
@@ -1007,7 +941,7 @@
           setSyncBadge('syncing');
 
           const payload = {
-            my_quests: getMyQuests(),
+            my_quests: safeParse(localStorage.getItem('xinghuo_my_quests'), []),
             stats: {
               level: Number(document.getElementById('userLevel')?.textContent || 0),
               xp: Number(String(document.getElementById('currentXP')?.textContent || '0').replace(/,/g,'')),
@@ -1113,11 +1047,8 @@
           applyStats(data.stats || {});
           const myQuests = Array.isArray(data.my_quests) ? data.my_quests : [];
           localStorage.setItem('xinghuo_my_quests', JSON.stringify(myQuests));
-          renderMyQuests();
         }else{
-          // 保底全 0
           applyStats({ level:0,xp:0,nextLevelXP:100,totalEarned:0,todayEarnings:0,monthEarnings:0,completedQuests:0,activeDays:0 });
-          renderMyQuests();
         }
 
         // profile(name/email) from users sheet
@@ -1136,14 +1067,19 @@
         }
 
       }catch(e){
-        // 全部失敗保底
         applyStats({ level:0,xp:0,nextLevelXP:100,totalEarned:0,todayEarnings:0,monthEarnings:0,completedQuests:0,activeDays:0 });
-        renderMyQuests();
         setText('kvName', user?.name ? user.name : '(未填)');
         setText('kvEmail', user?.email ? user.email : '(未填)');
       }finally{
         setLoading(false);
         setSyncBadge((okDashboard && okProfile) ? 'ok' : 'error');
+      }
+
+      // ✅ 任務系統：載入任務大廳 + 我的任務
+      try{
+        await window.TaskUI.init(token);
+      }catch(e){
+        toast('⚠️ 任務載入失敗：' + (e?.message || '未知錯誤'), 'error');
       }
 
       // Simulated login count
@@ -1156,6 +1092,345 @@
         el.textContent = next.toLocaleString();
       }, 30000);
     });
+  </script>
+
+  <!-- ✅ 任務系統模組（保留原風格、只替換任務區內容） -->
+  <script type="module">
+    import { uploadImage } from "./assets/js/uploader.js";
+
+    window.TaskUI = (() => {
+      function getToken(){ return localStorage.getItem('xinghuo_token') || ""; }
+
+      async function apiGet(path, token){
+        const r = await fetch(path, { headers: { Authorization: "Bearer " + token } });
+        const j = await r.json().catch(()=>({}));
+        if(!r.ok || !j.ok) throw new Error(j.error || "Request failed");
+        return j;
+      }
+      async function apiPost(path, token, body){
+        const r = await fetch(path, {
+          method: "POST",
+          headers: { "Content-Type":"application/json", Authorization: "Bearer " + token },
+          body: JSON.stringify(body || {})
+        });
+        const j = await r.json().catch(()=>({}));
+        if(!r.ok || !j.ok) throw new Error(j.error || "Request failed");
+        return j;
+      }
+
+      async function loadPublicConfig(){
+        const r = await fetch("/.netlify/functions/public-config");
+        const j = await r.json().catch(()=>({}));
+        if(!r.ok || !j.ok) throw new Error(j.error || "public-config failed");
+        window.SUPABASE_URL = j.supabaseUrl;
+        window.SUPABASE_ANON_KEY = j.supabaseAnonKey;
+      }
+
+      function publicUrl(bucketPath){
+        const s = String(bucketPath||"").trim();
+        if(!s) return "";
+        const parts = s.split("/");
+        const bucket = parts.shift();
+        const path = parts.join("/");
+        return `${window.SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
+      }
+
+      function pillByRemain(remaining){
+        if(remaining === -1) return { cls:"green", text:"無上限" };
+        if(Number(remaining) <= 0) return { cls:"red", text:"已額滿" };
+        if(Number(remaining) <= 5) return { cls:"orange", text:"名額緊張" };
+        return { cls:"green", text:"可接取" };
+      }
+
+      function fmtRemainText(t){
+        if(t.remaining === -1) return "無上限";
+        return String(t.remaining);
+      }
+
+      function escapeHtml(s){
+        return String(s||"")
+          .replace(/&/g,"&amp;")
+          .replace(/</g,"&lt;")
+          .replace(/>/g,"&gt;")
+          .replace(/"/g,"&quot;")
+          .replace(/'/g,"&#039;");
+      }
+
+      function claimStatusLabel(st){
+        if(st === "ACTIVE") return "⏳ 進行中";
+        if(st === "SUBMITTED") return "🕒 待審核";
+        if(st === "APPROVED") return "✅ 已通過";
+        if(st === "REJECTED") return "❌ 已退回";
+        if(st === "ABANDONED") return "🚫 已放棄";
+        return st || "-";
+      }
+
+      async function renderQuestHall(token){
+        const box = document.getElementById("questList");
+        if(!box) return;
+
+        // skeleton
+        box.innerHTML = `
+          <div class="quest-card">
+            <span class="pill blue">載入中</span>
+            <div class="quest-row">
+              <div>
+                <h3 class="skeleton wide">任務載入中…</h3>
+                <p class="quest-desc skeleton wide">請稍候</p>
+              </div>
+              <div class="quest-side">
+                <div class="quest-reward skeleton narrow">$ -</div>
+                <button class="btn" disabled>⚔️ 接受任務</button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        const j = await apiGet("/.netlify/functions/tasks-list", token);
+        const tasks = Array.isArray(j.tasks) ? j.tasks : [];
+
+        if(!tasks.length){
+          box.innerHTML = `
+            <div class="quest-card">
+              <span class="pill orange">目前沒有任務</span>
+              <div class="quest-row">
+                <div>
+                  <h3>暫時沒有可接取任務</h3>
+                  <p class="quest-desc">請稍後再回來看看。</p>
+                </div>
+              </div>
+            </div>
+          `;
+          return;
+        }
+
+        box.innerHTML = tasks.map(t => {
+          const p = pillByRemain(t.remaining);
+          const photos = (t.photo_paths||[]).slice(0,3).map(pp => `<img src="${publicUrl(pp)}" alt="任務圖片">`).join("");
+          const title = t.title ? escapeHtml(t.title) : "🚗 車輛推廣任務";
+          const remain = fmtRemainText(t);
+
+          return `
+            <div class="quest-card" data-task="${escapeHtml(t.task_id)}">
+              <span class="pill ${p.cls}"><i class="fas fa-flag"></i> ${p.text}</span>
+              <div class="quest-row">
+                <div>
+                  <h3>${title}</h3>
+                  <p class="quest-desc" style="white-space:pre-wrap;">${escapeHtml(t.vehicle_text || "")}</p>
+                  <div class="quest-meta">
+                    <span><i class="far fa-clock"></i> 天數：${Number(t.duration_days)||0} 天</span>
+                    <span><i class="fas fa-users"></i> 剩餘名額：${remain}</span>
+                  </div>
+                  ${photos ? `<div class="quest-photos">${photos}</div>` : ``}
+                </div>
+                <div class="quest-side">
+                  <div class="quest-reward">$ ${Number(t.budget_plan||0).toLocaleString()}</div>
+                  <button class="btn" data-accept="${escapeHtml(t.task_id)}" ${t.remaining===0 ? "disabled" : ""}>⚔️ 接受任務</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        // bind accept
+        box.querySelectorAll("[data-accept]").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const task_id = btn.getAttribute("data-accept");
+            const ok = confirm("確定要接受此任務嗎？\n\n接受後會佔用名額，並顯示在「我的任務」。");
+            if(!ok) return;
+
+            btn.disabled = true;
+            try{
+              await apiPost("/.netlify/functions/tasks-claim", token, { task_id });
+              toast("✅ 任務已接受，已加入「我的任務」", "ok");
+              await renderMyTasks(token);
+              // 重新載入任務大廳（更新剩餘名額）
+              await renderQuestHall(token);
+              document.getElementById('myQuestsBox')?.scrollIntoView({ behavior:'smooth', block:'start' });
+            }catch(e){
+              toast("❌ 接受失敗：" + (e?.message || "未知錯誤"), "error");
+              btn.disabled = false;
+            }
+          });
+        });
+      }
+
+      async function renderMyTasks(token){
+        const box = document.getElementById("myQuestsList");
+        if(!box) return;
+
+        box.innerHTML = "讀取中…";
+
+        const j = await apiGet("/.netlify/functions/tasks-my", token);
+        const items = Array.isArray(j.items) ? j.items : [];
+
+        if(!items.length){
+          box.innerHTML = "目前沒有任務。去上面接受一個任務吧！";
+          return;
+        }
+
+        box.innerHTML = items.map(it => {
+          const c = it.claim || {};
+          const t = it.task || {};
+          const s = it.submission || null;
+
+          const st = String(c.status || "");
+          const title = t.title ? escapeHtml(t.title) : "🚗 車輛推廣任務";
+          const desc = escapeHtml((t.vehicle_text||"")).slice(0, 140);
+          const statusText = claimStatusLabel(st);
+
+          const showAbandon = st === "ACTIVE";
+          const showSubmit = st === "ACTIVE";
+          const showSubmitted = st === "SUBMITTED";
+          const showApproved = st === "APPROVED";
+          const showRejected = st === "REJECTED";
+
+          const shareLink = s?.share_link ? escapeHtml(s.share_link) : "";
+          const shareImg = s?.share_screenshot_path ? publicUrl(s.share_screenshot_path) : "";
+
+          return `
+            <div class="my-quest-item" data-claim="${escapeHtml(c.claim_id)}">
+              <div style="min-width: 260px;">
+                <div class="name">${title}</div>
+                <div class="mini">
+                  狀態：<b>${statusText}</b><br>
+                  任務：${desc}${(t.vehicle_text && t.vehicle_text.length > 140) ? "..." : ""}<br>
+                  claim_id：<span style="opacity:.9">${escapeHtml(c.claim_id || "")}</span>
+                </div>
+                ${shareLink ? `<div class="mini" style="margin-top:8px;">轉發連結：<a href="${shareLink}" target="_blank" style="color:#9bd3ff">${shareLink}</a></div>` : ``}
+                ${shareImg ? `<div class="mini" style="margin-top:8px;">回傳截圖：<br><img src="${shareImg}" style="max-width:340px; border-radius:14px; border:1px solid rgba(255,255,255,.12); margin-top:8px;"></div>` : ``}
+              </div>
+
+              <div class="my-quest-actions">
+                ${showAbandon ? `<button class="btnMini danger" data-abandon="${escapeHtml(c.claim_id)}"><i class="fas fa-ban"></i> 放棄</button>` : ``}
+                ${showSubmit ? `<button class="btnMini primary" data-open-submit="${escapeHtml(c.claim_id)}"><i class="fas fa-upload"></i> 提交回傳</button>` : ``}
+                ${showSubmitted ? `<span class="chip"><i class="fas fa-hourglass-half"></i> 等待審核</span>` : ``}
+                ${showApproved ? `<span class="chip"><i class="fas fa-circle-check"></i> 已通過</span>` : ``}
+                ${showRejected ? `<span class="chip"><i class="fas fa-triangle-exclamation"></i> 已退回</span>` : ``}
+              </div>
+
+              <div class="submit-panel" id="panel_${escapeHtml(c.claim_id)}" style="display:none; width:100%;">
+                <div style="font-weight:900; font-size:18px;">📮 提交回傳</div>
+                <div class="hint">1) 填轉發連結 2) 上傳「轉發截圖」(必填) 3) 上傳「瀏覽量截圖」(選填，僅管理員可看)</div>
+
+                <input type="text" id="link_${escapeHtml(c.claim_id)}" placeholder="轉發連結（必填）" value="${shareLink ? shareLink : ""}">
+                <input type="file" id="share_${escapeHtml(c.claim_id)}" accept="image/*">
+                <input type="file" id="ins_${escapeHtml(c.claim_id)}" accept="image/*">
+
+                <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+                  <button class="btnMini primary" data-submit="${escapeHtml(c.claim_id)}"><i class="fas fa-paper-plane"></i> 送出</button>
+                  <button class="btnMini" data-close-submit="${escapeHtml(c.claim_id)}">收起</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        // bind abandon
+        box.querySelectorAll("[data-abandon]").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const claim_id = btn.getAttribute("data-abandon");
+            const ok = confirm("確定要放棄此任務嗎？\n\n放棄後名額會釋放，且此任務會標記為已放棄。");
+            if(!ok) return;
+
+            btn.disabled = true;
+            try{
+              await apiPost("/.netlify/functions/tasks-abandon", token, { claim_id });
+              toast("已放棄任務", "ok");
+              await renderMyTasks(token);
+              await renderQuestHall(token);
+            }catch(e){
+              toast("❌ 放棄失敗：" + (e?.message || "未知錯誤"), "error");
+              btn.disabled = false;
+            }
+          });
+        });
+
+        // open/close submit panel
+        box.querySelectorAll("[data-open-submit]").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const claim_id = btn.getAttribute("data-open-submit");
+            const panel = document.getElementById("panel_" + claim_id);
+            if(panel) panel.style.display = "block";
+          });
+        });
+        box.querySelectorAll("[data-close-submit]").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const claim_id = btn.getAttribute("data-close-submit");
+            const panel = document.getElementById("panel_" + claim_id);
+            if(panel) panel.style.display = "none";
+          });
+        });
+
+        // bind submit
+        box.querySelectorAll("[data-submit]").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            const claim_id = btn.getAttribute("data-submit");
+            const linkEl = document.getElementById("link_" + claim_id);
+            const shareEl = document.getElementById("share_" + claim_id);
+            const insEl = document.getElementById("ins_" + claim_id);
+
+            const share_link = String(linkEl?.value || "").trim();
+            const shareFile = shareEl?.files?.[0] || null;
+            const insFile = insEl?.files?.[0] || null;
+
+            if(!share_link){
+              toast("請填寫轉發連結", "error");
+              return;
+            }
+            if(!shareFile){
+              toast("請上傳轉發截圖（必填）", "error");
+              return;
+            }
+
+            btn.disabled = true;
+            try{
+              toast("上傳中…", "ok");
+
+              // public-assets：轉發截圖
+              const share_screenshot_path = await uploadImage({
+                bucket: "public-assets",
+                prefix: "proof",
+                id: claim_id,
+                file: shareFile
+              });
+
+              // admin-only：瀏覽量截圖（可空）
+              let insights_screenshot_path = "";
+              if(insFile){
+                insights_screenshot_path = await uploadImage({
+                  bucket: "admin-only",
+                  prefix: "proof",
+                  id: claim_id,
+                  file: insFile
+                });
+              }
+
+              await apiPost("/.netlify/functions/tasks-submit", token, {
+                claim_id,
+                share_link,
+                share_screenshot_path,
+                insights_screenshot_path
+              });
+
+              toast("✅ 已提交，等待審核", "ok");
+              await renderMyTasks(token);
+            }catch(e){
+              toast("❌ 提交失敗：" + (e?.message || "未知錯誤"), "error");
+              btn.disabled = false;
+            }
+          });
+        });
+      }
+
+      async function init(token){
+        await loadPublicConfig(); // 必須：提供 uploader.js 需要的 window.SUPABASE_*
+        await renderQuestHall(token);
+        await renderMyTasks(token);
+      }
+
+      return { init };
+    })();
   </script>
 </body>
 </html>
