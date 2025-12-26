@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>星火廣告｜使用協議</title>
+  <meta name="description" content="星火廣告平台使用協議與規則總章" />
+  <style>
+    :root{
+      --bg: #0b0f19;
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.74);
+      --shadow: 0 18px 60px rgba(0,0,0,.28);
+      --radius: 16px;
+      --max: 1100px;
+    }
+
+    *{ box-sizing:border-box; }
+    html{ scroll-behavior:smooth; }
+
+    body{
+      margin:0;
+      font-family: "DFKai-SB","BiauKai","KaiTi","STKaiti","Noto Serif TC",serif;
+      font-size: 20px;
+      font-weight: 700;
+      text-align: center;
+      color: var(--text);
+      line-height: 1.8;
+      background: var(--bg);
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* ✅ 全站背景圖：沿用首頁（注意路徑 /picture） */
+    body::before{
+      content:"";
+      position: fixed;
+      inset: 0;
+      background-image: url("picture/p1.png");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      transform: scale(1.02);
+      z-index: -3;
+    }
+
+    /* ✅ 全站遮罩：確保文字可讀（沿用首頁） */
+    body::after{
+      content:"";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(900px 600px at 20% 0%, rgba(255,255,255,.08), transparent 60%),
+        radial-gradient(800px 520px at 80% 15%, rgba(255,255,255,.06), transparent 55%),
+        linear-gradient(180deg, rgba(0,0,0,.52) 0%, rgba(0,0,0,.60) 45%, rgba(0,0,0,.70) 100%);
+      z-index: -2;
+      pointer-events: none;
+    }
+
+    a{ color:inherit; text-decoration:none; }
+    .container{ width:min(var(--max), calc(100% - 40px)); margin:0 auto; }
+
+    /* =========================
+       ✅ Header（跟 index 一樣 + 手機漢堡）
+       ========================= */
+    header{
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(11,15,25,.78);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,.14);
+    }
+    .header-inner{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      padding: 14px 0;
+      position: relative;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width: 160px;
+    }
+    .logo{
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.16);
+      box-shadow: var(--shadow);
+      background-image: url("picture/logo.png");
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: contain;
+      background-color: rgba(255,255,255,.08);
+      flex: 0 0 auto;
+    }
+    .brand b{
+      font-weight: 800;
+      letter-spacing:.2px;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .navPanel{
+      display:flex;
+      align-items:center;
+      gap: 18px;
+      flex: 1;
+      justify-content:space-between;
+    }
+
+    nav{
+      display:flex;
+      align-items:center;
+      gap: 18px;
+      flex-wrap: wrap;
+      justify-content:center;
+      flex: 1;
+    }
+    nav a{
+      padding: 10px 12px;
+      border-radius: 12px;
+      color: var(--muted);
+      border: 1px solid transparent;
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    nav a:hover{
+      color: var(--text);
+      border-color: rgba(255,255,255,.16);
+      background: rgba(255,255,255,.04);
+    }
+    nav a.active{
+      color: var(--text);
+      border-color: rgba(255,255,255,.20);
+      background: rgba(255,255,255,.08);
+    }
+
+    .actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width: 160px;
+      justify-content:flex-end;
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding: 12px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      cursor:pointer;
+      user-select:none;
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .btn:hover{ background: rgba(255,255,255,.10); }
+    .btn.primary{
+      background: rgba(255,255,255,.14);
+      border-color: rgba(255,255,255,.18);
+    }
+
+    /* ✅ 登入後：顯示使用者/登出（沿用 index 的邏輯，不改版面） */
+    .btn.user{
+      background: rgba(255,255,255,.08);
+      border-color: rgba(255,255,255,.16);
+      cursor: default;
+    }
+    .btn.logout{
+      background: rgba(255,92,122,.10);
+      border-color: rgba(255,92,122,.28);
+    }
+    .btn.logout:hover{
+      background: rgba(255,92,122,.18);
+      border-color: rgba(255,92,122,.40);
+    }
+
+    .menuBtn{
+      display:none;
+      width:44px; height:44px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      cursor:pointer;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      padding:10px;
+      flex: 0 0 auto;
+    }
+    .menuBtn span{
+      display:block;
+      width:22px;
+      height:2px;
+      background: rgba(255,255,255,.86);
+      border-radius:999px;
+    }
+    .menuBtn:hover{ background: rgba(255,255,255,.10); }
+
+    @media (max-width: 900px){
+      .header-inner{ padding: 10px 0; }
+      .logo{ width:32px; height:32px; border-radius:10px; }
+      .brand b{ font-size:20px; }
+
+      .menuBtn{ display:inline-flex; }
+
+      .navPanel{
+        display:none;
+        position:absolute;
+        left:0; right:0;
+        top:100%;
+        padding: 14px 20px 18px;
+        background: rgba(11,15,25,.92);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid rgba(255,255,255,.14);
+        box-shadow: 0 18px 60px rgba(0,0,0,.28);
+      }
+
+      .navPanel nav{
+        width:100%;
+        display:grid;
+        grid-template-columns: 1fr 1fr;
+        gap:10px;
+        justify-content:stretch;
+      }
+      .navPanel nav a{
+        font-size:18px;
+        padding: 12px 12px;
+        text-align:center;
+        background: rgba(255,255,255,.04);
+        border-color: rgba(255,255,255,.12);
+        white-space: normal;
+      }
+
+      .navPanel .actions{
+        width:100%;
+        margin-top:12px;
+        display:grid;
+        grid-template-columns: 1fr 1fr;
+        gap:10px;
+        justify-content:stretch;
+      }
+      .navPanel .btn{
+        width:100%;
+        font-size:18px;
+        padding: 12px 12px;
+      }
+
+      body.menu-open .navPanel{ display:block; }
+    }
+
+    @media (max-width: 520px){
+      .navPanel nav{ grid-template-columns: 1fr; }
+      .navPanel .actions{ grid-template-columns: 1fr; }
+    }
+
+    /* =========================
+       Main（原本 pact 內容保留）
+       ========================= */
+    main{ padding: 54px 0 70px; }
+
+    .page-title{
+      margin: 0 0 18px 0;
+      font-size: 34px;
+      font-weight: 900;
+      letter-spacing: .4px;
+      line-height: 1.25;
+    }
+
+    .card{
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      padding: 22px 18px;
+      overflow: hidden;
+    }
+
+    .note{
+      margin-top: 14px;
+      padding: 16px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.86);
+      font-weight: 900;
+      line-height: 1.9;
+    }
+
+    .toc{
+      margin-top: 18px;
+      padding: 18px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.16);
+    }
+    .toc-title{
+      margin: 0 0 12px 0;
+      font-size: 22px;
+      font-weight: 900;
+      color: rgba(255,255,255,.90);
+    }
+    .toc-links{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      align-items: stretch;
+      justify-items: stretch;
+    }
+    .toc-links a{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 12px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      color: var(--muted);
+      font-weight: 900;
+      line-height: 1.25;
+      min-height: 54px;
+      white-space: normal;
+      text-wrap: balance;
+    }
+    .toc-links a:hover{
+      color: var(--text);
+      background: rgba(255,255,255,.10);
+      border-color: rgba(255,255,255,.18);
+    }
+
+    .section{
+      margin-top: 18px;
+      padding: 18px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+    }
+    .section h2{
+      margin: 0 0 12px 0;
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: .2px;
+      color: rgba(255,255,255,.92);
+    }
+    .section .p{
+      margin: 10px 0 0 0;
+      color: rgba(255,255,255,.84);
+      font-weight: 800;
+      line-height: 1.95;
+      white-space: pre-line;
+    }
+
+    .final{
+      margin-top: 18px;
+      padding: 18px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.08);
+      font-weight: 900;
+      line-height: 1.95;
+      color: rgba(255,255,255,.92);
+      white-space: pre-line;
+    }
+
+    footer{
+      padding: 38px 0 30px;
+      border-top: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+    }
+    .footer-bottom{
+      color: rgba(255,255,255,.68);
+      font-size: 18px;
+      line-height: 1.8;
+      font-weight: 800;
+    }
+
+    @media (max-width: 900px){
+      main{ padding: 40px 0 60px; }
+      .toc-links{ grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="container">
+      <div class="header-inner">
+        <a class="brand" href="index.html" aria-label="回到首頁">
+          <div class="logo" aria-hidden="true"></div>
+          <b>星火廣告</b>
+        </a>
+
+        <button class="menuBtn" id="menuBtn" type="button" aria-label="開啟選單" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+
+        <div class="navPanel" id="navPanel">
+          <nav aria-label="站內導覽">
+            <!-- ✅ 改：會員中心 → dashboard -->
+            <a href="dashboard.html">會員中心</a>
+            <a href="index.html#intro">關於我們</a>
+            <a href="index.html#testimonials">分享區</a>
+            <a class="active" href="pact.html">使用協議</a>
+            <a href="index.html#footer">聯絡資訊</a>
+          </nav>
+
+          <div class="actions">
+            <!-- ✅ 未登入顯示 -->
+            <div id="guestActions" style="display:flex; gap:10px; align-items:center;">
+              <a class="btn" href="signup.html">註冊</a>
+              <a class="btn primary" href="login.html">登入</a>
+            </div>
+
+            <!-- ✅ 已登入顯示 -->
+            <div id="userActions" style="display:none; gap:10px; align-items:center;">
+              <span class="btn user" id="navUsername" aria-label="目前登入使用者">使用者</span>
+              <button class="btn logout" id="logoutBtn" type="button">登出</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div class="card">
+        <h1 class="page-title">《星火廣告平台使用協議與規則總章》</h1>
+
+        <div class="note">
+          重要提示：<br>
+          請您務必詳細閱讀本協議內容。當您勾選「我同意」並完成註冊或開始使用本平台服務，<br>
+          即表示您已充分閱讀、理解並同意接受本協議及其所有附屬規則之全部條款。
+        </div>
+
+        <div class="toc" aria-label="條文目錄">
+          <div class="toc-title">條文目錄</div>
+          <div class="toc-links">
+            <a href="#a1">第一條 平台主體與性質</a>
+            <a href="#a2">第二條 名詞定義</a>
+            <a href="#a3">第三條 乙方（推廣方）權利與義務</a>
+            <a href="#a4">第四條 推廣任務與積分制度</a>
+            <a href="#a5">第五條 丙方（刊登廣告客戶）之義務</a>
+            <a href="#a6">第六條 丙方違規與處置</a>
+            <a href="#a7">第七條 禁止行為（通用）</a>
+            <a href="#a8">第八條 免責聲明</a>
+            <a href="#a9">第九條 協議修改與終止</a>
+            <a href="#a10">第十條 最終解釋權</a>
+            <a href="#a11">第十一條 準據法與管轄</a>
+          </div>
+        </div>
+
+        <div id="a1" class="section">
+          <h2>第一條 平台主體與性質</h2>
+          <div class="p">１．本平台（以下簡稱「平台」）係由 星火廣告（以下簡稱「甲方」）所建置與營運之數位廣告與推廣任務媒合平台。
+
+２．平台提供推廣任務發布、廣告曝光、成效追蹤與獎勵機制，供乙方與丙方於自願基礎下參與。
+
+３．本平台所提供之一切任務、積分、獎勵及相關機制，均不構成僱傭、承攬、代理或任何勞動關係。</div>
+        </div>
+
+        <div id="a2" class="section">
+          <h2>第二條 名詞定義</h2>
+          <div class="p">１．乙方（Partner）：指註冊並使用平台，依平台規則執行推廣任務以獲得積分或獎勵之個人或單位。
+
+２．丙方（Dealer）：指於平台刊登廣告、車輛資訊或推廣內容之商家、車商或個人。
+
+３．積分：指乙方完成推廣任務後，經平台認定有效所獲得之虛擬點數，用於會員等級計算或申請兌換獎勵。
+
+４．公告：指平台於官方網站、會員中心、系統通知或其他指定線上方式所發布之內容，自發布時起即生效。</div>
+        </div>
+
+        <div id="a3" class="section">
+          <h2>第三條 乙方（推廣方）權利與義務</h2>
+          <div class="p">１．乙方應確保註冊及使用平台時所提供之所有資料均為真實、正確且完整。
+
+２．乙方應妥善保管帳號及密碼，並對其帳號下之一切行為負完全責任。
+
+３．乙方不得出借、出租、轉讓或提供帳號予任何第三人使用。
+
+４．若乙方違反前述規定，甲方得立即凍結或永久終止帳號，並沒收尚未發放之所有積分或獎勵。</div>
+        </div>
+
+        <div id="a4" class="section">
+          <h2>第四條 推廣任務與積分制度</h2>
+          <div class="p">１．任務內容、執行方式、有效期限、可獲積分數量，均以平台當時公告為準。
+
+２．乙方須依任務指定條件完成推廣，包括但不限於指定平台、文案、素材、公開權限與保留期間，並提交有效證明。
+
+３．積分經系統或人工初步確認後記入乙方帳戶，僅為暫時記錄，不代表最終確認。
+
+４．乙方申請積分兌現或獎勵發放時，甲方得進行追溯審核；如發現推廣內容刪除、隱藏、不符規定或從未公開，甲方得扣除該筆積分，並依情節沒收全部或部分獎勵。</div>
+        </div>
+
+        <div id="a5" class="section">
+          <h2>第五條 丙方（刊登廣告客戶）之義務</h2>
+          <div class="p">１．丙方保證其於平台所提供及刊登之所有廣告與車輛資訊均為真實、正確、完整。
+
+２．車輛資訊應包含但不限於：
+（1）車輛品牌、型號
+（2）出廠年份
+（3）版本與配備
+（4）實際里程數
+（5）車體與引擎狀況
+（6）是否為重大事故車、水泡車、泡水車或其他影響交易之情形
+
+３．丙方不得提供任何不實、誤導、隱匿或刻意模糊之資訊。</div>
+        </div>
+
+        <div id="a6" class="section">
+          <h2>第六條 丙方違規與處置</h2>
+          <div class="p">１．如經查證丙方刊登之廣告或車輛資訊不實，甲方得依違規情節採取下列措施之一或數項：
+（1）下架該廣告內容
+（2）暫停或終止丙方使用平台之權利
+（3）沒收全部或部分已支付之廣告費用
+
+２．前項沒收之廣告費用，甲方得用於補償已參與推廣之乙方及平台營運損失，丙方不得異議。</div>
+        </div>
+
+        <div id="a7" class="section">
+          <h2>第七條 禁止行為（通用）</h2>
+          <div class="p">１．任何一方不得利用平台從事詐欺、刷量、散布不實資訊或其他違法行為。
+
+２．不得干擾平台系統運作或侵害甲方、其他使用者或第三人之權益。
+
+３．違反者，甲方得不經通知即採取凍結、終止、追償等必要措施。</div>
+        </div>
+
+        <div id="a8" class="section">
+          <h2>第八條 免責聲明</h2>
+          <div class="p">４．平台依現況提供服務，甲方不保證服務不中斷或完全無誤。
+
+５．因乙方或丙方個人行為、第三方平台政策或不可抗力因素所生之一切損失，概由該方自行負責。</div>
+        </div>
+
+        <div id="a9" class="section">
+          <h2>第九條 協議修改與終止</h2>
+          <div class="p">１．甲方得依營運需要，隨時修改本協議或相關規則，並以公告方式通知。
+
+２．使用者於公告後繼續使用平台，即視為同意修改後內容。
+
+３．甲方得隨時終止與乙方或丙方之合作關係。</div>
+        </div>
+
+        <div id="a10" class="section">
+          <h2>第十條 最終解釋權</h2>
+          <div class="p">１．本協議、平台規則、任務內容、活動辦法及所有相關事項，如有疑義或未盡事宜，均由甲方 星火廣告 依誠信原則為最終解釋、補充、調整與決定。</div>
+        </div>
+
+        <div id="a11" class="section">
+          <h2>第十一條 準據法與管轄</h2>
+          <div class="p">１．本協議以中華民國法律為準據法。
+
+２．因本協議所生之一切爭議，以桃園地方法院為第一審管轄法院。</div>
+        </div>
+
+        <div class="final">本人已閱讀、理解並同意接受《星火廣告平台使用協議與規則總章》全部內容。</div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-bottom">
+        <div>© <span id="year"></span> 星火廣告. 版權所有。</div>
+        <div>本平台活動依官方公告為準，主辦單位保留修改、終止及最終解釋權。</div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    // ===== Mobile header menu toggle（同 index） =====
+    const menuBtn = document.getElementById("menuBtn");
+    const navPanel = document.getElementById("navPanel");
+
+    menuBtn?.addEventListener("click", () => {
+      const open = document.body.classList.toggle("menu-open");
+      menuBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+
+    navPanel?.querySelectorAll("a").forEach(a => {
+      a.addEventListener("click", () => {
+        document.body.classList.remove("menu-open");
+        menuBtn?.setAttribute("aria-expanded", "false");
+      });
+    });
+
+    // =========================
+    // ✅ Login state on pact (match dashboard)
+    // =========================
+    function safeParse(json, fallback){
+      try { return JSON.parse(json); } catch(e){ return fallback; }
+    }
+
+    function isLoggedIn(){
+      const token = localStorage.getItem('xinghuo_token');
+      const userRaw = localStorage.getItem('xinghuo_user');
+      const user = safeParse(userRaw, null);
+      if(!token || !user) return null;
+      return { token, user };
+    }
+
+    function setHeaderAuthUI(){
+      const guest = document.getElementById('guestActions');
+      const authed = document.getElementById('userActions');
+      const nameEl = document.getElementById('navUsername');
+
+      const session = isLoggedIn();
+      if(!session){
+        if(guest) guest.style.display = 'flex';
+        if(authed) authed.style.display = 'none';
+        return;
+      }
+
+      const username = session.user?.username || session.user?.name || '使用者';
+      if(nameEl) nameEl.textContent = username;
+
+      if(guest) guest.style.display = 'none';
+      if(authed) authed.style.display = 'flex';
+    }
+
+    function logout(){
+      const ok = confirm('確定要登出嗎？');
+      if(!ok) return;
+
+      localStorage.removeItem('xinghuo_token');
+      localStorage.removeItem('xinghuo_user');
+      localStorage.removeItem('xinghuo_my_quests'); // ✅ 與 dashboard 同步
+
+      document.body.classList.remove("menu-open");
+      menuBtn?.setAttribute("aria-expanded", "false");
+      setHeaderAuthUI();
+
+      location.href = './index.html';
+    }
+
+    document.getElementById('logoutBtn')?.addEventListener('click', logout);
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setHeaderAuthUI();
+    });
+  </script>
+</body>
+</html>

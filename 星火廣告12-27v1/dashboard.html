@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>會員儀表板 - 星火廣告</title>
+
+  <!-- Icons + Font -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#0b0f19;
+      --card:rgba(17,24,42,.86);
+      --text:#ffffff;
+      --muted:#ffffff;
+      --line:rgba(255,255,255,.12);
+      --accent:#32e0c4;
+      --accent2:#6ea8ff;
+      --danger:#ff5c7a;
+      --gold:#FFD700;
+      --radius:18px;
+      --shadow:0 18px 60px rgba(0,0,0,.35);
+      --font:"Zen Maru Gothic", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", Arial;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0; min-height:100vh;
+      font-family:var(--font);
+      background:
+        radial-gradient(1100px 500px at 20% -10%, rgba(50,224,196,.16), transparent 60%),
+        radial-gradient(900px 500px at 90% 10%, rgba(110,168,255,.16), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      font-size:24px;
+    }
+
+    .container{width:min(1100px, 92%); margin:0 auto;}
+    .section{padding:44px 0;}
+    .glass{
+      background: var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    /* Navbar */
+    .navbar{
+      position:fixed; top:0; left:0; right:0; z-index:50;
+      background: rgba(15, 23, 42, 0.75);
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      backdrop-filter: blur(10px);
+    }
+    .nav-container{
+      width:min(1200px, 92%);
+      margin:0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 0;
+      gap:16px;
+      position:relative;
+    }
+    .brand{
+      display:flex; align-items:center; gap:12px;
+      text-decoration:none; color:var(--text);
+      font-weight:800;
+    }
+    .brand img{
+      width:56px; height:56px;
+      border-radius:16px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+      padding:7px;
+      object-fit:contain;
+      box-shadow: 0 10px 30px rgba(50,224,196,.14);
+    }
+    .nav-links{
+      display:flex; flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
+      justify-content:flex-end;
+    }
+    .nav-link{
+      display:inline-flex; align-items:center; gap:10px;
+      padding:10px 14px;
+      border-radius:14px;
+      color:var(--text);
+      text-decoration:none;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      transition: transform .2s ease, border-color .2s ease, background .2s ease;
+      font-size:20px;
+      white-space:nowrap;
+    }
+    .nav-link:hover{
+      transform: translateY(-2px);
+      border-color: rgba(50,224,196,.45);
+      background: rgba(50,224,196,.10);
+    }
+    .nav-link.danger{
+      border-color: rgba(255,92,122,.35);
+      background: rgba(255,92,122,.10);
+    }
+    .nav-link.danger:hover{
+      border-color: rgba(255,92,122,.55);
+      background: rgba(255,92,122,.18);
+    }
+
+    .menu-btn{
+      display:none;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      border-radius:14px;
+      padding:10px 14px;
+      cursor:pointer;
+      font-size:20px;
+      line-height:1;
+      transition: transform .2s ease, border-color .2s ease, background .2s ease;
+    }
+    .menu-btn:hover{
+      transform: translateY(-2px);
+      border-color: rgba(50,224,196,.45);
+      background: rgba(50,224,196,.10);
+    }
+
+    /* Header */
+    .dashboard-header{
+      margin-top:92px;
+      padding:54px 0 34px;
+      position:relative;
+      overflow:hidden;
+    }
+    .dashboard-header::before{
+      content:"";
+      position:absolute; inset:0;
+      background:
+        radial-gradient(900px 360px at 15% 20%, rgba(255,215,0,.10), transparent 60%),
+        radial-gradient(900px 420px at 90% 30%, rgba(157,78,221,.12), transparent 55%),
+        radial-gradient(900px 520px at 60% 110%, rgba(50,224,196,.10), transparent 60%);
+      pointer-events:none;
+    }
+    .header-inner{
+      position:relative;
+      text-align:center;
+    }
+    .welcome-title{
+      margin:0 0 10px;
+      font-size:44px;
+      font-weight:900;
+      text-shadow: 2px 2px 6px rgba(0,0,0,.45);
+    }
+    .welcome-subtitle{
+      margin:0 0 18px;
+      opacity:.95;
+      font-size:22px;
+    }
+    .level-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:12px;
+      padding:10px 18px;
+      border-radius:999px;
+      border:1px solid rgba(255,215,0,.45);
+      background: rgba(0,0,0,.22);
+      box-shadow: 0 10px 30px rgba(0,0,0,.22);
+      flex-wrap:wrap;
+      justify-content:center;
+    }
+    .level-number{
+      font-size:28px;
+      font-weight:900;
+      color:var(--gold);
+    }
+    .badge-sep{opacity:.6}
+
+    /* Quick Profile Card */
+    .profile-row{
+      margin-top:24px;
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:18px;
+      align-items:stretch;
+    }
+    .profile-card{
+      padding:22px;
+      text-align:left;
+    }
+    .profile-title{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:12px;
+      margin-bottom:14px;
+    }
+    .profile-title h3{
+      margin:0;
+      font-size:26px;
+      font-weight:900;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:6px 12px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      font-size:18px;
+      opacity:.95;
+      white-space:nowrap;
+    }
+    .kv{
+      display:grid;
+      grid-template-columns: 160px 1fr;
+      row-gap:10px;
+      column-gap:10px;
+      font-size:20px;
+      line-height:1.6;
+    }
+    .kv .k{opacity:.85}
+    .kv .v{font-weight:800; word-break:break-word}
+    .actions{
+      display:flex; gap:10px; flex-wrap:wrap;
+      margin-top:14px;
+    }
+
+    /* Buttons */
+    .btn{
+      border:0;
+      cursor:pointer;
+      border-radius:18px;
+      padding:16px 18px;
+      font-size:22px;
+      font-weight:900;
+      color:var(--text);
+      background: linear-gradient(135deg, rgba(50,224,196,.95), rgba(110,168,255,.95));
+      box-shadow: 0 10px 30px rgba(50,224,196,.14);
+      text-shadow: 0 1px 2px rgba(0,0,0,.35);
+      transition: transform .2s ease, box-shadow .2s ease;
+    }
+    .btn:hover{transform: translateY(-2px); box-shadow: 0 14px 38px rgba(50,224,196,.22);}
+    .btn.secondary{
+      background: rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.16);
+      box-shadow: none;
+    }
+    .btn.secondary:hover{border-color: rgba(50,224,196,.45);}
+
+    /* XP */
+    .xp-container{margin-top:18px;}
+    .xp-label{
+      display:flex; justify-content:space-between; gap:10px;
+      font-weight:800;
+      margin-bottom:10px;
+      font-size:20px;
+    }
+    .xp-bar{
+      height:26px;
+      border-radius:999px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+    }
+    .xp-fill{
+      height:100%;
+      width: 0%;
+      border-radius:999px;
+      background: linear-gradient(90deg, #06C755, #32e0c4, #6ea8ff, #9d4edd);
+      transition: width 900ms cubic-bezier(0.34, 1.56, 0.64, 1);
+      position:relative;
+      overflow:hidden;
+    }
+    .xp-fill::after{
+      content:"";
+      position:absolute; inset:0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent);
+      animation: xpShine 2s infinite;
+    }
+    @keyframes xpShine { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
+
+    /* Stats */
+    .section-title{
+      margin:0 0 18px;
+      font-size:34px;
+      font-weight:900;
+      text-align:center;
+    }
+    .stats-grid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap:18px;
+      margin-top:18px;
+    }
+    .stat-card{
+      padding:22px;
+      border-radius:22px;
+      border:1px solid rgba(255,255,255,.12);
+      background: linear-gradient(135deg, rgba(17,24,42,.86) 0%, rgba(45,55,72,.70) 100%);
+      box-shadow: 0 10px 30px rgba(0,0,0,.28);
+      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+      position:relative;
+      overflow:hidden;
+    }
+    .stat-card::before{
+      content:"";
+      position:absolute; top:0; left:0; right:0;
+      height:4px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      opacity:.9;
+    }
+    .stat-card:hover{
+      transform: translateY(-6px);
+      box-shadow: 0 16px 44px rgba(0,0,0,.38);
+      border-color: rgba(50,224,196,.28);
+    }
+    .stat-icon{font-size:34px; margin-bottom:10px;}
+    .stat-value{font-size:44px; font-weight:900; margin:6px 0 4px;}
+    .stat-label{opacity:.9; font-weight:700;}
+
+    /* Quests */
+    .quest-hall{padding:34px 0;}
+    .quest-wrap{padding:28px;}
+    .quest-card{
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.10);
+      background: linear-gradient(135deg, rgba(45,55,72,.72) 0%, rgba(30,41,59,.85) 100%);
+      padding:20px;
+      margin-bottom:14px;
+      transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+      position:relative;
+      overflow:hidden;
+    }
+    .quest-card:hover{
+      transform: translateX(8px);
+      border-color: rgba(110,168,255,.28);
+      box-shadow: 0 14px 34px rgba(0,0,0,.34);
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:6px 12px;
+      border-radius:999px;
+      font-weight:900;
+      font-size:18px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.20);
+      margin-bottom:10px;
+    }
+    .pill.green{border-color: rgba(6,199,85,.35)}
+    .pill.orange{border-color: rgba(243,156,18,.40)}
+    .pill.red{border-color: rgba(231,76,60,.45)}
+    .quest-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:18px;
+      flex-wrap:wrap;
+    }
+    .quest-row h3{margin:0 0 10px; font-size:26px;}
+    .quest-desc{opacity:.92; line-height:1.7; margin:0 0 10px;}
+    .quest-meta{display:flex; gap:14px; flex-wrap:wrap; opacity:.92; font-size:18px;}
+    .quest-side{min-width:240px; text-align:right;}
+    .quest-reward{color:var(--gold); font-weight:900; font-size:34px; margin-bottom:10px;}
+
+    /* My quests */
+    .my-quests{
+      margin-top:18px;
+      padding:18px;
+      border-radius:18px;
+      border:1px dashed rgba(255,255,255,.18);
+      background: rgba(255,255,255,.04);
+    }
+    .my-quests h4{margin:0 0 10px; font-size:22px;}
+    .my-quest-item{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      margin-bottom:10px;
+    }
+    .my-quest-item:last-child{margin-bottom:0}
+    .my-quest-item .name{font-weight:900}
+    .my-quest-item .mini{opacity:.9; font-size:18px}
+    .my-quest-actions{display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;}
+    .btnMini{
+      border-radius:14px;
+      padding:10px 12px;
+      font-size:18px;
+      font-weight:900;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      cursor:pointer;
+    }
+    .btnMini:hover{border-color: rgba(50,224,196,.45);}
+    .btnMini.danger{border-color: rgba(255,92,122,.35); background: rgba(255,92,122,.10);}
+    .btnMini.danger:hover{border-color: rgba(255,92,122,.55);}
+
+    /* Tools */
+    .toolbox{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap:18px;
+      margin-top:18px;
+    }
+    .tool-card{padding:22px;}
+    .tool-card h3{margin:0 0 10px; font-size:26px;}
+    .codebox{
+      padding:14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.22);
+      word-break:break-all;
+      font-size:18px;
+    }
+
+    /* Toast */
+    .toast{
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      max-width: min(520px, calc(100vw - 36px));
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(17,24,42,.92);
+      box-shadow: 0 18px 60px rgba(0,0,0,.45);
+      display:none;
+      z-index: 99;
+      font-size:20px;
+      line-height:1.5;
+      white-space:pre-line;
+    }
+    .toast.ok{border-color: rgba(50,224,196,.35);}
+    .toast.error{border-color: rgba(255,92,122,.35); background: rgba(255,92,122,.10);}
+
+    /* Footer */
+    footer{
+      margin-top:40px;
+      padding:34px 0;
+      border-top:1px solid rgba(255,255,255,.10);
+      opacity:.95;
+    }
+    .footer-grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:18px;
+      margin-bottom:14px;
+    }
+    .footer-grid h3{margin:0 0 10px; font-size:22px;}
+    .footer-link{color:var(--text); text-decoration:underline; text-underline-offset:3px; display:inline-block; margin:6px 0;}
+    .footer-bottom{opacity:.9; font-size:18px;}
+
+    /* ✅ Responsive + dropdown menu (mobile) */
+    @media (max-width: 900px){
+      .profile-row{grid-template-columns: 1fr; }
+      .quest-side{text-align:left}
+      .footer-grid{grid-template-columns: 1fr}
+      .menu-btn{ display:inline-flex; align-items:center; justify-content:center; }
+      .nav-links{
+        position:absolute;
+        top: calc(100% + 10px);
+        left: 0;
+        right: 0;
+        display:none;
+        flex-direction:column;
+        align-items:stretch;
+        justify-content:flex-start;
+        gap:10px;
+        padding:12px;
+        border-radius:16px;
+        border:1px solid rgba(255,255,255,.12);
+        background: rgba(15, 23, 42, 0.92);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+      }
+      .nav-links.open{ display:flex; }
+      .nav-link{ width:100%; justify-content:flex-start; }
+    }
+
+    /* ===== Loading skeleton (避免閃爍) ===== */
+    .is-loading .skeleton{
+      position: relative;
+      color: transparent !important;
+      user-select: none;
+    }
+    .is-loading .skeleton::before{
+      content:"";
+      display:block;
+      height: 1em;
+      border-radius: 12px;
+      background: rgba(255,255,255,.10);
+    }
+    .is-loading .skeleton.wide::before{ width: 90%; }
+    .is-loading .skeleton.mid::before{ width: 65%; }
+    .is-loading .skeleton.narrow::before{ width: 40%; }
+    .is-loading .skeleton::after{
+      content:"";
+      position:absolute; inset:0;
+      border-radius: 12px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
+      transform: translateX(-100%);
+      animation: sk 1.1s infinite;
+    }
+    @keyframes sk { 100% { transform: translateX(100%); } }
+  </style>
+</head>
+
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a class="brand" href="index.html">
+        <img src="./picture/logo.png" alt="星火廣告 Logo">
+        <span>星火廣告</span>
+      </a>
+
+      <button class="menu-btn" id="menuBtn" type="button"
+        aria-label="開啟選單" aria-expanded="false" aria-controls="navLinks">
+        <i class="fas fa-ellipsis-vertical"></i>
+      </button>
+
+      <div class="nav-links" id="navLinks">
+        <a href="#top" class="nav-link"><i class="fas fa-home"></i> 公會大廳</a>
+        <a href="#quests" class="nav-link"><i class="fas fa-tasks"></i> 任務大廳</a>
+        <a href="#tools" class="nav-link"><i class="fas fa-tools"></i> 冒險工具</a>
+        <a href="index.html" class="nav-link"><i class="fas fa-house"></i> 返回首頁</a>
+        <a href="#" class="nav-link danger" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> 登出</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Header -->
+  <section class="dashboard-header" id="top">
+    <div class="container header-inner">
+      <h1 class="welcome-title">🏰 歡迎回來，<span id="userName">冒險者</span>！</h1>
+      <p class="welcome-subtitle">星火廣告會員中心｜你的推廣冒險基地</p>
+
+      <div class="level-badge" aria-label="會員狀態">
+        <span class="level-number">Lv. <span id="userLevel" class="skeleton narrow">0</span></span>
+        <span id="userRole">冒險者</span>
+        <span class="badge-sep">|</span>
+        <span><i class="fas fa-coins" style="color:#FFD700;"></i> <span id="totalEarned" class="skeleton mid">0</span> 金幣</span>
+      </div>
+
+      <div class="profile-row">
+        <div class="glass profile-card">
+          <div class="profile-title">
+            <h3>👤 會員資料</h3>
+            <!-- ✅ 雲端同步狀態 Badge -->
+            <span class="chip" id="syncBadge"><i class="fas fa-cloud"></i> 同步中…</span>
+          </div>
+
+          <div class="kv">
+            <div class="k">使用者名稱</div><div class="v" id="kvUsername">-</div>
+            <div class="k">姓名</div><div class="v" id="kvName" class="skeleton mid">(未填)</div>
+            <div class="k">Email</div><div class="v" id="kvEmail" class="skeleton wide">(未填)</div>
+          </div>
+
+          <div class="actions">
+            <button class="btn secondary" id="copyRefBtn"><i class="fas fa-copy"></i> 複製推廣連結</button>
+            <button class="btn secondary" id="scrollQuestBtn"><i class="fas fa-flag"></i> 看任務</button>
+          </div>
+        </div>
+
+        <div class="glass profile-card">
+          <div class="profile-title">
+            <h3>⚡ 經驗值</h3>
+            <span class="chip"><i class="fas fa-bolt"></i> 成長中</span>
+          </div>
+
+          <div class="xp-container">
+            <div class="xp-label">
+              <span>經驗值</span>
+              <span><span id="currentXP" class="skeleton mid">0</span> / <span id="nextLevelXP" class="skeleton mid">100</span> XP</span>
+            </div>
+            <div class="xp-bar"><div class="xp-fill" id="xpFill"></div></div>
+          </div>
+
+          <div style="margin-top:14px; opacity:.95; font-size:18px; line-height:1.6">
+            ✅ 新註冊第一次登入：自動建立全 0 初始數據（Lv.0、0 金幣、0/100 XP、收益/任務/活躍皆為 0）。
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <section class="section">
+    <div class="container">
+      <h2 class="section-title">⚡ 冒險者狀態</h2>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">💰</div>
+          <div class="stat-value skeleton mid" id="todayEarnings">$ 0</div>
+          <div class="stat-label">今日收益</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">📈</div>
+          <div class="stat-value skeleton mid" id="monthEarnings">$ 0</div>
+          <div class="stat-label">本月累計</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">✅</div>
+          <div class="stat-value skeleton narrow" id="completedQuests">0</div>
+          <div class="stat-label">已完成任務</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">⏱️</div>
+          <div class="stat-value skeleton narrow" id="activeDays">0</div>
+          <div class="stat-label">活躍天數</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quests -->
+  <section class="quest-hall" id="quests">
+    <div class="container">
+      <div class="glass quest-wrap">
+        <h2 class="section-title" style="margin-bottom:10px;">📋 任務大廳</h2>
+        <div style="text-align:center; opacity:.95; font-size:18px; margin-bottom:18px;">
+          點「接受任務」後會加入下方「我的任務」。登出時會自動存到雲端；下次登入自動讀回。
+        </div>
+
+        <div id="questList">
+          <div class="quest-card">
+            <span class="pill green">新手任務</span>
+            <div class="quest-row">
+              <div>
+                <h3>🚗 分享車輛貼文到 FB</h3>
+                <p class="quest-desc">將指定車輛貼文分享到 3 個相關 FB 社團，並截圖回報。</p>
+                <div class="quest-meta">
+                  <span><i class="far fa-clock"></i> 剩餘：2 天</span>
+                  <span><i class="fas fa-users"></i> 42 人已完成</span>
+                  <span><i class="fas fa-star"></i> +50 XP</span>
+                </div>
+              </div>
+              <div class="quest-side">
+                <div class="quest-reward">$ 150</div>
+                <button class="btn" onclick="acceptQuest(1)">⚔️ 接受任務</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="quest-card">
+            <span class="pill orange">中級任務</span>
+            <div class="quest-row">
+              <div>
+                <h3>📱 LINE 群組推廣</h3>
+                <p class="quest-desc">將車輛資訊分享到 5 個 LINE 群組，並獲得至少 3 個有效詢問。</p>
+                <div class="quest-meta">
+                  <span><i class="far fa-clock"></i> 剩餘：5 天</span>
+                  <span><i class="fas fa-users"></i> 28 人已完成</span>
+                  <span><i class="fas fa-star"></i> +120 XP</span>
+                </div>
+              </div>
+              <div class="quest-side">
+                <div class="quest-reward">$ 350</div>
+                <button class="btn" onclick="acceptQuest(2)">⚔️ 接受任務</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="quest-card">
+            <span class="pill red">高級任務</span>
+            <div class="quest-row">
+              <div>
+                <h3>🎯 成功引薦買家</h3>
+                <p class="quest-desc">引薦實際買家完成看車，並獲得車商確認。</p>
+                <div class="quest-meta">
+                  <span><i class="far fa-clock"></i> 剩餘：7 天</span>
+                  <span><i class="fas fa-users"></i> 15 人已完成</span>
+                  <span><i class="fas fa-star"></i> +300 XP</span>
+                </div>
+              </div>
+              <div class="quest-side">
+                <div class="quest-reward">$ 1,200</div>
+                <button class="btn" onclick="acceptQuest(3)">⚔️ 接受任務</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="my-quests" id="myQuestsBox">
+          <h4>🧾 我的任務（進行中）</h4>
+          <div id="myQuestsList" style="opacity:.95; font-size:18px;">
+            目前沒有任務。去上面接受一個任務吧！
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tools -->
+  <section class="section" id="tools">
+    <div class="container">
+      <h2 class="section-title">🛠️ 冒險工具</h2>
+
+      <div class="toolbox">
+        <div class="glass tool-card">
+          <h3><i class="fas fa-link"></i> 推廣連結</h3>
+          <p style="opacity:.92; margin-top:0; line-height:1.7;">
+            你的專屬推廣連結（固定不變），分享即可追蹤成效。
+          </p>
+          <div class="codebox" id="refLinkBox">-</div>
+          <div style="margin-top:14px;">
+            <button class="btn" id="copyRefBtn2"><i class="fas fa-copy"></i> 複製連結</button>
+          </div>
+        </div>
+
+        <div class="glass tool-card">
+          <h3><i class="fas fa-wallet"></i> 獎金提領（示範）</h3>
+          <p style="opacity:.92; margin-top:0; line-height:1.7;">
+            這一塊下一步可接真實金額與提領申請。現在先示範 UI。
+          </p>
+          <div class="codebox">可提領金額：<b style="color:#FFD700;">$ 3,250</b><br>最低提領：$ 500</div>
+          <div style="margin-top:14px;">
+            <button class="btn" id="withdrawBtn"><i class="fas fa-money-check-alt"></i> 申請提領</button>
+          </div>
+        </div>
+
+        <div class="glass tool-card">
+          <h3><i class="fas fa-chart-line"></i> 數據報表（示範）</h3>
+          <p style="opacity:.92; margin-top:0; line-height:1.7;">
+            下一步可把 dashboard sheet 的 stats 做成真實報表。
+          </p>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn secondary" id="weeklyBtn"><i class="fas fa-calendar-alt"></i> 本週報表</button>
+            <button class="btn secondary" id="chartBtn"><i class="fas fa-chart-bar"></i> 分析圖表</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <h3>快速連結</h3>
+          <a href="index.html" class="footer-link">網站首頁</a><br>
+          <a href="#top" class="footer-link">公會大廳</a><br>
+          <a href="#quests" class="footer-link">任務大廳</a>
+        </div>
+        <div>
+          <h3>支援中心</h3>
+          <div style="opacity:.92; font-size:18px; line-height:1.8;">
+            <div><i class="fas fa-question-circle"></i> 任務問題諮詢</div>
+            <div><i class="fab fa-line"></i> 官方客服：<b>@206zsrzq</b></div>
+            <div style="margin-top:10px;">本日登入：<span id="loginCount">1,248</span> 位冒險者</div>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        © 2025 星火廣告. 版權所有。
+      </div>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ===== helpers =====
+    function toast(text, type){
+      const el = document.getElementById('toast');
+      el.className = 'toast ' + (type || '');
+      el.textContent = text;
+      el.style.display = 'block';
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => { el.style.display = 'none'; }, 2600);
+    }
+
+    function safeParse(json, fallback){
+      try { return JSON.parse(json); } catch(e){ return fallback; }
+    }
+
+    function requireLogin(){
+      const token = localStorage.getItem('xinghuo_token');
+      const userRaw = localStorage.getItem('xinghuo_user');
+      const user = safeParse(userRaw, null);
+
+      if(!token || !user){
+        location.href = './login.html';
+        return null;
+      }
+      return { token, user };
+    }
+
+    function setText(id, text){
+      const el = document.getElementById(id);
+      if(el) el.textContent = text;
+    }
+
+    function setHTML(id, html){
+      const el = document.getElementById(id);
+      if(el) el.innerHTML = html;
+    }
+
+    // ✅ Skeleton 控制（避免閃爍）
+    function setLoading(on){
+      document.body.classList.toggle('is-loading', !!on);
+    }
+
+    // ✅ 雲端同步 Badge
+    function setSyncBadge(state){
+      const el = document.getElementById('syncBadge');
+      if(!el) return;
+      if(state === 'ok'){
+        el.innerHTML = '<i class="fas fa-circle-check"></i> 已同步';
+      }else if(state === 'error'){
+        el.innerHTML = '<i class="fas fa-triangle-exclamation"></i> 同步失敗';
+      }else{
+        el.innerHTML = '<i class="fas fa-cloud"></i> 同步中…';
+      }
+    }
+
+    // ===== referral link =====
+    function buildRefLink(user){
+      const uid = user?.user_id || user?.username || 'unknown';
+      return `https://xinghuoad.xyz/?ref=${encodeURIComponent(uid)}`;
+    }
+
+    async function copyToClipboard(text){
+      try{
+        await navigator.clipboard.writeText(text);
+        toast('✅ 已複製到剪貼簿', 'ok');
+      }catch(e){
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        toast('✅ 已複製到剪貼簿', 'ok');
+      }
+    }
+
+    // ===== Cloud API (dashboard sheet) =====
+    async function cloudDashboard(action, token, data){
+      const res = await fetch('/.netlify/functions/dashboard', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({ action, ...(data ? { data } : {}) })
+      });
+      return await res.json();
+    }
+
+    // ===== Cloud API (users profile: name/email) =====
+    async function cloudProfile(token){
+      const res = await fetch('/.netlify/functions/user-profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        // ✅ 修正：user-profile 需要 action=get
+        body: JSON.stringify({ action: 'get' })
+      });
+      return await res.json();
+    }
+
+    function applyStats(stats){
+      const s = stats || {};
+      const level = Number(s.level) || 0;
+      const xp = Number(s.xp) || 0;
+      const nextLevelXP = Number(s.nextLevelXP) || 100;
+
+      const totalEarned = Number(s.totalEarned) || 0;
+      const todayEarnings = Number(s.todayEarnings) || 0;
+      const monthEarnings = Number(s.monthEarnings) || 0;
+      const completedQuests = Number(s.completedQuests) || 0;
+      const activeDays = Number(s.activeDays) || 0;
+
+      setText('userLevel', String(level));
+      setText('totalEarned', totalEarned.toLocaleString());
+
+      setText('currentXP', xp.toLocaleString());
+      setText('nextLevelXP', nextLevelXP.toLocaleString());
+
+      const xpPercent = Math.max(0, Math.min(100, (xp / Math.max(1, nextLevelXP)) * 100));
+      const fill = document.getElementById('xpFill');
+      if(fill) fill.style.width = xpPercent.toFixed(1) + '%';
+
+      setText('todayEarnings', '$ ' + todayEarnings.toLocaleString());
+      setText('monthEarnings', '$ ' + monthEarnings.toLocaleString());
+      setText('completedQuests', String(completedQuests));
+      setText('activeDays', String(activeDays));
+    }
+
+    // ===== quests (local cache; cloud sync at login/logout) =====
+    const QUESTS = [
+      { id: 1, name: '分享車輛貼文到 FB', reward: 150, xp: 50 },
+      { id: 2, name: 'LINE 群組推廣', reward: 350, xp: 120 },
+      { id: 3, name: '成功引薦買家', reward: 1200, xp: 300 },
+    ];
+
+    function getMyQuests(){
+      return safeParse(localStorage.getItem('xinghuo_my_quests'), []);
+    }
+    function setMyQuests(list){
+      localStorage.setItem('xinghuo_my_quests', JSON.stringify(list));
+      renderMyQuests();
+    }
+    function renderMyQuests(){
+      const list = getMyQuests();
+      if(!list.length){
+        setHTML('myQuestsList', '目前沒有任務。去上面接受一個任務吧！');
+        return;
+      }
+
+      const html = list.map(q => {
+        const statusText = q.status === 'done' ? '✅ 已完成（示範）' : '⏳ 進行中';
+        return `
+          <div class="my-quest-item">
+            <div>
+              <div class="name">${q.name}</div>
+              <div class="mini">${statusText} · 獎勵 $${q.reward} · +${q.xp} XP</div>
+            </div>
+            <div class="my-quest-actions">
+              ${q.status !== 'done' ? `<button class="btnMini" onclick="markQuestDone(${q.id})">標記完成</button>` : ''}
+              <button class="btnMini danger" onclick="removeQuest(${q.id})">移除</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      setHTML('myQuestsList', html);
+    }
+
+    function acceptQuest(questId){
+      const q = QUESTS.find(x => x.id === questId);
+      if(!q) return;
+
+      const list = getMyQuests();
+      if(list.some(x => x.id === q.id)){
+        toast('你已接受過此任務了', 'error');
+        return;
+      }
+
+      const ok = confirm(`確定要接受任務嗎？\n\n任務：${q.name}\n獎勵：$${q.reward}\nXP：+${q.xp}\n\n接受後將加入「我的任務」。`);
+      if(!ok) return;
+
+      list.push({ ...q, status: 'doing', accepted_at: new Date().toISOString() });
+      setMyQuests(list);
+      toast('✅ 任務已加入「我的任務」', 'ok');
+      document.getElementById('myQuestsBox')?.scrollIntoView({ behavior:'smooth', block:'start' });
+    }
+
+    function markQuestDone(id){
+      const list = getMyQuests().map(q => q.id === id ? ({...q, status:'done', done_at: new Date().toISOString()}) : q);
+      setMyQuests(list);
+      toast('✅ 已標記完成（示範）', 'ok');
+    }
+
+    function removeQuest(id){
+      const ok = confirm('確定要移除此任務嗎？');
+      if(!ok) return;
+      const list = getMyQuests().filter(q => q.id !== id);
+      setMyQuests(list);
+      toast('已移除任務', 'ok');
+    }
+
+    // ===== withdraw demo =====
+    function withdrawFunds(){
+      const available = 3250;
+      if(available < 500){
+        toast(`提領金額不足（目前 $${available}，最低 $500）`, 'error');
+        return;
+      }
+      const amountStr = prompt(`請輸入提領金額（最低 $500，最高 $${available}）：`, String(available));
+      if(!amountStr) return;
+
+      const amount = Number(amountStr);
+      if(!Number.isFinite(amount) || amount < 500 || amount > available){
+        toast('❌ 金額輸入錯誤，請確認範圍', 'error');
+        return;
+      }
+      toast(`✅ 已提交提領申請：$${amount}\n（示範流程，下一步可接真實申請）`, 'ok');
+    }
+
+    // ===== logout (cloud save -> clear localStorage -> go index) =====
+    async function logout(){
+      const ok = confirm('確定要登出嗎？');
+      if(!ok) return;
+
+      const session = window.__session;
+      if(session?.token){
+        try{
+          setSyncBadge('syncing');
+
+          const payload = {
+            my_quests: getMyQuests(),
+            stats: {
+              level: Number(document.getElementById('userLevel')?.textContent || 0),
+              xp: Number(String(document.getElementById('currentXP')?.textContent || '0').replace(/,/g,'')),
+              nextLevelXP: Number(String(document.getElementById('nextLevelXP')?.textContent || '100').replace(/,/g,'')),
+              totalEarned: Number(String(document.getElementById('totalEarned')?.textContent || '0').replace(/,/g,'')),
+              todayEarnings: Number(String(document.getElementById('todayEarnings')?.textContent || '0').replace(/[^\d]/g,'')) || 0,
+              monthEarnings: Number(String(document.getElementById('monthEarnings')?.textContent || '0').replace(/[^\d]/g,'')) || 0,
+              completedQuests: Number(String(document.getElementById('completedQuests')?.textContent || '0').replace(/,/g,'')) || 0,
+              activeDays: Number(String(document.getElementById('activeDays')?.textContent || '0').replace(/,/g,'')) || 0,
+            }
+          };
+
+          await cloudDashboard('save', session.token, payload);
+          toast('☁️ 已同步雲端，準備登出…', 'ok');
+          setSyncBadge('ok');
+        }catch(e){
+          toast('⚠️ 雲端同步失敗，但仍會登出\n（下次登入可能讀到舊資料）', 'error');
+          setSyncBadge('error');
+        }
+      }
+
+      // ✅ 依你既定規格：登出清 3 個 key
+      localStorage.removeItem('xinghuo_token');
+      localStorage.removeItem('xinghuo_user');
+      localStorage.removeItem('xinghuo_my_quests');
+
+      setTimeout(() => { location.href = './index.html'; }, 450);
+    }
+
+    // ✅ Mobile dropdown menu behavior
+    const menuBtn = document.getElementById('menuBtn');
+    const navLinks = document.getElementById('navLinks');
+
+    function closeMenu(){
+      if(!menuBtn || !navLinks) return;
+      navLinks.classList.remove('open');
+      menuBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    if(menuBtn && navLinks){
+      menuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const open = navLinks.classList.toggle('open');
+        menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+
+      navLinks.addEventListener('click', (e) => e.stopPropagation());
+      document.addEventListener('click', () => closeMenu());
+      document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeMenu(); });
+      navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
+      window.addEventListener('resize', () => { if(window.innerWidth > 900) closeMenu(); });
+    }
+
+    // ===== init =====
+    document.addEventListener('DOMContentLoaded', async () => {
+      const session = requireLogin();
+      if(!session) return;
+      window.__session = session;
+
+      const { user, token } = session;
+
+      // 先用 localStorage 的 username 立即顯示
+      setText('userName', user?.username || '冒險者');
+      setText('kvUsername', user?.username || '-');
+
+      // 先進入 loading 狀態（骨架 + badge）
+      setLoading(true);
+      setSyncBadge('syncing');
+
+      // Referral link（這個不需要等雲端）
+      const refLink = buildRefLink(user);
+      setText('refLinkBox', refLink);
+
+      // Buttons
+      document.getElementById('logoutBtn')?.addEventListener('click', (e) => { e.preventDefault(); logout(); });
+      document.getElementById('withdrawBtn')?.addEventListener('click', withdrawFunds);
+
+      const copyFn = () => copyToClipboard(refLink);
+      document.getElementById('copyRefBtn')?.addEventListener('click', copyFn);
+      document.getElementById('copyRefBtn2')?.addEventListener('click', copyFn);
+
+      document.getElementById('scrollQuestBtn')?.addEventListener('click', () => {
+        document.getElementById('quests')?.scrollIntoView({ behavior:'smooth', block:'start' });
+      });
+
+      document.getElementById('weeklyBtn')?.addEventListener('click', () => toast('📅 本週報表（示範）\n下一步可接真實資料', 'ok'));
+      document.getElementById('chartBtn')?.addEventListener('click', () => toast('📊 分析圖表（示範）\n下一步可加入圖表/報表頁', 'ok'));
+
+      // ✅ 同步讀取：dashboard 資料 + users profile(name/email)
+      let okDashboard = false;
+      let okProfile = false;
+
+      try{
+        const [rDash, rProfile] = await Promise.allSettled([
+          cloudDashboard('get', token),
+          cloudProfile(token),
+        ]);
+
+        // dashboard data
+        if(rDash.status === 'fulfilled' && rDash.value?.ok){
+          okDashboard = true;
+          const data = rDash.value.data || {};
+          applyStats(data.stats || {});
+          const myQuests = Array.isArray(data.my_quests) ? data.my_quests : [];
+          localStorage.setItem('xinghuo_my_quests', JSON.stringify(myQuests));
+          renderMyQuests();
+        }else{
+          // 保底全 0
+          applyStats({ level:0,xp:0,nextLevelXP:100,totalEarned:0,todayEarnings:0,monthEarnings:0,completedQuests:0,activeDays:0 });
+          renderMyQuests();
+        }
+
+        // profile(name/email) from users sheet
+        if(rProfile.status === 'fulfilled' && rProfile.value?.ok){
+          okProfile = true;
+
+          // ✅ 修正：user-profile 回傳的是 profile
+          const u2 = rProfile.value.profile || {};
+
+          setText('kvName', u2.name ? u2.name : '(未填)');
+          setText('kvEmail', u2.email ? u2.email : '(未填)');
+
+          // 更新 localStorage 的 user（讓其他頁面也能用到）
+          const merged = { ...user, ...u2 };
+          localStorage.setItem('xinghuo_user', JSON.stringify(merged));
+        }else{
+          setText('kvName', user?.name ? user.name : '(未填)');
+          setText('kvEmail', user?.email ? user.email : '(未填)');
+        }
+
+      }catch(e){
+        // 全部失敗保底
+        applyStats({ level:0,xp:0,nextLevelXP:100,totalEarned:0,todayEarnings:0,monthEarnings:0,completedQuests:0,activeDays:0 });
+        renderMyQuests();
+        setText('kvName', user?.name ? user.name : '(未填)');
+        setText('kvEmail', user?.email ? user.email : '(未填)');
+      }finally{
+        setLoading(false);
+        setSyncBadge((okDashboard && okProfile) ? 'ok' : 'error');
+      }
+
+      // Simulated login count
+      setInterval(() => {
+        const el = document.getElementById('loginCount');
+        if(!el) return;
+        const current = parseInt(String(el.textContent).replace(/,/g,''), 10) || 1248;
+        const change = Math.floor(Math.random() * 10) - 3;
+        const next = Math.max(1200, current + change);
+        el.textContent = next.toLocaleString();
+      }, 30000);
+    });
+  </script>
+</body>
+</html>
