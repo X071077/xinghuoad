@@ -5,6 +5,8 @@
 // - get:    讀取自己的社群驗證資料（從 users 取回）
 // - approve:(admin only) 審核通過：social_status=approved + verified_at/by + Lv0->Lv1 + 開權限 + 設定 tier/platform
 // - reject: (admin only) 審核拒絕：social_status=rejected + verified_at/by + 關權限
+//
+// ✅ 作法2：若已 approved 又 submit → 視為重送審核：清 verified_at/by + 收回權限，回到 submitted
 
 const { google } = require("googleapis");
 const jwt = require("jsonwebtoken");
@@ -255,7 +257,6 @@ exports.handler = async (event) => {
     ]);
 
     const headerIdx = buildHeaderIndex(headers);
-
     const uidIdx = headerIdx["user_id"];
 
     // ===== action: approve/reject (admin only) =====
@@ -382,6 +383,10 @@ exports.handler = async (event) => {
       return reply(400, { ok: false, error: "unknown_action" }, origin);
     }
 
+    // ===== 作法2：如果原本已 approved，重送就作廢舊審核 + 先收回權限 =====
+    const prevStatus = safeStr(getCell(fullRow, headerIdx, "social_status")) || "unsubmitted";
+    const wasApproved = prevStatus === "approved";
+
     // ===== submit validation (v1) =====
     const ig_url = sanitizeForSheet(data.ig_url);
     const fb_url = sanitizeForSheet(data.fb_url);
@@ -430,7 +435,16 @@ exports.handler = async (event) => {
     fullRow[headerIdx["social_status"]] = "submitted";
     fullRow[headerIdx["social_submitted_at"]] = nowISO();
 
-    // 注意：verified_at / verified_by 由管理員審核時寫入，submit 不動它
+    // ✅ 作法2核心：若之前是 approved → 作廢舊審核資訊 + 待審先收回權限
+    if (wasApproved) {
+      fullRow[headerIdx["verified_at"]] = "";
+      fullRow[headerIdx["verified_by"]] = "";
+
+      // 保守：待審期間先鎖回 Lv0 & 關權限（重新 approve 才開回）
+      fullRow[headerIdx["level"]] = "0";
+      fullRow[headerIdx["can_take_tasks"]] = "false";
+      fullRow[headerIdx["can_withdraw"]] = "false";
+    }
 
     await updateRowRange(sheets, spreadsheetId, usersSheet, rowNumber1Based, headersLen, fullRow);
 
@@ -440,6 +454,7 @@ exports.handler = async (event) => {
         ok: true,
         social_status: "submitted",
         social_submitted_at: fullRow[headerIdx["social_submitted_at"]],
+        reset_previous_approval: wasApproved,
       },
       origin
     );
