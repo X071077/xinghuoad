@@ -117,7 +117,7 @@ async function getSheetsClient() {
 async function readAllRows(sheets, spreadsheetId, sheetName) {
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: `${sheetName}!A:Z`,
+    range: `${sheetName}!A:ZZ`,
   });
   const values = res.data.values || [];
   if (!values.length) return { headers: [], rows: [] };
@@ -199,7 +199,7 @@ function findRowByUsername(rows, headerIdx, username) {
 async function appendRow(sheets, spreadsheetId, sheetName, values) {
   await sheets.spreadsheets.values.append({
     spreadsheetId,
-    range: `${sheetName}!A:Z`,
+    range: `${sheetName}!A:ZZ`,
     valueInputOption: "RAW",
     insertDataOption: "INSERT_ROWS",
     requestBody: { values: [values] },

@@ -90,7 +90,7 @@ async function getSheetsClient() {
 async function readAllRows(sheets, spreadsheetId, sheetName) {
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: `${sheetName}!A:Z`,
+    range: `${sheetName}!A:ZZ`,
   });
   const values = res.data.values || [];
   if (!values.length) return { headers: [], rows: [] };
