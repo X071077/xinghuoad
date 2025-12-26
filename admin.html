@@ -146,347 +146,6 @@
         radial-gradient(900px 520px at 60% 110%, rgba(50,224,196,.10), transparent 60%);
       pointer-events:none;
     }
-    .header-inner{
-      position:relative;
-      text-align:center;
-    }
-    .welcome-title{
-      margin:0 0 10px;
-      font-size:44px;
-      font-weight:900;
-      text-shadow: 2px 2px 6px rgba(0,0,0,.45);
-    }
-    .welcome-subtitle{
-      margin:0 0 18px;
-      opacity:.95;
-      font-size:22px;
-    }
-    .level-badge{
-      display:inline-flex;
-      align-items:center;
-      gap:12px;
-      padding:10px 18px;
-      border-radius:999px;
-      border:1px solid rgba(255,215,0,.45);
-      background: rgba(0,0,0,.22);
-      box-shadow: 0 10px 30px rgba(0,0,0,.22);
-      flex-wrap:wrap;
-      justify-content:center;
-    }
-    .level-number{
-      font-size:28px;
-      font-weight:900;
-      color:var(--gold);
-    }
-    .badge-sep{opacity:.6}
-
-    /* Quick Profile Card */
-    .profile-row{
-      margin-top:24px;
-      display:grid;
-      grid-template-columns: 1.1fr .9fr;
-      gap:18px;
-      align-items:stretch;
-    }
-    .profile-card{
-      padding:22px;
-      text-align:left;
-    }
-    .profile-title{
-      display:flex; align-items:center; justify-content:space-between;
-      gap:12px;
-      margin-bottom:14px;
-    }
-    .profile-title h3{
-      margin:0;
-      font-size:26px;
-      font-weight:900;
-    }
-    .chip{
-      display:inline-flex;
-      align-items:center;
-      gap:10px;
-      padding:6px 12px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.06);
-      font-size:18px;
-      opacity:.95;
-      white-space:nowrap;
-    }
-    .kv{
-      display:grid;
-      grid-template-columns: 160px 1fr;
-      row-gap:10px;
-      column-gap:10px;
-      font-size:20px;
-      line-height:1.6;
-    }
-    .kv .k{opacity:.85}
-    .kv .v{font-weight:800; word-break:break-word}
-    .actions{
-      display:flex; gap:10px; flex-wrap:wrap;
-      margin-top:14px;
-    }
-
-    /* Buttons */
-    .btn{
-      border:0;
-      cursor:pointer;
-      border-radius:18px;
-      padding:16px 18px;
-      font-size:22px;
-      font-weight:900;
-      color:var(--text);
-      background: linear-gradient(135deg, rgba(50,224,196,.95), rgba(110,168,255,.95));
-      box-shadow: 0 10px 30px rgba(50,224,196,.14);
-      text-shadow: 0 1px 2px rgba(0,0,0,.35);
-      transition: transform .2s ease, box-shadow .2s ease;
-    }
-    .btn:hover{transform: translateY(-2px); box-shadow: 0 14px 38px rgba(50,224,196,.22);}
-    .btn.secondary{
-      background: rgba(255,255,255,.08);
-      border:1px solid rgba(255,255,255,.16);
-      box-shadow: none;
-    }
-    .btn.secondary:hover{border-color: rgba(50,224,196,.45);}
-
-    /* XP */
-    .xp-container{margin-top:18px;}
-    .xp-label{
-      display:flex; justify-content:space-between; gap:10px;
-      font-weight:800;
-      margin-bottom:10px;
-      font-size:20px;
-    }
-    .xp-bar{
-      height:26px;
-      border-radius:999px;
-      overflow:hidden;
-      border:1px solid rgba(255,255,255,.16);
-      background: rgba(255,255,255,.06);
-    }
-    .xp-fill{
-      height:100%;
-      width: 0%;
-      border-radius:999px;
-      background: linear-gradient(90deg, #06C755, #32e0c4, #6ea8ff, #9d4edd);
-      transition: width 900ms cubic-bezier(0.34, 1.56, 0.64, 1);
-      position:relative;
-      overflow:hidden;
-    }
-    .xp-fill::after{
-      content:"";
-      position:absolute; inset:0;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,.28), transparent);
-      animation: xpShine 2s infinite;
-    }
-    @keyframes xpShine { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
-
-    /* Stats */
-    .section-title{
-      margin:0 0 18px;
-      font-size:34px;
-      font-weight:900;
-      text-align:center;
-    }
-    .stats-grid{
-      display:grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap:18px;
-      margin-top:18px;
-    }
-    .stat-card{
-      padding:22px;
-      border-radius:22px;
-      border:1px solid rgba(255,255,255,.12);
-      background: linear-gradient(135deg, rgba(17,24,42,.86) 0%, rgba(45,55,72,.70) 100%);
-      box-shadow: 0 10px 30px rgba(0,0,0,.28);
-      transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
-      position:relative;
-      overflow:hidden;
-    }
-    .stat-card::before{
-      content:"";
-      position:absolute; top:0; left:0; right:0;
-      height:4px;
-      background: linear-gradient(90deg, var(--accent), var(--accent2));
-      opacity:.9;
-    }
-    .stat-card:hover{
-      transform: translateY(-6px);
-      box-shadow: 0 16px 44px rgba(0,0,0,.38);
-      border-color: rgba(50,224,196,.28);
-    }
-    .stat-icon{font-size:34px; margin-bottom:10px;}
-    .stat-value{font-size:44px; font-weight:900; margin:6px 0 4px;}
-    .stat-label{opacity:.9; font-weight:700;}
-
-    /* Quests */
-    .quest-hall{padding:34px 0;}
-    .quest-wrap{padding:28px;}
-    .quest-card{
-      border-radius:18px;
-      border:1px solid rgba(255,255,255,.10);
-      background: linear-gradient(135deg, rgba(45,55,72,.72) 0%, rgba(30,41,59,.85) 100%);
-      padding:20px;
-      margin-bottom:14px;
-      transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
-      position:relative;
-      overflow:hidden;
-    }
-    .quest-card:hover{
-      transform: translateX(8px);
-      border-color: rgba(110,168,255,.28);
-      box-shadow: 0 14px 34px rgba(0,0,0,.34);
-    }
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:10px;
-      padding:6px 12px;
-      border-radius:999px;
-      font-weight:900;
-      font-size:18px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.20);
-      margin-bottom:10px;
-    }
-    .pill.green{border-color: rgba(6,199,85,.35)}
-    .pill.orange{border-color: rgba(243,156,18,.40)}
-    .pill.red{border-color: rgba(231,76,60,.45)}
-    .quest-row{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:18px;
-      flex-wrap:wrap;
-    }
-    .quest-row h3{margin:0 0 10px; font-size:26px;}
-    .quest-desc{opacity:.92; line-height:1.7; margin:0 0 10px;}
-    .quest-meta{display:flex; gap:14px; flex-wrap:wrap; opacity:.92; font-size:18px;}
-    .quest-side{min-width:240px; text-align:right;}
-    .quest-reward{color:var(--gold); font-weight:900; font-size:34px; margin-bottom:10px;}
-
-    /* My quests */
-    .my-quests{
-      margin-top:18px;
-      padding:18px;
-      border-radius:18px;
-      border:1px dashed rgba(255,255,255,.18);
-      background: rgba(255,255,255,.04);
-    }
-    .my-quests h4{margin:0 0 10px; font-size:22px;}
-    .my-quest-item{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      padding:12px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.18);
-      margin-bottom:10px;
-    }
-    .my-quest-item:last-child{margin-bottom:0}
-    .my-quest-item .name{font-weight:900}
-    .my-quest-item .mini{opacity:.9; font-size:18px}
-    .my-quest-actions{display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;}
-    .btnMini{
-      border-radius:14px;
-      padding:10px 12px;
-      font-size:18px;
-      font-weight:900;
-      border:1px solid rgba(255,255,255,.16);
-      background: rgba(255,255,255,.06);
-      color:var(--text);
-      cursor:pointer;
-    }
-    .btnMini:hover{border-color: rgba(50,224,196,.45);}
-    .btnMini.danger{border-color: rgba(255,92,122,.35); background: rgba(255,92,122,.10);}
-    .btnMini.danger:hover{border-color: rgba(255,92,122,.55);}
-
-    /* Tools */
-    .toolbox{
-      display:grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap:18px;
-      margin-top:18px;
-    }
-    .tool-card{padding:22px;}
-    .tool-card h3{margin:0 0 10px; font-size:26px;}
-    .codebox{
-      padding:14px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.22);
-      word-break:break-all;
-      font-size:18px;
-    }
-
-    /* Toast */
-    .toast{
-      position: fixed;
-      right: 18px;
-      bottom: 18px;
-      max-width: min(520px, calc(100vw - 36px));
-      padding: 14px 16px;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.16);
-      background: rgba(17,24,42,.92);
-      box-shadow: 0 18px 60px rgba(0,0,0,.45);
-      display:none;
-      z-index: 99;
-      font-size:20px;
-      line-height:1.5;
-      white-space:pre-line;
-    }
-    .toast.ok{border-color: rgba(50,224,196,.35);}
-    .toast.error{border-color: rgba(255,92,122,.35); background: rgba(255,92,122,.10);}
-
-    /* Footer */
-    footer{
-      margin-top:40px;
-      padding:34px 0;
-      border-top:1px solid rgba(255,255,255,.10);
-      opacity:.95;
-    }
-    .footer-grid{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:18px;
-      margin-bottom:14px;
-    }
-    .footer-grid h3{margin:0 0 10px; font-size:22px;}
-    .footer-link{color:var(--text); text-decoration:underline; text-underline-offset:3px; display:inline-block; margin:6px 0;}
-    .footer-bottom{opacity:.9; font-size:18px;}
-
-    /* ✅ Responsive + dropdown menu (mobile) */
-    @media (max-width: 900px){
-      .profile-row{grid-template-columns: 1fr; }
-      .quest-side{text-align:left}
-      .footer-grid{grid-template-columns: 1fr}
-      .menu-btn{ display:inline-flex; align-items:center; justify-content:center; }
-      .nav-links{
-        position:absolute;
-        top: calc(100% + 10px);
-        left: 0;
-        right: 0;
-        display:none;
-        flex-direction:column;
-        align-items:stretch;
-        justify-content:flex-start;
-        gap:10px;
-        padding:12px;
-        border-radius:16px;
-        border:1px solid rgba(255,255,255,.12);
-        background: rgba(15, 23, 42, 0.92);
-        box-shadow: var(--shadow);
-        backdrop-filter: blur(10px);
-      }
-      .nav-links.open{ display:flex; }
-      .nav-link{ width:100%; justify-content:flex-start; }
-    }
 
     /* ===== Loading skeleton (避免閃爍) ===== */
     .is-loading .skeleton{
@@ -513,9 +172,133 @@
       animation: sk 1.1s infinite;
     }
     @keyframes sk { 100% { transform: translateX(100%); } }
-  
 
     /* Admin additions */
+    /* ===== Missing base blocks (補齊 card/section/button/Chip 樣式) ===== */
+    .section-head{ text-align:center; margin-bottom: 14px; }
+    .section-sub{ margin: 0 auto 18px; max-width: 920px; opacity: .92; font-size: 20px; line-height: 1.7; text-align:center; }
+    .card{
+      padding:22px;
+      border-radius:22px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(17,24,42,.86);
+      box-shadow: 0 10px 30px rgba(0,0,0,.28);
+    }
+    .btn-primary{
+      background: linear-gradient(135deg, rgba(50,224,196,.95), rgba(110,168,255,.95));
+      border: 0;
+      box-shadow: 0 10px 30px rgba(50,224,196,.14);
+    }
+    .btn-ghost{
+      background: rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.16);
+      box-shadow: none;
+    }
+    .btn-ghost:hover{border-color: rgba(50,224,196,.45);}
+    .btn-danger{
+      border:1px solid rgba(255,92,122,.35);
+      background: rgba(255,92,122,.12);
+      box-shadow: none;
+    }
+    .btn-danger:hover{border-color: rgba(255,92,122,.55);}
+
+    .chip-success{ border-color: rgba(90,255,190,.35) !important; background: rgba(90,255,190,.10) !important; }
+    .chip-warn{ border-color: rgba(255,190,80,.35) !important; background: rgba(255,190,80,.10) !important; }
+    .chip-danger{ border-color: rgba(255,92,122,.35) !important; background: rgba(255,92,122,.10) !important; }
+    .chip .dot{ width:10px; height:10px; border-radius:999px; background: rgba(255,255,255,.55); display:inline-block; }
+    .chip-success .dot{ background: rgba(90,255,190,.95) !important; }
+    .chip-warn .dot{ background: rgba(255,190,80,.95) !important; }
+    .chip-danger .dot{ background: rgba(255,92,122,.95) !important; }
+
+    /* ===== Social verify layout ===== */
+    .sv-grid{
+      display:grid;
+      grid-template-columns: .95fr 1.05fr;
+      gap: 18px;
+      align-items: start;
+    }
+    .sv-detail{
+      padding: 18px;
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      min-height: 360px;
+    }
+    .sv-detail-head{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom: 12px;
+    }
+    .sv-detail-title{ font-size: 26px; font-weight: 900; }
+    .sv-kv{
+      display:grid;
+      grid-template-columns: 170px 1fr;
+      row-gap: 10px;
+      column-gap: 12px;
+      font-size: 18px;
+      line-height: 1.6;
+      margin-top: 10px;
+    }
+    .sv-kv .k{ opacity: .78; }
+    .sv-kv .v{ font-weight: 800; word-break: break-word; }
+    .sv-link{
+      color: rgba(110,168,255,.96);
+      text-decoration: none;
+      border-bottom: 1px dashed rgba(110,168,255,.45);
+      padding-bottom: 1px;
+    }
+    .sv-link:hover{ filter: brightness(1.12); }
+    .sv-form{ margin-top: 14px; }
+    .sv-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top: 10px; }
+
+    @media (max-width: 980px){
+      .sv-grid{ grid-template-columns: 1fr; }
+      .sv-kv{ grid-template-columns: 150px 1fr; }
+    }
+
+    /* ===== Toast (修正 admin.html 目前 toast 無法顯示) ===== */
+    .toast-wrap{
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      display:flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 99;
+      max-width: min(520px, calc(100vw - 36px));
+    }
+    .toast{
+      width: 100%;
+      display:flex;
+      gap: 12px;
+      align-items:flex-start;
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(17,24,42,.92);
+      box-shadow: 0 18px 60px rgba(0,0,0,.45);
+      font-size: 18px;
+      line-height: 1.5;
+    }
+    .toast-icon{ margin-top: 2px; opacity: .95; }
+    .toast-msg{ font-weight: 800; }
+    .toast-close{
+      margin-left: auto;
+      border: 0;
+      background: transparent;
+      color: rgba(255,255,255,.86);
+      cursor: pointer;
+      padding: 6px 8px;
+      border-radius: 12px;
+    }
+    .toast-close:hover{ background: rgba(255,255,255,.08); }
+    .toast-success{ border-color: rgba(90,255,190,.35); }
+    .toast-error{ border-color: rgba(255,92,122,.35); background: rgba(255,92,122,.10); }
+    .toast-warn{ border-color: rgba(255,190,80,.35); background: rgba(255,190,80,.10); }
+    .toast-info{ border-color: rgba(110,168,255,.28); }
+
     .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-top:14px}
     .toolbar .left{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     .field{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
@@ -587,6 +370,7 @@
       <div class="nav-links" id="navLinks">
         <a href="#top" class="nav-link"><i class="fas fa-gauge-high"></i> 總覽</a>
         <a href="#users" class="nav-link"><i class="fas fa-users"></i> 用戶</a>
+        <a href="#social-verify" class="nav-link"><i class="fas fa-circle-check"></i> 社群審核</a>
         <a href="#dealers" class="nav-link"><i class="fas fa-car"></i> 車行</a>
         <a href="#quests" class="nav-link"><i class="fas fa-tasks"></i> 任務</a>
         <a href="#payouts" class="nav-link"><i class="fas fa-sack-dollar"></i> 提領</a>
@@ -784,6 +568,145 @@
     </div>
   </section>
 
+  <!-- Social Verify -->
+  <section class="section" id="social-verify">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="section-title"><i class="fas fa-circle-check"></i> 社群驗證審核</h2>
+        <p class="section-sub">列出所有 <b>submitted</b> 待審核名單，點選後可檢視明細並進行通過/拒絕。</p>
+      </div>
+
+      <div class="card">
+        <div class="toolbar">
+          <div class="left">
+            <div class="field">
+              <input class="input" id="svSearch" placeholder="搜尋 user_id / username / email" />
+              <select class="select" id="svPlatformFilter">
+                <option value="">全部平台</option>
+                <option value="ig">IG</option>
+                <option value="fb">FB</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="right">
+            <button class="btn btn-primary" id="svRefreshBtn" type="button">
+              <i class="fas fa-rotate"></i> 重新載入待審
+            </button>
+          </div>
+        </div>
+
+        <div style="height:12px"></div>
+
+        <div class="sv-grid">
+          <!-- Left: list -->
+          <div class="sv-col">
+            <div class="table-wrap">
+              <table style="min-width:760px">
+                <thead>
+                  <tr>
+                    <th style="width:220px">user_id</th>
+                    <th style="width:160px">username</th>
+                    <th style="width:120px">平台</th>
+                    <th style="width:140px">粉絲</th>
+                    <th style="width:190px">送審時間</th>
+                    <th style="width:120px">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="svTbody">
+                  <tr>
+                    <td colspan="6">
+                      <div class="empty" id="svEmpty">
+                        <div><b>尚未載入待審名單</b></div>
+                        <div class="muted">點「重新同步」或「重新載入待審」取得最新待審清單。</div>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div style="height:10px"></div>
+            <div class="muted" id="svHint">提示：此區只顯示 social_status=submitted 的使用者。</div>
+          </div>
+
+          <!-- Right: detail -->
+          <div class="sv-col">
+            <div class="sv-detail" id="svDetail">
+              <div class="sv-detail-head">
+                <div>
+                  <div class="sv-detail-title">審核明細</div>
+                  <div class="muted" id="svDetailSub">請先從左側點選一位待審使用者</div>
+                </div>
+                <span class="status-pill" id="svStatusPill" style="display:none">
+                  <span class="status-dot" id="svStatusDot"></span>
+                  <span id="svStatusText">submitted</span>
+                </span>
+              </div>
+
+              <div class="sv-kv" id="svKv" style="display:none">
+                <div class="k">user_id</div><div class="v" id="svUserId">-</div>
+                <div class="k">username</div><div class="v" id="svUsername">-</div>
+                <div class="k">email</div><div class="v" id="svEmail">-</div>
+                <div class="k">followers</div><div class="v" id="svFollowers">-</div>
+                <div class="k">avg_views_7d</div><div class="v" id="svViews">-</div>
+                <div class="k">IG</div><div class="v"><a class="sv-link" id="svIg" href="#" target="_blank" rel="noopener">-</a></div>
+                <div class="k">FB</div><div class="v"><a class="sv-link" id="svFb" href="#" target="_blank" rel="noopener">-</a></div>
+                <div class="k">截圖</div><div class="v"><a class="sv-link" id="svShot" href="#" target="_blank" rel="noopener">-</a></div>
+                <div class="k">user_type</div><div class="v" id="svUserType">-</div>
+                <div class="k">region</div><div class="v" id="svRegion">-</div>
+                <div class="k">brand_desc</div><div class="v" id="svBrand">-</div>
+                <div class="k">audience_desc</div><div class="v" id="svAudience">-</div>
+                <div class="k">送審時間</div><div class="v" id="svSubmittedAt">-</div>
+              </div>
+
+              <div class="sv-form" id="svForm" style="display:none">
+                <div class="field">
+                  <label class="muted" style="min-width:120px">primary_platform</label>
+                  <select class="select" id="svPlatform">
+                    <option value="">請選平台</option>
+                    <option value="ig">ig</option>
+                    <option value="fb">fb</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label class="muted" style="min-width:120px">influence_tier</label>
+                  <select class="select" id="svTier">
+                    <option value="">請選 Tier</option>
+                    <option value="C">C</option>
+                    <option value="B">B</option>
+                    <option value="A">A</option>
+                    <option value="S">S</option>
+                  </select>
+                </div>
+
+                <div class="sv-actions">
+                  <button class="btn btn-primary" id="svApproveBtn" type="button">
+                    <i class="fas fa-check"></i> 通過
+                  </button>
+                  <button class="btn btn-danger" id="svRejectBtn" type="button">
+                    <i class="fas fa-xmark"></i> 拒絕
+                  </button>
+                </div>
+
+                <div class="muted" id="svAdminNote" style="margin-top:10px">
+                  通過時可設定平台/Tier；拒絕會關閉權限（can_take_tasks / can_withdraw）。
+                </div>
+              </div>
+
+              <div class="empty" id="svDetailEmpty">
+                <div><b>尚未選擇待審使用者</b></div>
+                <div class="muted">從左側名單點選「檢視」，即可在此看到明細並審核。</div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Dealers -->
   <section class="section" id="dealers">
     <div class="container">
@@ -821,18 +744,18 @@
             <thead>
               <tr>
                 <th style="width:220px">dealer_id</th>
-                <th style="width:220px">車行/店名</th>
-                <th style="width:220px">聯絡方式</th>
+                <th style="width:240px">車行名稱</th>
+                <th style="width:240px">聯絡</th>
                 <th style="width:160px">驗證狀態</th>
-                <th style="width:240px">操作</th>
+                <th style="width:260px">操作</th>
               </tr>
             </thead>
             <tbody id="dealersTbody">
               <tr>
                 <td colspan="5">
-                  <div class="empty" id="dealersEmpty">
-                    <div><b>尚未載入車行資料</b></div>
-                    <div class="muted">後端串接完成後，這裡會顯示待審核清單。</div>
+                  <div class="empty">
+                    <div><b>尚未載入車行</b></div>
+                    <div class="muted">點「重新同步」或等待後端串接（/.netlify/functions/admin）。</div>
                   </div>
                 </td>
               </tr>
@@ -840,6 +763,8 @@
           </table>
         </div>
 
+        <div style="height:14px"></div>
+        <div class="muted">提示：車行驗證流程可後續串接 dealer_verify（你之後要串接的欄位我已經留好位置。</div>
       </div>
     </div>
   </section>
@@ -849,13 +774,13 @@
     <div class="container">
       <div class="section-head">
         <h2 class="section-title"><i class="fas fa-tasks"></i> 任務管理</h2>
-        <p class="section-sub">建立/編輯/上架/下架、驗收審核與發放。</p>
+        <p class="section-sub">建立任務、發放、追蹤、驗收（目前先做 UI 預留）。</p>
       </div>
 
-      <div class="grid-2">
+      <div class="toolbox">
         <div class="card">
-          <h3 class="card-title"><i class="fas fa-circle-plus"></i> 快速建立任務（規劃）</h3>
-          <p class="muted">這裡先做 UI 結構，你之後要串接的欄位我已經留好位置。</p>
+          <h3 class="card-title"><i class="fas fa-plus"></i> 建立任務（先做介面）</h3>
+          <p class="muted">這裡是任務建立的 UI 雛形，你之後要串接的欄位我已經留好位置。</p>
 
           <div style="height:10px"></div>
 
@@ -988,7 +913,7 @@
         info:'fa-circle-info'
       };
       const el = document.createElement('div');
-      el.className = 'toast ' + (type ? 'toast-' + type : '');
+      el.className = 'toast ' + (type ? ('toast-' + type) : 'toast-info');
       el.innerHTML = `
         <div class="toast-icon"><i class="fas ${iconMap[type] || 'fa-circle-info'}"></i></div>
         <div class="toast-body">
@@ -1022,6 +947,8 @@
     }
 
     function setSkeleton(on){
+      // ✅ skeleton 啟用需搭配 body.is-loading
+      document.body.classList.toggle("is-loading", !!on);
       const ids = [
         '#adminName','#adminEmail',
         '#statUsers','#statDealers','#statPending','#statPayouts',
@@ -1063,7 +990,6 @@
 
     // ===== Data loading (stub + future API) =====
     async function fetchAdminSnapshot(token){
-      // 之後你可以建立 /.netlify/functions/admin 來回傳 stats + lists
       const res = await fetch('/.netlify/functions/admin', {
         method: 'POST',
         headers: {
@@ -1079,6 +1005,304 @@
       return await res.json();
     }
 
+    // ===== Social verify (Admin) =====
+    let SV_LIST = [];
+    let SV_SELECTED_USER_ID = "";
+
+    async function adminApi(token, payload){
+      const res = await fetch('/.netlify/functions/admin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify(payload || {})
+      });
+      if(!res.ok){
+        const t = await res.text().catch(()=> '');
+        throw new Error('admin api ' + res.status + ': ' + (t || res.statusText));
+      }
+      return await res.json();
+    }
+
+    async function fetchSocialSubmitted(token){
+      return adminApi(token, { action: 'social_list_submitted' });
+    }
+
+    async function fetchSocialDetail(token, target_user_id){
+      return adminApi(token, { action: 'social_get', target_user_id });
+    }
+
+    async function socialApprove(token, target_user_id, primary_platform, influence_tier){
+      return adminApi(token, {
+        action: 'social_approve',
+        target_user_id,
+        data: { primary_platform, influence_tier }
+      });
+    }
+
+    async function socialReject(token, target_user_id){
+      return adminApi(token, { action: 'social_reject', target_user_id });
+    }
+
+    function normalizePlatformForUI(item){
+      const s = (item?.primary_platform || item?.suggest_platform || '').toLowerCase();
+      if(s === 'instagram') return 'ig';
+      if(s === 'facebook') return 'fb';
+      return s;
+    }
+
+    function renderSocialList(list){
+      const tbody = $('#svTbody');
+      if(!tbody) return;
+
+      const q = ($('#svSearch')?.value || '').trim().toLowerCase();
+      const pf = ($('#svPlatformFilter')?.value || '').trim().toLowerCase();
+
+      const filtered = (list || []).filter(it => {
+        const text = `${it.user_id||''} ${it.username||''} ${it.email||''}`.toLowerCase();
+        let ok = !q || text.includes(q);
+        if(ok && pf){
+          const p = normalizePlatformForUI(it);
+          ok = p === pf;
+        }
+        return ok;
+      });
+
+      if(!filtered.length){
+        tbody.innerHTML = `
+          <tr><td colspan="6">
+            <div class="empty">
+              <div><b>目前沒有待審名單</b></div>
+              <div class="muted">當使用者 submit 後（social_status=submitted）才會出現在此處。</div>
+            </div>
+          </td></tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(it => {
+        const p = normalizePlatformForUI(it) || '-';
+        const submittedAt = it.social_submitted_at ? new Date(it.social_submitted_at).toLocaleString() : '-';
+        const followers = (it.followers_count ?? '').toString() || '-';
+        return `
+          <tr data-userid="${escapeHtml(it.user_id || '')}">
+            <td>${escapeHtml(it.user_id || '')}</td>
+            <td>${escapeHtml(it.username || '')}</td>
+            <td><span class="status-pill"><span class="status-dot" style="background:rgba(110,168,255,.95)"></span>${escapeHtml(p)}</span></td>
+            <td>${escapeHtml(followers)}</td>
+            <td>${escapeHtml(submittedAt)}</td>
+            <td>
+              <button class="mini-btn" data-act="sv_view" data-userid="${escapeHtml(it.user_id || '')}">
+                <i class="fas fa-eye"></i> 檢視
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      tbody.querySelectorAll('button[data-act="sv_view"]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const uid = btn.getAttribute('data-userid');
+          if(uid) await openSocialDetail(uid);
+        });
+      });
+    }
+
+    function setPill(status){
+      const pill = $('#svStatusPill');
+      const dot = $('#svStatusDot');
+      const text = $('#svStatusText');
+      if(!pill || !dot || !text) return;
+      pill.style.display = 'inline-flex';
+      text.textContent = status || '-';
+      let color = 'rgba(255,255,255,.55)';
+      if(status === 'submitted') color = 'rgba(255,190,80,.95)';
+      if(status === 'approved') color = 'rgba(90,255,190,.95)';
+      if(status === 'rejected') color = 'rgba(255,92,122,.95)';
+      dot.style.background = color;
+    }
+
+    function fillLink(aEl, url){
+      if(!aEl) return;
+      const u = (url || '').trim();
+      if(!u){
+        aEl.textContent = '-';
+        aEl.href = '#';
+        aEl.style.pointerEvents = 'none';
+        aEl.style.opacity = '.75';
+        return;
+      }
+      aEl.textContent = u;
+      aEl.href = u;
+      aEl.style.pointerEvents = '';
+      aEl.style.opacity = '1';
+    }
+
+    async function openSocialDetail(userId){
+      const auth = requireLogin();
+      if(!auth) return;
+      guardAdmin(auth.user);
+
+      SV_SELECTED_USER_ID = userId;
+      $('#svDetailSub').textContent = '載入中…';
+      $('#svDetailEmpty').style.display = 'none';
+      $('#svKv').style.display = 'none';
+      $('#svForm').style.display = 'none';
+      $('#svStatusPill').style.display = 'none';
+
+      try{
+        const data = await fetchSocialDetail(auth.token, userId);
+        const s = data?.social || {};
+        setPill(s.social_status || 'submitted');
+
+        $('#svUserId').textContent = data.user_id || userId;
+        $('#svUsername').textContent = data.username || '-';
+        $('#svEmail').textContent = data.email || '-';
+        $('#svFollowers').textContent = s.followers_count || '-';
+        $('#svViews').textContent = s.avg_views_7d || '-';
+        fillLink($('#svIg'), s.ig_url || '');
+        fillLink($('#svFb'), s.fb_url || '');
+        fillLink($('#svShot'), s.social_screenshot_url || '');
+        $('#svUserType').textContent = s.user_type || '-';
+        $('#svRegion').textContent = s.region || '-';
+        $('#svBrand').textContent = s.brand_desc || '-';
+        $('#svAudience').textContent = s.audience_desc || '-';
+        $('#svSubmittedAt').textContent = s.social_submitted_at ? new Date(s.social_submitted_at).toLocaleString() : '-';
+
+        const suggest = normalizePlatformForUI(s) || normalizePlatformForUI(data) || '';
+        $('#svPlatform').value = suggest || '';
+        $('#svTier').value = '';
+
+        $('#svDetailSub').textContent = '請確認資料後進行審核（僅 submitted 可審）';
+        $('#svKv').style.display = '';
+        $('#svForm').style.display = '';
+      } catch(err){
+        $('#svDetailEmpty').style.display = '';
+        $('#svDetailSub').textContent = '讀取失敗（請稍後再試）';
+        showToast('讀取待審明細失敗：' + (err?.message || err), 'error');
+      }
+    }
+
+    async function loadSocialSubmitted(){
+      const auth = requireLogin();
+      if(!auth) return;
+      guardAdmin(auth.user);
+
+      const hint = $('#svHint');
+      if(hint) hint.textContent = '載入中…';
+      try{
+        const out = await fetchSocialSubmitted(auth.token);
+        SV_LIST = out?.items || [];
+        renderSocialList(SV_LIST);
+
+        const pendingEl = $('#statPending');
+        if(pendingEl) pendingEl.textContent = String(SV_LIST.length);
+
+        if(hint) hint.textContent = `提示：此區只顯示 social_status=submitted 的使用者（目前 ${SV_LIST.length} 筆）。`;
+      } catch(err){
+        SV_LIST = [];
+        renderSocialList([]);
+        if(hint) hint.textContent = '載入失敗：請確認你已佈署最新 Netlify Functions。';
+        showToast('載入待審清單失敗：' + (err?.message || err), 'warn');
+      }
+    }
+
+    function wireSocialVerifyUI(){
+      $('#svSearch')?.addEventListener('input', ()=>renderSocialList(SV_LIST));
+      $('#svPlatformFilter')?.addEventListener('change', ()=>renderSocialList(SV_LIST));
+      $('#svRefreshBtn')?.addEventListener('click', loadSocialSubmitted);
+
+      $('#svApproveBtn')?.addEventListener('click', async ()=>{
+        const auth = requireLogin();
+        if(!auth) return;
+        guardAdmin(auth.user);
+
+        if(!SV_SELECTED_USER_ID){
+          showToast('請先選擇一位待審使用者', 'info');
+          return;
+        }
+        const platform = ($('#svPlatform')?.value || '').trim();
+        const tier = ($('#svTier')?.value || '').trim();
+        if(!platform){ showToast('請選擇 primary_platform', 'warn'); return; }
+        if(!tier){ showToast('請選擇 influence_tier', 'warn'); return; }
+
+        try{
+          await socialApprove(auth.token, SV_SELECTED_USER_ID, platform, tier);
+          showToast('已通過審核（approved）', 'success');
+          await loadSocialSubmitted();
+          await openSocialDetail(SV_SELECTED_USER_ID);
+        } catch(err){
+          showToast('通過失敗：' + (err?.message || err), 'error');
+        }
+      });
+
+      $('#svRejectBtn')?.addEventListener('click', async ()=>{
+        const auth = requireLogin();
+        if(!auth) return;
+        guardAdmin(auth.user);
+
+        if(!SV_SELECTED_USER_ID){
+          showToast('請先選擇一位待審使用者', 'info');
+          return;
+        }
+        try{
+          await socialReject(auth.token, SV_SELECTED_USER_ID);
+          showToast('已拒絕（rejected）', 'success');
+          await loadSocialSubmitted();
+          await openSocialDetail(SV_SELECTED_USER_ID);
+        } catch(err){
+          showToast('拒絕失敗：' + (err?.message || err), 'error');
+        }
+      });
+    }
+
+    function applySnapshotUI(snapshot){
+      const s = snapshot?.stats || {};
+      const set = (id, val) => { const el = $(id); if(el) el.textContent = String(val ?? 0); };
+      set('#statUsers', s.users);
+      set('#statDealers', s.dealers);
+      set('#statPending', s.pending);
+      set('#statPayouts', s.payouts);
+      set('#todayUsers', s.todayUsers);
+      set('#pendingDealers', s.pendingDealers);
+      set('#activeQuests', s.activeQuests);
+      set('#todayPayouts', s.todayPayouts);
+
+      // 目前仍保留：之後你要擴充也不會卡住
+      renderUsers(snapshot?.users || []);
+      renderDealers(snapshot?.dealers || []);
+    }
+
+    async function syncAll(){
+      const auth = requireLogin();
+      if(!auth) return;
+      guardAdmin(auth.user);
+
+      $('#navUsername').textContent = auth.user.username || auth.user.name || 'admin';
+      $('#adminName').textContent = auth.user.name || auth.user.username || '管理員';
+      $('#adminEmail').textContent = auth.user.email || '-';
+
+      setSkeleton(true);
+      setSyncBadge('syncing');
+
+      try{
+        const snap = await fetchAdminSnapshot(auth.token);
+        applySnapshotUI(snap);
+        // ✅ 社群待審清單
+        await loadSocialSubmitted();
+        setSyncBadge('ok');
+        showToast('同步完成', 'success');
+      } catch (err){
+        setSyncBadge('fail');
+        showToast('尚未串接後端資料（可先使用介面）', 'warn');
+        applySnapshotUI({ stats: { users:0, dealers:0, pending:0, payouts:0, todayUsers:0, pendingDealers:0, activeQuests:0, todayPayouts:0 }, users: [], dealers: [] });
+      } finally{
+        setSkeleton(false);
+      }
+    }
+
+    // ===== 原本 users/dealers render（保留）=====
     function renderUsers(users=[]){
       const tbody = $('#usersTbody');
       if(!tbody) return;
@@ -1162,49 +1386,6 @@
       }).join('');
     }
 
-    function applySnapshotUI(snapshot){
-      const s = snapshot?.stats || {};
-      const set = (id, val) => { const el = $(id); if(el) el.textContent = String(val ?? 0); };
-      set('#statUsers', s.users);
-      set('#statDealers', s.dealers);
-      set('#statPending', s.pending);
-      set('#statPayouts', s.payouts);
-      set('#todayUsers', s.todayUsers);
-      set('#pendingDealers', s.pendingDealers);
-      set('#activeQuests', s.activeQuests);
-      set('#todayPayouts', s.todayPayouts);
-
-      renderUsers(snapshot?.users || []);
-      renderDealers(snapshot?.dealers || []);
-    }
-
-    async function syncAll(){
-      const auth = requireLogin();
-      if(!auth) return;
-      guardAdmin(auth.user);
-
-      // profile
-      $('#navUsername').textContent = auth.user.username || auth.user.name || 'admin';
-      $('#adminName').textContent = auth.user.name || auth.user.username || '管理員';
-      $('#adminEmail').textContent = auth.user.email || '-';
-
-      setSkeleton(true);
-      setSyncBadge('syncing');
-
-      try{
-        const snap = await fetchAdminSnapshot(auth.token);
-        applySnapshotUI(snap);
-        setSyncBadge('ok');
-        showToast('同步完成', 'success');
-      } catch (err){
-        setSyncBadge('fail');
-        showToast('尚未串接後端資料（可先使用介面）', 'warn');
-        applySnapshotUI({ stats: { users:0, dealers:0, pending:0, payouts:0, todayUsers:0, pendingDealers:0, activeQuests:0, todayPayouts:0 }, users: [], dealers: [] });
-      } finally{
-        setSkeleton(false);
-      }
-    }
-
     // actions
     $('#refreshBtn')?.addEventListener('click', syncAll);
     $('#btnCreateQuest')?.addEventListener('click', ()=>showToast('此功能為 UI 預留，後端串接後即可使用。','info'));
@@ -1252,6 +1433,7 @@
       if(!auth) return;
       guardAdmin(auth.user);
       wireFilters();
+      wireSocialVerifyUI();
       syncAll();
     })();
   </script>
