@@ -173,8 +173,6 @@
     }
     @keyframes sk { 100% { transform: translateX(100%); } }
 
-    /* Admin additions */
-    /* ===== Missing base blocks (補齊 card/section/button/Chip 樣式) ===== */
     .section-head{ text-align:center; margin-bottom: 14px; }
     .section-sub{ margin: 0 auto 18px; max-width: 920px; opacity: .92; font-size: 20px; line-height: 1.7; text-align:center; }
     .card{
@@ -183,6 +181,23 @@
       border:1px solid rgba(255,255,255,.12);
       background: rgba(17,24,42,.86);
       box-shadow: 0 10px 30px rgba(0,0,0,.28);
+    }
+    .btn{
+      display:inline-flex;align-items:center;gap:10px;
+      padding:10px 14px;border-radius:14px;
+      color: rgba(255,255,255,.92);
+      text-decoration:none;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      cursor:pointer;
+      font-size:18px;
+      font-weight:800;
+      transition: transform .2s ease, border-color .2s ease, background .2s ease;
+    }
+    .btn:hover{
+      transform: translateY(-2px);
+      border-color: rgba(50,224,196,.45);
+      background: rgba(50,224,196,.10);
     }
     .btn-primary{
       background: linear-gradient(135deg, rgba(50,224,196,.95), rgba(110,168,255,.95));
@@ -202,6 +217,17 @@
     }
     .btn-danger:hover{border-color: rgba(255,92,122,.55);}
 
+    .chip{
+      display:inline-flex;align-items:center;gap:10px;
+      padding:8px 12px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      font-weight:900;font-size:16px;
+    }
+    .chip-strong{
+      border-color: rgba(255,215,0,.35);
+      background: rgba(255,215,0,.10);
+    }
     .chip-success{ border-color: rgba(90,255,190,.35) !important; background: rgba(90,255,190,.10) !important; }
     .chip-warn{ border-color: rgba(255,190,80,.35) !important; background: rgba(255,190,80,.10) !important; }
     .chip-danger{ border-color: rgba(255,92,122,.35) !important; background: rgba(255,92,122,.10) !important; }
@@ -210,7 +236,60 @@
     .chip-warn .dot{ background: rgba(255,190,80,.95) !important; }
     .chip-danger .dot{ background: rgba(255,92,122,.95) !important; }
 
-    /* ===== Social verify layout ===== */
+    /* layout blocks */
+    .hero-card{
+      position:relative;
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 16px;
+      padding: 22px;
+      border-radius: 26px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(17,24,42,.72);
+      box-shadow: 0 18px 60px rgba(0,0,0,.35);
+      backdrop-filter: blur(10px);
+    }
+    .hero-title{margin:10px 0 8px; font-size:44px; font-weight:900;}
+    .hero-sub{margin:0; opacity:.9; font-size:20px; line-height:1.7;}
+    .hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .hero-kicker{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+    .profile-card{
+      padding: 18px;
+      border-radius: 22px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+    }
+    .profile-top{display:flex;gap:12px;align-items:center}
+    .avatar{
+      width:56px;height:56px;border-radius:18px;
+      display:grid;place-items:center;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+    }
+    .profile-name{font-size:22px;font-weight:900}
+    .profile-sub{font-size:16px;opacity:.8;margin-top:2px}
+    .profile-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+    .pstat{padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,.10);background: rgba(255,255,255,.03)}
+    .pstat-label{font-size:14px;opacity:.8}
+    .pstat-value{font-size:22px;font-weight:900;margin-top:4px}
+    .profile-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
+    .stat-card{padding:16px;border-radius:22px;border:1px solid rgba(255,255,255,.10);background: rgba(255,255,255,.03);display:flex;gap:12px;align-items:center}
+    .stat-icon{width:44px;height:44px;border-radius:16px;border:1px solid rgba(255,255,255,.12);background: rgba(255,255,255,.06);display:grid;place-items:center}
+    .stat-label{font-size:14px;opacity:.8}
+    .stat-value{font-size:22px;font-weight:900;margin-top:2px}
+
+    @media (max-width: 980px){
+      .hero-card{grid-template-columns:1fr}
+      .stats-row{grid-template-columns:1fr 1fr}
+    }
+    @media (max-width: 560px){
+      .stats-row{grid-template-columns:1fr}
+    }
+
+    /* Social verify */
     .sv-grid{
       display:grid;
       grid-template-columns: .95fr 1.05fr;
@@ -252,13 +331,12 @@
     .sv-link:hover{ filter: brightness(1.12); }
     .sv-form{ margin-top: 14px; }
     .sv-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top: 10px; }
-
     @media (max-width: 980px){
       .sv-grid{ grid-template-columns: 1fr; }
       .sv-kv{ grid-template-columns: 150px 1fr; }
     }
 
-    /* ===== Toast (修正 admin.html 目前 toast 無法顯示) ===== */
+    /* Toast */
     .toast-wrap{
       position: fixed;
       right: 18px;
@@ -466,7 +544,6 @@
         </div>
       </div>
 
-      <!-- Quick Stats Row -->
       <div class="stats-row">
         <div class="stat-card">
           <div class="stat-icon"><i class="fas fa-user-plus"></i></div>
@@ -505,14 +582,14 @@
     <div class="container">
       <div class="section-head">
         <h2 class="section-title"><i class="fas fa-users"></i> 用戶管理</h2>
-        <p class="section-sub">搜尋、檢視、角色調整、停權/解鎖（UI 已備妥，後端可後續串接）。</p>
+        <p class="section-sub">搜尋、檢視、角色調整（已串接）。停權/解鎖目前先保留 UI 預留。</p>
       </div>
 
       <div class="card">
         <div class="toolbar">
           <div class="left">
             <div class="field">
-              <input class="input" id="userSearch" placeholder="搜尋 user_id / username / email" />
+              <input class="input" id="userSearch" placeholder="搜尋 user_id / username / email / name" />
               <select class="select" id="userRoleFilter">
                 <option value="">全部角色</option>
                 <option value="admin">admin</option>
@@ -520,7 +597,7 @@
                 <option value="partner">partner</option>
               </select>
               <select class="select" id="userStatusFilter">
-                <option value="">全部狀態</option>
+                <option value="">全部狀態（預留）</option>
                 <option value="active">正常</option>
                 <option value="blocked">停權</option>
                 <option value="pending">待補資料</option>
@@ -529,6 +606,9 @@
           </div>
 
           <div class="right">
+            <button class="btn btn-ghost" id="usersRefreshBtn" type="button">
+              <i class="fas fa-rotate"></i> 重新載入用戶
+            </button>
             <button class="btn btn-primary" id="btnCreateUser" type="button">
               <i class="fas fa-user-plus"></i> 新增用戶（規劃）
             </button>
@@ -545,7 +625,7 @@
                 <th style="width:160px">username</th>
                 <th style="width:240px">email</th>
                 <th style="width:120px">role</th>
-                <th style="width:140px">狀態</th>
+                <th style="width:140px">狀態（預留）</th>
                 <th style="width:240px">操作</th>
               </tr>
             </thead>
@@ -554,7 +634,7 @@
                 <td colspan="6">
                   <div class="empty" id="usersEmpty">
                     <div><b>尚未載入用戶資料</b></div>
-                    <div class="muted">點「重新同步」或等待後端串接（/.netlify/functions/admin）。</div>
+                    <div class="muted">點「重新同步」或「重新載入用戶」。</div>
                   </div>
                 </td>
               </tr>
@@ -563,7 +643,7 @@
         </div>
 
         <div style="height:14px"></div>
-        <div class="muted" id="usersHint">提示：目前此頁主要提供 UI 與流程結構，資料串接完成後即可上線使用。</div>
+        <div class="muted" id="usersHint">提示：同步後會載入前 200 筆。可用搜尋/角色篩選縮小結果。</div>
       </div>
     </div>
   </section>
@@ -599,7 +679,6 @@
         <div style="height:12px"></div>
 
         <div class="sv-grid">
-          <!-- Left: list -->
           <div class="sv-col">
             <div class="table-wrap">
               <table style="min-width:760px">
@@ -630,7 +709,6 @@
             <div class="muted" id="svHint">提示：此區只顯示 social_status=submitted 的使用者。</div>
           </div>
 
-          <!-- Right: detail -->
           <div class="sv-col">
             <div class="sv-detail" id="svDetail">
               <div class="sv-detail-head">
@@ -707,176 +785,61 @@
     </div>
   </section>
 
-  <!-- Dealers -->
+  <!-- （下方 dealers/quests/payouts/logs 先保留原本預留，不影響本輪重點） -->
   <section class="section" id="dealers">
     <div class="container">
       <div class="section-head">
         <h2 class="section-title"><i class="fas fa-car"></i> 車行管理</h2>
-        <p class="section-sub">審核/驗證、方案狀態、停權、資訊補件。</p>
+        <p class="section-sub">此區維持 UI 預留（本輪先專注：用戶管理 + 社群審核）。</p>
       </div>
-
       <div class="card">
-        <div class="toolbar">
-          <div class="left">
-            <div class="field">
-              <input class="input" id="dealerSearch" placeholder="搜尋 車行名稱 / 聯絡 / dealer_id" />
-              <select class="select" id="dealerVerifyFilter">
-                <option value="">全部驗證狀態</option>
-                <option value="unverified">未審核</option>
-                <option value="need_fix">補件中</option>
-                <option value="verified">已通過</option>
-                <option value="rejected">已拒絕</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="right">
-            <a class="btn btn-primary" href="dealers.html">
-              <i class="fas fa-shop"></i> 前往車行頁（Admin 可進）
-            </a>
-          </div>
+        <div class="empty">
+          <div><b>尚未串接</b></div>
+          <div class="muted">下一輪要做車行審核時再補對應節點。</div>
         </div>
-
-        <div style="height:12px"></div>
-
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th style="width:220px">dealer_id</th>
-                <th style="width:240px">車行名稱</th>
-                <th style="width:240px">聯絡</th>
-                <th style="width:160px">驗證狀態</th>
-                <th style="width:260px">操作</th>
-              </tr>
-            </thead>
-            <tbody id="dealersTbody">
-              <tr>
-                <td colspan="5">
-                  <div class="empty">
-                    <div><b>尚未載入車行</b></div>
-                    <div class="muted">點「重新同步」或等待後端串接（/.netlify/functions/admin）。</div>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div style="height:14px"></div>
-        <div class="muted">提示：車行驗證流程可後續串接 dealer_verify（你之後要串接的欄位我已經留好位置。</div>
       </div>
     </div>
   </section>
 
-  <!-- Quests -->
   <section class="section" id="quests">
     <div class="container">
       <div class="section-head">
         <h2 class="section-title"><i class="fas fa-tasks"></i> 任務管理</h2>
-        <p class="section-sub">建立任務、發放、追蹤、驗收（目前先做 UI 預留）。</p>
+        <p class="section-sub">此區維持 UI 預留。</p>
       </div>
-
-      <div class="toolbox">
-        <div class="card">
-          <h3 class="card-title"><i class="fas fa-plus"></i> 建立任務（先做介面）</h3>
-          <p class="muted">這裡是任務建立的 UI 雛形，你之後要串接的欄位我已經留好位置。</p>
-
-          <div style="height:10px"></div>
-
-          <div class="field">
-            <input class="input" id="qTitle" placeholder="任務名稱（例如：分享車源貼文）" />
-            <select class="select" id="qType">
-              <option value="promo">推廣</option>
-              <option value="review">審核/回報</option>
-              <option value="sales">成交</option>
-            </select>
-          </div>
-
-          <div style="height:10px"></div>
-
-          <div class="field">
-            <input class="input" id="qReward" placeholder="獎勵（例如：500 金幣 / 50 XP）" />
-            <input class="input" id="qDeadline" placeholder="期限（例如：2026-01-05）" />
-          </div>
-
-          <div style="height:12px"></div>
-
-          <button class="btn btn-primary" type="button" id="btnCreateQuest">
-            <i class="fas fa-upload"></i> 送出（先做介面）
-          </button>
-        </div>
-
-        <div class="card">
-          <h3 class="card-title"><i class="fas fa-list-check"></i> 任務列表（待串接）</h3>
-          <div class="empty">
-            <div><b>尚未載入任務</b></div>
-            <div class="muted">之後可從你規劃的 quests Sheet / Supabase 讀取，並加上狀態流轉。</div>
-          </div>
-        </div>
+      <div class="card">
+        <div class="empty"><b>尚未串接</b></div>
       </div>
     </div>
   </section>
 
-  <!-- Payouts -->
   <section class="section" id="payouts">
     <div class="container">
       <div class="section-head">
         <h2 class="section-title"><i class="fas fa-sack-dollar"></i> 提領/結算</h2>
-        <p class="section-sub">Partner 提領申請審核、付款證明、對帳。</p>
+        <p class="section-sub">此區維持 UI 預留。</p>
       </div>
-
       <div class="card">
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th style="width:220px">request_id</th>
-                <th style="width:220px">user_id</th>
-                <th style="width:140px">金額</th>
-                <th style="width:160px">狀態</th>
-                <th style="width:240px">操作</th>
-              </tr>
-            </thead>
-            <tbody id="payoutsTbody">
-              <tr>
-                <td colspan="5">
-                  <div class="empty">
-                    <div><b>尚未載入提領申請</b></div>
-                    <div class="muted">後端串接後，可顯示「待審核/已付款/退回」並保留操作紀錄。</div>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <div class="empty"><b>尚未串接</b></div>
       </div>
-
     </div>
   </section>
 
-  <!-- Logs -->
   <section class="section" id="logs">
     <div class="container">
       <div class="section-head">
         <h2 class="section-title"><i class="fas fa-clipboard-list"></i> 操作紀錄</h2>
-        <p class="section-sub">記錄管理員操作：誰在什麼時間做了什麼變更（待後端）。</p>
+        <p class="section-sub">此區維持 UI 預留。</p>
       </div>
-
       <div class="card">
-        <div class="empty">
-          <div><b>尚未載入紀錄</b></div>
-          <div class="muted">建議後端落地：所有管理操作都寫入 audit_logs（時間、操作者 user_id、行為、差異內容）。</div>
-        </div>
+        <div class="empty"><b>尚未串接</b></div>
       </div>
     </div>
   </section>
 
-  <!-- Toast -->
   <div class="toast-wrap" id="toastWrap" aria-live="polite" aria-atomic="true"></div>
 
   <script>
-    // ===== Guard: login + role (admin only) =====
     function requireLogin(){
       const token = localStorage.getItem('xinghuo_token');
       const u = JSON.parse(localStorage.getItem('xinghuo_user') || 'null');
@@ -894,7 +857,6 @@
       }
     }
 
-    // ===== UI utils =====
     const $ = (sel) => document.querySelector(sel);
     const escapeHtml = (s) => String(s ?? '')
       .replaceAll('&', '&amp;')
@@ -947,7 +909,6 @@
     }
 
     function setSkeleton(on){
-      // ✅ skeleton 啟用需搭配 body.is-loading
       document.body.classList.toggle("is-loading", !!on);
       const ids = [
         '#adminName','#adminEmail',
@@ -962,7 +923,6 @@
       });
     }
 
-    // ===== Navbar mobile menu =====
     (function initMenu(){
       const btn = $('#menuBtn');
       const links = $('#navLinks');
@@ -979,7 +939,6 @@
       });
     })();
 
-    // ===== Logout =====
     function logout(){
       localStorage.removeItem('xinghuo_token');
       localStorage.removeItem('xinghuo_user');
@@ -987,27 +946,6 @@
       location.href = './index.html';
     }
     $('#logoutBtn')?.addEventListener('click', (e)=>{ e.preventDefault(); logout(); });
-
-    // ===== Data loading (stub + future API) =====
-    async function fetchAdminSnapshot(token){
-      const res = await fetch('/.netlify/functions/admin', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + token
-        },
-        body: JSON.stringify({ action: 'snapshot' })
-      });
-      if(!res.ok){
-        const t = await res.text().catch(()=> '');
-        throw new Error('admin api ' + res.status + ': ' + (t || res.statusText));
-      }
-      return await res.json();
-    }
-
-    // ===== Social verify (Admin) =====
-    let SV_LIST = [];
-    let SV_SELECTED_USER_ID = "";
 
     async function adminApi(token, payload){
       const res = await fetch('/.netlify/functions/admin', {
@@ -1025,14 +963,143 @@
       return await res.json();
     }
 
+    // ===== Users (Admin) =====
+    let USERS_CACHE = [];
+    let USERS_TOTAL = 0;
+    let USERS_OFFSET = 0;
+    const USERS_LIMIT = 200;
+
+    async function fetchUsersList(token, { q = "", role = "", limit = USERS_LIMIT, offset = 0 } = {}){
+      return adminApi(token, { action: 'users_list', q, role, limit, offset });
+    }
+
+    async function fetchUserDetail(token, target_user_id){
+      return adminApi(token, { action: 'users_get', target_user_id });
+    }
+
+    async function updateUserRole(token, target_user_id, role){
+      return adminApi(token, { action: 'users_update_role', target_user_id, role });
+    }
+
+    function getUsersQueryState(){
+      const q = ($('#userSearch')?.value || '').trim();
+      const role = ($('#userRoleFilter')?.value || '').trim().toLowerCase();
+      return { q, role };
+    }
+
+    async function loadUsers({ silent = false } = {}){
+      const auth = requireLogin();
+      if(!auth) return;
+      guardAdmin(auth.user);
+
+      const { q, role } = getUsersQueryState();
+
+      if(!silent) showToast('載入用戶中…', 'info');
+
+      try{
+        const out = await fetchUsersList(auth.token, { q, role, limit: USERS_LIMIT, offset: USERS_OFFSET });
+        USERS_CACHE = out?.items || [];
+        USERS_TOTAL = Number(out?.total || 0);
+        renderUsers(USERS_CACHE);
+
+        const hint = $('#usersHint');
+        if(hint){
+          hint.textContent = `已載入 ${USERS_CACHE.length} 筆（total ${USERS_TOTAL}）。目前先顯示前 ${USERS_LIMIT} 筆，可用搜尋/角色篩選縮小結果。`;
+        }
+      } catch(err){
+        USERS_CACHE = [];
+        USERS_TOTAL = 0;
+        renderUsers([]);
+        showToast('載入用戶失敗：' + (err?.message || err), 'error');
+      }
+    }
+
+    function formatUserForAlert(userObj){
+      const keys = Object.keys(userObj || {});
+      keys.sort();
+      const lines = keys.map(k => `${k}: ${userObj[k]}`);
+      return lines.join('\n');
+    }
+
+    async function onUserView(userId){
+      const auth = requireLogin();
+      if(!auth) return;
+      guardAdmin(auth.user);
+
+      try{
+        const out = await fetchUserDetail(auth.token, userId);
+        const user = out?.user || {};
+        alert(formatUserForAlert(user));
+      } catch(err){
+        showToast('讀取用戶資料失敗：' + (err?.message || err), 'error');
+      }
+    }
+
+    async function onUserChangeRole(userId, currentRole){
+      const auth = requireLogin();
+      if(!auth) return;
+      guardAdmin(auth.user);
+
+      const next = prompt('輸入新角色（admin / dealer / partner）', (currentRole || '').toLowerCase());
+      if(next == null) return;
+      const role = String(next).trim().toLowerCase();
+      if(!['admin','dealer','partner'].includes(role)){
+        showToast('角色不合法：請輸入 admin / dealer / partner', 'warn');
+        return;
+      }
+
+      if(!confirm(`確定要把 ${userId} 的角色改成 ${role} 嗎？`)) return;
+
+      try{
+        await updateUserRole(auth.token, userId, role);
+        showToast('角色已更新', 'success');
+        await loadUsers({ silent: true });
+      } catch(err){
+        showToast('更新角色失敗：' + (err?.message || err), 'error');
+      }
+    }
+
+    function wireUserRowActions(){
+      const tbody = $('#usersTbody');
+      if(!tbody) return;
+
+      tbody.querySelectorAll('tr[data-userid]').forEach(tr => {
+        const uid = tr.getAttribute('data-userid');
+        if(!uid) return;
+
+        const btnView = tr.querySelector('button[data-act="view"]');
+        const btnRole = tr.querySelector('button[data-act="role"]');
+        const btnBlock = tr.querySelector('button[data-act="block"]');
+
+        btnView?.addEventListener('click', () => onUserView(uid));
+
+        btnRole?.addEventListener('click', () => {
+          const roleCell = tr.querySelector('td:nth-child(4)')?.textContent || '';
+          onUserChangeRole(uid, roleCell);
+        });
+
+        btnBlock?.addEventListener('click', () => {
+          showToast('停權/解鎖：目前為 UI 預留（需要先定義 users sheet 欄位/規則）', 'info');
+        });
+      });
+    }
+
+    let usersReloadTimer = null;
+    function scheduleUsersReload(){
+      if(usersReloadTimer) clearTimeout(usersReloadTimer);
+      usersReloadTimer = setTimeout(() => loadUsers({ silent: true }), 320);
+    }
+
+    // ===== Social verify (Admin) =====
+    let SV_LIST = [];
+    let SV_SELECTED_USER_ID = "";
+
     async function fetchSocialSubmitted(token){
       return adminApi(token, { action: 'social_list_submitted' });
     }
-
     async function fetchSocialDetail(token, target_user_id){
       return adminApi(token, { action: 'social_get', target_user_id });
     }
-
     async function socialApprove(token, target_user_id, primary_platform, influence_tier){
       return adminApi(token, {
         action: 'social_approve',
@@ -1040,7 +1107,6 @@
         data: { primary_platform, influence_tier }
       });
     }
-
     async function socialReject(token, target_user_id){
       return adminApi(token, { action: 'social_reject', target_user_id });
     }
@@ -1257,52 +1323,6 @@
       });
     }
 
-    function applySnapshotUI(snapshot){
-      const s = snapshot?.stats || {};
-      const set = (id, val) => { const el = $(id); if(el) el.textContent = String(val ?? 0); };
-      set('#statUsers', s.users);
-      set('#statDealers', s.dealers);
-      set('#statPending', s.pending);
-      set('#statPayouts', s.payouts);
-      set('#todayUsers', s.todayUsers);
-      set('#pendingDealers', s.pendingDealers);
-      set('#activeQuests', s.activeQuests);
-      set('#todayPayouts', s.todayPayouts);
-
-      // 目前仍保留：之後你要擴充也不會卡住
-      renderUsers(snapshot?.users || []);
-      renderDealers(snapshot?.dealers || []);
-    }
-
-    async function syncAll(){
-      const auth = requireLogin();
-      if(!auth) return;
-      guardAdmin(auth.user);
-
-      $('#navUsername').textContent = auth.user.username || auth.user.name || 'admin';
-      $('#adminName').textContent = auth.user.name || auth.user.username || '管理員';
-      $('#adminEmail').textContent = auth.user.email || '-';
-
-      setSkeleton(true);
-      setSyncBadge('syncing');
-
-      try{
-        const snap = await fetchAdminSnapshot(auth.token);
-        applySnapshotUI(snap);
-        // ✅ 社群待審清單
-        await loadSocialSubmitted();
-        setSyncBadge('ok');
-        showToast('同步完成', 'success');
-      } catch (err){
-        setSyncBadge('fail');
-        showToast('尚未串接後端資料（可先使用介面）', 'warn');
-        applySnapshotUI({ stats: { users:0, dealers:0, pending:0, payouts:0, todayUsers:0, pendingDealers:0, activeQuests:0, todayPayouts:0 }, users: [], dealers: [] });
-      } finally{
-        setSkeleton(false);
-      }
-    }
-
-    // ===== 原本 users/dealers render（保留）=====
     function renderUsers(users=[]){
       const tbody = $('#usersTbody');
       if(!tbody) return;
@@ -1311,7 +1331,7 @@
           <tr><td colspan="6">
             <div class="empty">
               <div><b>目前沒有資料</b></div>
-              <div class="muted">你可以先用 UI；串接完成後這裡會自動顯示。</div>
+              <div class="muted">你可以先用 UI；確認 Netlify Functions 已佈署後再同步。</div>
             </div>
           </td></tr>
         `;
@@ -1320,9 +1340,8 @@
 
       tbody.innerHTML = users.map(u => {
         const role = (u.role || '').toLowerCase();
-        const status = (u.status || 'active').toLowerCase();
-        const statusLabel = status === 'blocked' ? '停權' : (status === 'pending' ? '待補資料' : '正常');
-        const dotColor = status === 'blocked' ? 'rgba(255,70,90,.95)' : (status === 'pending' ? 'rgba(255,190,80,.95)' : 'rgba(90,255,190,.95)');
+        const statusLabel = '正常（預留）';
+        const dotColor = 'rgba(90,255,190,.95)';
         return `
           <tr data-userid="${escapeHtml(u.user_id || '')}">
             <td>${escapeHtml(u.user_id || '')}</td>
@@ -1340,58 +1359,54 @@
           </tr>
         `;
       }).join('');
+
+      wireUserRowActions();
     }
 
-    function renderDealers(dealers=[]){
-      const tbody = $('#dealersTbody');
-      if(!tbody) return;
-      if(!dealers.length){
-        tbody.innerHTML = `
-          <tr><td colspan="5">
-            <div class="empty">
-              <div><b>目前沒有資料</b></div>
-              <div class="muted">串接完成後會顯示待審核車行清單。</div>
-            </div>
-          </td></tr>
-        `;
-        return;
+    function applySnapshotUI(snapshot){
+      const s = snapshot?.stats || {};
+      const set = (id, val) => { const el = $(id); if(el) el.textContent = String(val ?? 0); };
+      set('#statUsers', s.users);
+      set('#statDealers', s.dealers);
+      set('#statPending', s.pending);
+      set('#statPayouts', s.payouts);
+      set('#todayUsers', s.todayUsers);
+      set('#pendingDealers', s.pendingDealers);
+      set('#activeQuests', s.activeQuests);
+      set('#todayPayouts', s.todayPayouts);
+
+      USERS_CACHE = snapshot?.users || [];
+      USERS_TOTAL = Number(snapshot?.stats?.users || 0);
+      renderUsers(USERS_CACHE);
+    }
+
+    async function syncAll(){
+      const auth = requireLogin();
+      if(!auth) return;
+      guardAdmin(auth.user);
+
+      $('#navUsername').textContent = auth.user.username || auth.user.name || 'admin';
+      $('#adminName').textContent = auth.user.name || auth.user.username || '管理員';
+      $('#adminEmail').textContent = auth.user.email || '-';
+
+      setSkeleton(true);
+      setSyncBadge('syncing');
+
+      try{
+        const snap = await adminApi(auth.token, { action: 'snapshot' });
+        applySnapshotUI(snap);
+        await loadSocialSubmitted();
+        setSyncBadge('ok');
+        showToast('同步完成', 'success');
+      } catch (err){
+        setSyncBadge('fail');
+        showToast('同步失敗：請確認 Netlify Functions 已佈署', 'warn');
+        applySnapshotUI({ stats: { users:0, dealers:0, pending:0, payouts:0, todayUsers:0, pendingDealers:0, activeQuests:0, todayPayouts:0 }, users: [] });
+      } finally{
+        setSkeleton(false);
       }
-
-      tbody.innerHTML = dealers.map(d => {
-        const v = (d.verify_status || 'unverified').toLowerCase();
-        const map = {
-          unverified: ['未審核','rgba(255,190,80,.95)'],
-          need_fix: ['補件中','rgba(255,190,80,.95)'],
-          verified: ['已通過','rgba(90,255,190,.95)'],
-          rejected: ['已拒絕','rgba(255,70,90,.95)']
-        };
-        const pair = map[v] || ['未審核','rgba(255,190,80,.95)'];
-        const label = pair[0];
-        const color = pair[1];
-        return `
-          <tr data-dealerid="${escapeHtml(d.dealer_id || '')}">
-            <td>${escapeHtml(d.dealer_id || '')}</td>
-            <td>${escapeHtml(d.name || '')}</td>
-            <td>${escapeHtml(d.contact || '')}</td>
-            <td><span class="status-pill"><span class="status-dot" style="background:${color}"></span>${label}</span></td>
-            <td>
-              <div class="row-actions">
-                <button class="mini-btn" data-act="approve"><i class="fas fa-check"></i> 通過</button>
-                <button class="mini-btn" data-act="needfix"><i class="fas fa-file-circle-exclamation"></i> 補件</button>
-                <button class="mini-btn" data-act="reject"><i class="fas fa-xmark"></i> 拒絕</button>
-              </div>
-            </td>
-          </tr>
-        `;
-      }).join('');
     }
 
-    // actions
-    $('#refreshBtn')?.addEventListener('click', syncAll);
-    $('#btnCreateQuest')?.addEventListener('click', ()=>showToast('此功能為 UI 預留，後端串接後即可使用。','info'));
-    $('#btnCreateUser')?.addEventListener('click', ()=>showToast('此功能為 UI 預留，後端串接後即可使用。','info'));
-
-    // simple client-side filtering
     function wireFilters(){
       function filterUsers(){
         const q = ($('#userSearch')?.value || '').trim().toLowerCase();
@@ -1402,32 +1417,20 @@
           const text = (r.textContent || '').toLowerCase();
           let ok = !q || text.includes(q);
           if(ok && role) ok = text.includes(role);
-          if(ok && st) ok = text.includes(st === 'active' ? '正常' : (st === 'blocked' ? '停權' : '待補資料'));
+          if(ok && st) ok = ok; // 預留
           r.style.display = ok ? '' : 'none';
         });
       }
 
-      function filterDealers(){
-        const q = ($('#dealerSearch')?.value || '').trim().toLowerCase();
-        const v = ($('#dealerVerifyFilter')?.value || '').trim().toLowerCase();
-        const rows = Array.from($('#dealersTbody')?.querySelectorAll('tr') || []);
-        rows.forEach(r => {
-          const text = (r.textContent || '').toLowerCase();
-          let ok = !q || text.includes(q);
-          if(ok && v) ok = text.includes(v === 'need_fix' ? '補件' : v);
-          r.style.display = ok ? '' : 'none';
-        });
-      }
-
-      $('#userSearch')?.addEventListener('input', filterUsers);
-      $('#userRoleFilter')?.addEventListener('change', filterUsers);
+      $('#userSearch')?.addEventListener('input', () => { filterUsers(); scheduleUsersReload(); });
+      $('#userRoleFilter')?.addEventListener('change', () => { filterUsers(); scheduleUsersReload(); });
       $('#userStatusFilter')?.addEventListener('change', filterUsers);
-
-      $('#dealerSearch')?.addEventListener('input', filterDealers);
-      $('#dealerVerifyFilter')?.addEventListener('change', filterDealers);
     }
 
-    // init
+    $('#refreshBtn')?.addEventListener('click', syncAll);
+    $('#usersRefreshBtn')?.addEventListener('click', () => loadUsers({ silent: false }));
+    $('#btnCreateUser')?.addEventListener('click', ()=>showToast('此功能為 UI 預留，後端串接後即可使用。','info'));
+
     (function init(){
       const auth = requireLogin();
       if(!auth) return;

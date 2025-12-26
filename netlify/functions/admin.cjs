@@ -1,11 +1,14 @@
 // netlify/functions/admin.cjs
 // ✅ Admin API：JWT 驗證 + CORS 白名單 + Sheet 公式注入防護 + 讀取範圍 A:ZZ
 // action:
-// - snapshot:              後台總覽（目前回傳 users 總數 + social submitted 待審數）
+// - snapshot:              後台總覽（回傳 users 總數 + social submitted 待審數 + todayUsers + users preview）
 // - social_list_submitted: 列出 users 中 social_status=submitted 的待審清單
 // - social_get:            讀取指定 target_user_id 的社群驗證資料
 // - social_approve:        (admin only) 僅能審核 submitted → approved + verified_at/by + level=1 + 開權限 + 設定 tier/platform
 // - social_reject:         (admin only) 僅能審核 submitted → rejected + verified_at/by + level=0 + 關權限
+// - users_list:            用戶清單（支援 q/role/limit/offset）
+// - users_get:             讀取指定 target_user_id 的用戶資料（完整欄位）
+// - users_update_role:     更新指定 target_user_id 的 role（admin/dealer/partner）
 
 const { google } = require("googleapis");
 const jwt = require("jsonwebtoken");
@@ -52,8 +55,66 @@ function nowISO() {
   return new Date().toISOString();
 }
 
+// ===== Time helpers (Asia/Taipei, UTC+8) =====
+const TAIPEI_OFFSET_MS = 8 * 60 * 60 * 1000;
+
+function toTaipeiYMD(dateObjUtc) {
+  const shifted = new Date(dateObjUtc.getTime() + TAIPEI_OFFSET_MS);
+  return {
+    y: shifted.getUTCFullYear(),
+    m: shifted.getUTCMonth() + 1,
+    d: shifted.getUTCDate(),
+  };
+}
+
+function sameTaipeiDay(isoA, dateB) {
+  const da = new Date(isoA);
+  if (Number.isNaN(da.getTime())) return false;
+  const a = toTaipeiYMD(da);
+  const b = toTaipeiYMD(dateB);
+  return a.y === b.y && a.m === b.m && a.d === b.d;
+}
+
 function safeStr(v) {
   return String(v == null ? "" : v).trim();
+}
+
+function countTodayUsers(rows, headerIdx) {
+  const now = new Date();
+  const ci = headerIdx["create_at"];
+  if (ci === undefined) return 0;
+  let n = 0;
+  for (const r of rows) {
+    const v = safeStr(r?.[ci] || "");
+    if (v && sameTaipeiDay(v, now)) n++;
+  }
+  return n;
+}
+
+function buildUserObjFromRow(row, headerIdx) {
+  const get = (k) => safeStr(row?.[headerIdx[k]] || "");
+  return {
+    user_id: get("user_id"),
+    username: get("username"),
+    name: get("name"),
+    email: get("email"),
+    role: get("role"),
+    level: Number(get("level") || 0),
+    xp_total: Number(get("xp_total") || 0),
+    social_status: get("social_status") || "unsubmitted",
+    influence_tier: get("influence_tier"),
+    primary_platform: get("primary_platform"),
+    can_take_tasks: String(get("can_take_tasks")).toLowerCase() === "true",
+    can_withdraw: String(get("can_withdraw")).toLowerCase() === "true",
+    create_at: get("create_at"),
+    last_login_at: get("last_login_at"),
+  };
+}
+
+function buildRowMap(headers, row) {
+  const obj = {};
+  for (let i = 0; i < headers.length; i++) obj[headers[i]] = safeStr(row?.[i] || "");
+  return obj;
 }
 
 // ✅ 防公式注入：若以 = + - @ 開頭，前面加 ' 讓 Google Sheet 當純文字
@@ -230,9 +291,17 @@ exports.handler = async (event) => {
       "user_id",
       "username",
       "email",
+      "name",
       "role",
-
+      "create_at",
+      "last_login_at",
+      "level",
+      "xp_total",
       "social_status",
+      "influence_tier",
+      "primary_platform",
+      "can_take_tasks",
+      "can_withdraw",
       "ig_url",
       "fb_url",
       "followers_count",
@@ -245,12 +314,6 @@ exports.handler = async (event) => {
       "social_submitted_at",
       "verified_at",
       "verified_by",
-
-      "level",
-      "influence_tier",
-      "primary_platform",
-      "can_take_tasks",
-      "can_withdraw",
     ]);
 
     const headerIdx = buildHeaderIndex(headers);
@@ -261,6 +324,10 @@ exports.handler = async (event) => {
     if (action === "snapshot") {
       const totalUsers = rows.length;
       const pending = rows.filter((r) => safeStr(r[headerIdx["social_status"]]).toLowerCase() === "submitted").length;
+      const todayUsers = countTodayUsers(rows, headerIdx);
+
+      // 預設先回前 200 筆用戶，讓前台首次同步就能看到清單（之後可改成分頁/搜尋）
+      const usersPreview = rows.slice(0, 200).map((r) => buildUserObjFromRow(r, headerIdx));
 
       return reply(
         200,
@@ -271,16 +338,90 @@ exports.handler = async (event) => {
             dealers: 0,
             pending,
             payouts: 0,
-            todayUsers: 0,
+            todayUsers,
             pendingDealers: 0,
             activeQuests: 0,
             todayPayouts: 0,
           },
-          users: [],   // 目前先留空：UI 已備妥，後續可擴充
-          dealers: [], // 目前先留空：UI 已備妥，後續可擴充
+          users: usersPreview,
+          dealers: [],
         },
         origin
       );
+    }
+
+    // ===== users_list =====
+    if (action === "users_list") {
+      const q = safeStr(body.q || body.query || "").toLowerCase();
+      const roleFilter = safeStr(body.role || "").toLowerCase();
+      const limitRaw = Number(body.limit ?? 200);
+      const offsetRaw = Number(body.offset ?? 0);
+      const limit = Math.max(1, Math.min(500, Number.isFinite(limitRaw) ? limitRaw : 200));
+      const offset = Math.max(0, Number.isFinite(offsetRaw) ? offsetRaw : 0);
+
+      const itemsAll = rows.map((r) => buildUserObjFromRow(r, headerIdx));
+
+      const filtered = itemsAll.filter((u) => {
+        let ok = true;
+        if (roleFilter) ok = ok && String(u.role || "").toLowerCase() === roleFilter;
+        if (q) {
+          const hay = `${u.user_id} ${u.username} ${u.email} ${u.name}`.toLowerCase();
+          ok = ok && hay.includes(q);
+        }
+        return ok;
+      });
+
+      const page = filtered.slice(offset, offset + limit);
+
+      return reply(
+        200,
+        {
+          ok: true,
+          total: filtered.length,
+          limit,
+          offset,
+          items: page,
+        },
+        origin
+      );
+    }
+
+    // ===== users_get =====
+    if (action === "users_get") {
+      const tUid = safeStr(target_user_id);
+      if (!tUid) return reply(400, { ok: false, error: "target_user_id_required" }, origin);
+
+      const foundRowIndex = findRowIndexByUserId(rows, uidIdx, tUid);
+      if (foundRowIndex === -1) return reply(404, { ok: false, error: "user_not_found" }, origin);
+
+      const row = rows[foundRowIndex] || [];
+      const user = buildRowMap(headers, row);
+
+      return reply(200, { ok: true, user_id: tUid, user }, origin);
+    }
+
+    // ===== users_update_role =====
+    if (action === "users_update_role") {
+      const tUid = safeStr(target_user_id);
+      if (!tUid) return reply(400, { ok: false, error: "target_user_id_required" }, origin);
+
+      const nextRole = safeStr(body.role || data.role || "").toLowerCase();
+      if (!["admin", "dealer", "partner"].includes(nextRole)) {
+        return reply(400, { ok: false, error: "role_invalid" }, origin);
+      }
+
+      const foundRowIndex = findRowIndexByUserId(rows, uidIdx, tUid);
+      if (foundRowIndex === -1) return reply(404, { ok: false, error: "user_not_found" }, origin);
+
+      const rowNumber1Based = foundRowIndex + 2;
+      const row = rows[foundRowIndex] || [];
+      const fullRow = Array.from({ length: headersLen }, (_, j) => safeStr(row[j] || ""));
+
+      fullRow[headerIdx["role"]] = sanitizeForSheet(nextRole);
+
+      await updateRowRange(sheets, spreadsheetId, usersSheet, rowNumber1Based, headersLen, fullRow);
+
+      return reply(200, { ok: true, target_user_id: tUid, role: nextRole }, origin);
     }
 
     // ===== social list submitted =====
@@ -321,7 +462,6 @@ exports.handler = async (event) => {
         });
       }
 
-      // sort by submitted time desc if possible
       items.sort((a, b) => {
         const ta = Date.parse(a.social_submitted_at || "") || 0;
         const tb = Date.parse(b.social_submitted_at || "") || 0;
@@ -377,7 +517,6 @@ exports.handler = async (event) => {
         );
       }
 
-      // approve / reject: only allow when submitted
       if (currentStatus !== "submitted") {
         return reply(409, { ok: false, error: "not_submitted" }, origin);
       }
