@@ -27,13 +27,14 @@ function isOriginAllowed(origin) {
 }
 
 function corsHeaders(origin) {
-  const allowOrigin = origin && isOriginAllowed(origin) ? origin : getAllowedOrigins()[0];
+  const allowOrigin =
+    origin && isOriginAllowed(origin) ? origin : getAllowedOrigins()[0];
   return {
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": allowOrigin,
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Allow-Methods": "POST,OPTIONS",
-    "Vary": "Origin",
+    Vary: "Origin",
   };
 }
 
@@ -130,6 +131,29 @@ async function updateCell(sheets, spreadsheetId, sheetName, rowNumber1Based, col
   });
 }
 
+// ---- v1 欄位解析 helpers ----
+function safeStr(v) {
+  return String(v == null ? "" : v).trim();
+}
+
+function toIntOrDefault(v, d = 0) {
+  const n = parseInt(String(v ?? "").trim(), 10);
+  return Number.isFinite(n) ? n : d;
+}
+
+function toBoolOrDefault(v, d = false) {
+  const s = String(v ?? "").trim().toLowerCase();
+  if (s === "true" || s === "1" || s === "yes" || s === "y") return true;
+  if (s === "false" || s === "0" || s === "no" || s === "n") return false;
+  return d;
+}
+
+function getCell(row, headerIdx, key) {
+  const i = headerIdx[key];
+  if (i === undefined) return "";
+  return row[i];
+}
+
 exports.handler = async (event) => {
   const origin = getRequestOrigin(event.headers || {});
 
@@ -149,7 +173,22 @@ exports.handler = async (event) => {
     const usersSheet = getUsersSheetName();
 
     const { headers, rows } = await readAllRows(sheets, spreadsheetId, usersSheet);
-    ensureHeader(headers, ["user_id", "name", "email"]);
+
+    // ✅ 必備欄位（含 v1 任務/等級/風控欄位）
+    ensureHeader(headers, [
+      "user_id",
+      "name",
+      "email",
+
+      "level",
+      "xp_total",
+      "social_status",
+      "influence_tier",
+      "primary_platform",
+      "can_take_tasks",
+      "can_withdraw",
+    ]);
+
     const headerIdx = buildHeaderIndex(headers);
 
     const uid = String(authPayload.user_id);
@@ -169,9 +208,38 @@ exports.handler = async (event) => {
 
     if (action === "get") {
       const row = rows[foundRowIndex];
-      const name = String(row[headerIdx["name"]] || "").trim();
-      const email = String(row[headerIdx["email"]] || "").trim();
-      return reply(200, { ok: true, profile: { name, email, user_id: uid } }, origin);
+
+      const name = safeStr(row[headerIdx["name"]] || "");
+      const email = safeStr(row[headerIdx["email"]] || "");
+
+      const level = toIntOrDefault(getCell(row, headerIdx, "level"), 0);
+      const xp_total = toIntOrDefault(getCell(row, headerIdx, "xp_total"), 0);
+      const social_status = safeStr(getCell(row, headerIdx, "social_status")) || "unsubmitted";
+      const influence_tier = safeStr(getCell(row, headerIdx, "influence_tier")) || "C";
+      const primary_platform = safeStr(getCell(row, headerIdx, "primary_platform")) || "";
+      const can_take_tasks = toBoolOrDefault(getCell(row, headerIdx, "can_take_tasks"), false);
+      const can_withdraw = toBoolOrDefault(getCell(row, headerIdx, "can_withdraw"), false);
+
+      return reply(
+        200,
+        {
+          ok: true,
+          profile: {
+            name,
+            email,
+            user_id: uid,
+
+            level,
+            xp_total,
+            social_status,
+            influence_tier,
+            primary_platform,
+            can_take_tasks,
+            can_withdraw,
+          },
+        },
+        origin
+      );
     }
 
     if (action === "update") {

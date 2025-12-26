@@ -29,13 +29,14 @@ function isOriginAllowed(origin) {
 }
 
 function corsHeaders(origin) {
-  const allowOrigin = origin && isOriginAllowed(origin) ? origin : getAllowedOrigins()[0];
+  const allowOrigin =
+    origin && isOriginAllowed(origin) ? origin : getAllowedOrigins()[0];
   return {
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": allowOrigin,
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Allow-Methods": "POST,OPTIONS",
-    "Vary": "Origin",
+    Vary: "Origin",
   };
 }
 
@@ -226,6 +227,25 @@ function colToLetter(n1Based) {
   return s;
 }
 
+// ---- v1 欄位解析 helpers ----
+function toIntOrDefault(v, d = 0) {
+  const n = parseInt(String(v ?? "").trim(), 10);
+  return Number.isFinite(n) ? n : d;
+}
+
+function toBoolOrDefault(v, d = false) {
+  const s = String(v ?? "").trim().toLowerCase();
+  if (s === "true" || s === "1" || s === "yes" || s === "y") return true;
+  if (s === "false" || s === "0" || s === "no" || s === "n") return false;
+  return d;
+}
+
+function getCell(row, headerIdx, key) {
+  const i = headerIdx[key];
+  if (i === undefined) return "";
+  return row[i];
+}
+
 exports.handler = async (event) => {
   const origin = getRequestOrigin(event.headers || {});
 
@@ -243,7 +263,27 @@ exports.handler = async (event) => {
     const sheets = await getSheetsClient();
 
     const { headers, rows } = await readAllRows(sheets, spreadsheetId, usersSheet);
-    ensureHeader(headers, ["username", "password_hash", "create_at", "last_login_at", "user_id", "email", "name"]);
+
+    // ✅ users sheet 必備欄位（含 v1 任務/等級/風控欄位）
+    ensureHeader(headers, [
+      "username",
+      "password_hash",
+      "create_at",
+      "last_login_at",
+      "user_id",
+      "email",
+      "name",
+
+      // v1
+      "level",
+      "xp_total",
+      "social_status",
+      "influence_tier",
+      "primary_platform",
+      "can_take_tasks",
+      "can_withdraw",
+    ]);
+
     const headerIdx = buildHeaderIndex(headers);
 
     if (action === "register") {
@@ -273,7 +313,17 @@ exports.handler = async (event) => {
       const createAt = nowISO();
       const lastLoginAt = "";
 
+      // v1 預設（依你目前規格）
+      const level = "0";
+      const xpTotal = "0";
+      const socialStatus = "unsubmitted";
+      const influenceTier = "C";        // 你希望新用戶基本都是 C
+      const primaryPlatform = "";       // 等管理員審核後設定
+      const canTakeTasks = "false";     // Lv0 不可接任務
+      const canWithdraw = "false";      // Lv0 不可提領
+
       const rowValues = [];
+
       rowValues[headerIdx["name"]] = name;
       rowValues[headerIdx["username"]] = username;
       rowValues[headerIdx["password_hash"]] = pwHash;
@@ -281,6 +331,15 @@ exports.handler = async (event) => {
       rowValues[headerIdx["last_login_at"]] = lastLoginAt;
       rowValues[headerIdx["user_id"]] = uid;
       rowValues[headerIdx["email"]] = email;
+
+      // v1
+      rowValues[headerIdx["level"]] = level;
+      rowValues[headerIdx["xp_total"]] = xpTotal;
+      rowValues[headerIdx["social_status"]] = socialStatus;
+      rowValues[headerIdx["influence_tier"]] = influenceTier;
+      rowValues[headerIdx["primary_platform"]] = primaryPlatform;
+      rowValues[headerIdx["can_take_tasks"]] = canTakeTasks;
+      rowValues[headerIdx["can_withdraw"]] = canWithdraw;
 
       const maxLen = Math.max(...Object.values(headerIdx)) + 1;
       const finalRow = Array.from({ length: maxLen }, (_, i) => safeStr(rowValues[i] || ""));
@@ -313,13 +372,44 @@ exports.handler = async (event) => {
 
       const u = safeStr(row[headerIdx["username"]] || "");
       const uid = safeStr(row[headerIdx["user_id"]] || "");
+
       const role =
         (headerIdx["role"] !== undefined
           ? String(row[headerIdx["role"]] || "").trim().toLowerCase()
           : "") || "partner";
 
+      // v1 欄位回傳（舊資料容錯）
+      const level = toIntOrDefault(getCell(row, headerIdx, "level"), 0);
+      const xp_total = toIntOrDefault(getCell(row, headerIdx, "xp_total"), 0);
+      const social_status = safeStr(getCell(row, headerIdx, "social_status")) || "unsubmitted";
+      const influence_tier = safeStr(getCell(row, headerIdx, "influence_tier")) || "C";
+      const primary_platform = safeStr(getCell(row, headerIdx, "primary_platform")) || "";
+      const can_take_tasks = toBoolOrDefault(getCell(row, headerIdx, "can_take_tasks"), false);
+      const can_withdraw = toBoolOrDefault(getCell(row, headerIdx, "can_withdraw"), false);
+
       const token = jwt.sign({ user_id: uid, username: u, role }, jwtSecret, { expiresIn: "30d" });
-      return reply(200, { ok: true, user: { user_id: uid, username: u, role }, token }, origin);
+
+      return reply(
+        200,
+        {
+          ok: true,
+          user: {
+            user_id: uid,
+            username: u,
+            role,
+
+            level,
+            xp_total,
+            social_status,
+            influence_tier,
+            primary_platform,
+            can_take_tasks,
+            can_withdraw,
+          },
+          token,
+        },
+        origin
+      );
     }
 
     return reply(400, { ok: false, error: "unknown_action" }, origin);
