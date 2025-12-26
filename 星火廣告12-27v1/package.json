@@ -1,9 +1,0 @@
-{
-  "name": "xinghuoad",
-  "version": "1.0.0",
-  "private": true,
-  "dependencies": {
-    "googleapis": "^140.0.0",
-    "jsonwebtoken": "^9.0.2"
-  }
-}
