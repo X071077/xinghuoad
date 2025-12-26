@@ -1,108 +1,97 @@
 // netlify/functions/dashboard.cjs
+// ✅ 合併版：CORS 白名單 + JWT 驗證 + 不回傳內部錯誤細節
+
 const { google } = require("googleapis");
 const jwt = require("jsonwebtoken");
 
-function reply(statusCode, data) {
+const DEFAULT_ALLOWED_ORIGINS = [
+  "https://xinghuoad.xyz",
+  "https://www.xinghuoad.xyz",
+];
+
+function getAllowedOrigins() {
+  const env = String(process.env.ALLOWED_ORIGINS || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return env.length ? env : DEFAULT_ALLOWED_ORIGINS;
+}
+
+function getRequestOrigin(headers = {}) {
+  return headers.origin || headers.Origin || "";
+}
+
+function isOriginAllowed(origin) {
+  if (!origin) return true;
+  return getAllowedOrigins().includes(origin);
+}
+
+function corsHeaders(origin) {
+  const allowOrigin = origin && isOriginAllowed(origin) ? origin : getAllowedOrigins()[0];
   return {
-    statusCode,
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      "Access-Control-Allow-Methods": "POST,OPTIONS",
-    },
-    body: JSON.stringify(data),
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": allowOrigin,
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Methods": "POST,OPTIONS",
+    "Vary": "Origin",
   };
+}
+
+function reply(statusCode, data, origin) {
+  return { statusCode, headers: corsHeaders(origin), body: JSON.stringify(data) };
 }
 
 function nowISO() {
   return new Date().toISOString();
 }
 
-function safeParse(json, fallback) {
-  try { return JSON.parse(json); } catch { return fallback; }
-}
-
-function normalizeHeader(h) {
-  return String(h || "").trim();
-}
-
-function buildHeaderIndex(headers) {
-  const idx = {};
-  headers.forEach((h, i) => { if (h) idx[h] = i; });
-  return idx;
-}
-
-function colToA1(n) {
-  let s = "";
-  n = n + 1;
-  while (n > 0) {
-    const m = (n - 1) % 26;
-    s = String.fromCharCode(65 + m) + s;
-    n = Math.floor((n - 1) / 26);
-  }
-  return s;
-}
-
 function getBearerToken(event) {
-  const auth = event.headers?.authorization || event.headers?.Authorization || "";
-  const m = String(auth).match(/^Bearer\s+(.+)$/i);
-  return m ? m[1] : "";
+  const h = event.headers || {};
+  const auth = h.authorization || h.Authorization || "";
+  const s = String(auth);
+  if (!s.toLowerCase().startsWith("bearer ")) return "";
+  return s.slice(7).trim();
 }
 
 function requireAuth(event) {
-  const jwtSecret = process.env.JWT_SECRET;
-  if (!jwtSecret) throw new Error("Missing JWT_SECRET");
   const token = getBearerToken(event);
   if (!token) return null;
+  const secret = process.env.JWT_SECRET;
+  if (!secret) return null;
   try {
-    return jwt.verify(token, jwtSecret); // { user_id, username, iat, exp }
+    return jwt.verify(token, secret);
   } catch {
     return null;
   }
 }
 
-// ===== Default "all zero" data for NEW users =====
-const DEFAULT_DATA = {
-  my_quests: [],
-  stats: {
-    level: 0,
-    xp: 0,
-    nextLevelXP: 100,
-    totalEarned: 0,
-    todayEarnings: 0,
-    monthEarnings: 0,
-    completedQuests: 0,
-    activeDays: 0,
-  },
-};
-
-function normalizeIncomingData(incoming) {
-  const statsIn = (incoming && typeof incoming === "object") ? incoming.stats : null;
-  const myQuestsIn = (incoming && typeof incoming === "object") ? incoming.my_quests : null;
-
-  const stats = {
-    ...DEFAULT_DATA.stats,
-    ...(statsIn && typeof statsIn === "object" ? statsIn : {}),
-  };
-
-  for (const k of Object.keys(stats)) {
-    const v = Number(stats[k]);
-    stats[k] = Number.isFinite(v) ? v : DEFAULT_DATA.stats[k];
-  }
-
-  const my_quests = Array.isArray(myQuestsIn) ? myQuestsIn : DEFAULT_DATA.my_quests;
-  return { my_quests, stats };
+function normalizeHeader(s) {
+  return String(s || "").trim().toLowerCase();
 }
 
-async function getSheets() {
-  const sheetId = process.env.GOOGLE_SHEET_ID;
-  const tab = process.env.GOOGLE_DASHBOARD_TAB; // dashboard 分頁名
-  const saJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
-
-  if (!sheetId || !tab || !saJson) {
-    throw new Error("Missing env vars: GOOGLE_SHEET_ID / GOOGLE_DASHBOARD_TAB / GOOGLE_SERVICE_ACCOUNT_JSON");
+function colToA1(colIndex0Based) {
+  let n = colIndex0Based + 1;
+  let s = "";
+  while (n > 0) {
+    const mod = (n - 1) % 26;
+    s = String.fromCharCode(65 + mod) + s;
+    n = Math.floor((n - 1) / 26);
   }
+  return s;
+}
+
+const DEFAULT_DATA = {
+  stats: { coins: 0, xp: 0, level: 1 },
+  my_quests: [],
+};
+
+async function getSheets() {
+  const saJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+  const sheetId = process.env.GOOGLE_SHEET_ID || process.env.SPREADSHEET_ID;
+  const tab = process.env.DASHBOARD_TAB || "dashboard";
+
+  if (!saJson) throw new Error("Missing GOOGLE_SERVICE_ACCOUNT_JSON");
+  if (!sheetId) throw new Error("Missing GOOGLE_SHEET_ID (or SPREADSHEET_ID)");
 
   const credentials = JSON.parse(saJson);
   const auth = new google.auth.JWT({
@@ -128,27 +117,28 @@ async function loadAllRows(sheets, sheetId, tab) {
 }
 
 exports.handler = async (event) => {
+  const origin = getRequestOrigin(event.headers || {});
+
   try {
-    if (event.httpMethod === "OPTIONS") return reply(200, { ok: true });
-    if (event.httpMethod !== "POST") return reply(405, { error: "Method not allowed" });
+    if (event.httpMethod === "OPTIONS") return reply(200, { ok: true }, origin);
+    if (event.httpMethod !== "POST") return reply(405, { error: "Method not allowed" }, origin);
+    if (origin && !isOriginAllowed(origin)) return reply(403, { ok: false, error: "origin_not_allowed" }, origin);
 
     const authPayload = requireAuth(event);
-    if (!authPayload?.user_id) return reply(401, { error: "unauthorized" });
+    if (!authPayload?.user_id) return reply(401, { ok: false, error: "unauthorized" }, origin);
 
-    const body = safeParse(event.body || "{}", {});
-    const action = String(body?.action || "").trim();
-    if (!["get", "save"].includes(action)) {
-      return reply(400, { error: "Invalid action. Use get or save." });
-    }
+    const body = JSON.parse(event.body || "{}");
+    const action = String(body.action || "").trim();
 
     const { sheets, sheetId, tab } = await getSheets();
     const { headers, rows } = await loadAllRows(sheets, sheetId, tab);
-    const headerIdx = buildHeaderIndex(headers);
 
-    const mustHave = ["user_id", "data_json", "updated_at"];
-    for (const k of mustHave) {
+    const headerIdx = {};
+    headers.forEach((h, i) => (headerIdx[h] = i));
+
+    for (const k of ["user_id", "data_json", "updated_at"]) {
       if (headerIdx[k] === undefined) {
-        return reply(500, { error: `Sheet missing header: ${k}` });
+        return reply(500, { ok: false, error: `sheet_missing_header_${k}` }, origin);
       }
     }
 
@@ -158,7 +148,10 @@ exports.handler = async (event) => {
     let foundRowIndex = -1;
     for (let i = 0; i < rows.length; i++) {
       const cell = String(rows[i][uidCol] || "").trim();
-      if (cell === uid) { foundRowIndex = i; break; }
+      if (cell === uid) {
+        foundRowIndex = i;
+        break;
+      }
     }
 
     if (action === "get") {
@@ -178,41 +171,55 @@ exports.handler = async (event) => {
           requestBody: { values: [newRow] },
         });
 
-        return reply(200, { ok: true, data: initData, updated_at: updatedAt });
+        return reply(200, { ok: true, data: initData, updated_at: updatedAt, created: true }, origin);
       }
 
       const row = rows[foundRowIndex];
-      const dataJson = row[headerIdx["data_json"]] || "{}";
-      const updatedAt = row[headerIdx["updated_at"]] || "";
+      const dataJson = String(row[headerIdx["data_json"]] || "").trim();
+      const updatedAt = String(row[headerIdx["updated_at"]] || "").trim();
 
-      const dataRaw = safeParse(dataJson, DEFAULT_DATA);
-      const data = normalizeIncomingData(dataRaw);
+      let parsed = null;
+      try {
+        parsed = dataJson ? JSON.parse(dataJson) : null;
+      } catch {
+        parsed = null;
+      }
 
-      return reply(200, { ok: true, data, updated_at: updatedAt || null });
+      const statsIn = parsed && parsed.stats ? parsed.stats : null;
+      const myQuestsIn = parsed && Array.isArray(parsed.my_quests) ? parsed.my_quests : null;
+
+      const stats = {
+        ...DEFAULT_DATA.stats,
+        ...(statsIn && typeof statsIn === "object" ? statsIn : {}),
+      };
+
+      const data = {
+        stats,
+        my_quests: Array.isArray(myQuestsIn) ? myQuestsIn : DEFAULT_DATA.my_quests,
+      };
+
+      return reply(200, { ok: true, data, updated_at: updatedAt }, origin);
     }
 
     if (action === "save") {
-      const incoming = body?.data ?? {};
-      const data = normalizeIncomingData(incoming);
-      const dataJson = JSON.stringify(data);
+      if (foundRowIndex === -1) return reply(404, { ok: false, error: "user_not_found" }, origin);
+
+      const payload = body.data || {};
+      const statsIn = payload && payload.stats ? payload.stats : null;
+      const myQuestsIn = payload && Array.isArray(payload.my_quests) ? payload.my_quests : null;
+
+      const safeStats = {
+        ...DEFAULT_DATA.stats,
+        ...(statsIn && typeof statsIn === "object" ? statsIn : {}),
+      };
+
+      const safeData = {
+        stats: safeStats,
+        my_quests: Array.isArray(myQuestsIn) ? myQuestsIn : [],
+      };
+
+      const dataJson = JSON.stringify(safeData);
       const updatedAt = nowISO();
-
-      if (foundRowIndex === -1) {
-        const newRow = new Array(headers.length).fill("");
-        newRow[headerIdx["user_id"]] = uid;
-        newRow[headerIdx["data_json"]] = dataJson;
-        newRow[headerIdx["updated_at"]] = updatedAt;
-
-        await sheets.spreadsheets.values.append({
-          spreadsheetId: sheetId,
-          range: `${tab}!A:Z`,
-          valueInputOption: "RAW",
-          insertDataOption: "INSERT_ROWS",
-          requestBody: { values: [newRow] },
-        });
-
-        return reply(200, { ok: true, updated_at: updatedAt });
-      }
 
       const sheetRowNumber = foundRowIndex + 2;
       const colData = colToA1(headerIdx["data_json"]);
@@ -225,11 +232,12 @@ exports.handler = async (event) => {
         requestBody: { values: [[dataJson, updatedAt]] },
       });
 
-      return reply(200, { ok: true, updated_at: updatedAt });
+      return reply(200, { ok: true, updated_at: updatedAt }, origin);
     }
 
-    return reply(400, { error: "bad_request" });
+    return reply(400, { ok: false, error: "bad_request" }, origin);
   } catch (err) {
-    return reply(500, { error: "server_error", detail: String(err?.message || err) });
+    console.error("dashboard.cjs error:", err);
+    return reply(500, { ok: false, error: "server_error" }, origin);
   }
 };

@@ -1,125 +1,197 @@
 // netlify/functions/user-profile.cjs
+// ✅ 合併版：CORS 白名單 + JWT 驗證 + 不回傳內部錯誤細節
+
 const { google } = require("googleapis");
 const jwt = require("jsonwebtoken");
 
-function reply(statusCode, data) {
+const DEFAULT_ALLOWED_ORIGINS = [
+  "https://xinghuoad.xyz",
+  "https://www.xinghuoad.xyz",
+];
+
+function getAllowedOrigins() {
+  const env = String(process.env.ALLOWED_ORIGINS || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return env.length ? env : DEFAULT_ALLOWED_ORIGINS;
+}
+
+function getRequestOrigin(headers = {}) {
+  return headers.origin || headers.Origin || "";
+}
+
+function isOriginAllowed(origin) {
+  if (!origin) return true;
+  return getAllowedOrigins().includes(origin);
+}
+
+function corsHeaders(origin) {
+  const allowOrigin = origin && isOriginAllowed(origin) ? origin : getAllowedOrigins()[0];
   return {
-    statusCode,
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      "Access-Control-Allow-Methods": "POST,OPTIONS",
-    },
-    body: JSON.stringify(data),
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": allowOrigin,
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Methods": "POST,OPTIONS",
+    "Vary": "Origin",
   };
 }
 
-function safeParse(json, fallback) {
-  try { return JSON.parse(json); } catch { return fallback; }
-}
-
-function normalizeHeader(h) {
-  return String(h || "").trim();
-}
-
-function buildHeaderIndex(headers) {
-  const idx = {};
-  headers.forEach((h, i) => { if (h) idx[h] = i; });
-  return idx;
+function reply(statusCode, data, origin) {
+  return { statusCode, headers: corsHeaders(origin), body: JSON.stringify(data) };
 }
 
 function getBearerToken(event) {
-  const auth = event.headers?.authorization || event.headers?.Authorization || "";
-  const m = String(auth).match(/^Bearer\s+(.+)$/i);
-  return m ? m[1] : "";
+  const h = event.headers || {};
+  const auth = h.authorization || h.Authorization || "";
+  const s = String(auth);
+  if (!s.toLowerCase().startsWith("bearer ")) return "";
+  return s.slice(7).trim();
 }
 
 function requireAuth(event) {
-  const jwtSecret = process.env.JWT_SECRET;
-  if (!jwtSecret) throw new Error("Missing JWT_SECRET");
   const token = getBearerToken(event);
   if (!token) return null;
+  const secret = process.env.JWT_SECRET;
+  if (!secret) return null;
   try {
-    return jwt.verify(token, jwtSecret); // { user_id, username, iat, exp }
+    return jwt.verify(token, secret);
   } catch {
     return null;
   }
 }
 
-async function getSheetsUsers() {
-  const sheetId = process.env.GOOGLE_SHEET_ID;
-  const tab = process.env.GOOGLE_SHEET_TAB; // users 分頁
-  const saJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
-
-  if (!sheetId || !tab || !saJson) {
-    throw new Error("Missing env vars: GOOGLE_SHEET_ID / GOOGLE_SHEET_TAB / GOOGLE_SERVICE_ACCOUNT_JSON");
-  }
-
-  const credentials = JSON.parse(saJson);
-  const auth = new google.auth.JWT({
-    email: credentials.client_email,
-    key: credentials.private_key,
-    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-  });
-
-  const sheets = google.sheets({ version: "v4", auth });
-  return { sheets, sheetId, tab };
+function parseServiceAccountJson() {
+  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+  if (!raw) throw new Error("Missing GOOGLE_SERVICE_ACCOUNT_JSON");
+  return JSON.parse(raw);
 }
 
-async function loadAllRows(sheets, sheetId, tab) {
+function getSpreadsheetId() {
+  const id = process.env.GOOGLE_SHEET_ID || process.env.SPREADSHEET_ID;
+  if (!id) throw new Error("Missing GOOGLE_SHEET_ID (or SPREADSHEET_ID)");
+  return id;
+}
+
+function getUsersSheetName() {
+  return process.env.USERS_SHEET_NAME || "users";
+}
+
+async function getSheetsClient() {
+  const sa = parseServiceAccountJson();
+  const auth = new google.auth.GoogleAuth({
+    credentials: sa,
+    scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+  });
+  return google.sheets({ version: "v4", auth });
+}
+
+async function readAllRows(sheets, spreadsheetId, sheetName) {
   const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: sheetId,
-    range: `${tab}!A:Z`,
+    spreadsheetId,
+    range: `${sheetName}!A:Z`,
   });
   const values = res.data.values || [];
-  if (values.length === 0) return { headers: [], rows: [] };
-
-  const headers = values[0].map(normalizeHeader);
+  if (!values.length) return { headers: [], rows: [] };
+  const headers = values[0].map((h) => String(h || "").trim());
   const rows = values.slice(1);
   return { headers, rows };
 }
 
+function buildHeaderIndex(headers) {
+  const idx = {};
+  headers.forEach((h, i) => (idx[h] = i));
+  return idx;
+}
+
+function ensureHeader(headers, want) {
+  const missing = want.filter((h) => !headers.includes(h));
+  if (missing.length) throw new Error(`Users sheet missing columns: ${missing.join(", ")}`);
+}
+
+function colToLetter(n1Based) {
+  let n = n1Based;
+  let s = "";
+  while (n > 0) {
+    const mod = (n - 1) % 26;
+    s = String.fromCharCode(65 + mod) + s;
+    n = Math.floor((n - 1) / 26);
+  }
+  return s;
+}
+
+async function updateCell(sheets, spreadsheetId, sheetName, rowNumber1Based, colLetter, value) {
+  const a1 = `${sheetName}!${colLetter}${rowNumber1Based}`;
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: a1,
+    valueInputOption: "RAW",
+    requestBody: { values: [[value]] },
+  });
+}
+
 exports.handler = async (event) => {
+  const origin = getRequestOrigin(event.headers || {});
+
   try {
-    if (event.httpMethod === "OPTIONS") return reply(200, { ok: true });
-    if (event.httpMethod !== "POST") return reply(405, { error: "Method not allowed" });
+    if (event.httpMethod === "OPTIONS") return reply(200, { ok: true }, origin);
+    if (event.httpMethod !== "POST") return reply(405, { error: "Method not allowed" }, origin);
+    if (origin && !isOriginAllowed(origin)) return reply(403, { ok: false, error: "origin_not_allowed" }, origin);
 
     const authPayload = requireAuth(event);
-    if (!authPayload?.user_id) return reply(401, { error: "unauthorized" });
+    if (!authPayload?.user_id) return reply(401, { ok: false, error: "unauthorized" }, origin);
 
-    const { sheets, sheetId, tab } = await getSheetsUsers();
-    const { headers, rows } = await loadAllRows(sheets, sheetId, tab);
+    const body = JSON.parse(event.body || "{}");
+    const action = String(body.action || "").trim();
+
+    const sheets = await getSheetsClient();
+    const spreadsheetId = getSpreadsheetId();
+    const usersSheet = getUsersSheetName();
+
+    const { headers, rows } = await readAllRows(sheets, spreadsheetId, usersSheet);
+    ensureHeader(headers, ["user_id", "name", "email"]);
     const headerIdx = buildHeaderIndex(headers);
 
-    // user_id 必須要有，name/email 若缺就回空字串
-    if (headerIdx["user_id"] === undefined) {
-      return reply(500, { error: "users sheet missing header: user_id" });
-    }
-
     const uid = String(authPayload.user_id);
-    const uidCol = headerIdx["user_id"];
+    const uidIdx = headerIdx["user_id"];
 
     let foundRowIndex = -1;
     for (let i = 0; i < rows.length; i++) {
-      const cell = String(rows[i][uidCol] || "").trim();
-      if (cell === uid) { foundRowIndex = i; break; }
+      const cell = String(rows[i][uidIdx] || "").trim();
+      if (cell === uid) {
+        foundRowIndex = i;
+        break;
+      }
+    }
+    if (foundRowIndex === -1) return reply(404, { ok: false, error: "user_not_found" }, origin);
+
+    const rowNumber1Based = foundRowIndex + 2;
+
+    if (action === "get") {
+      const row = rows[foundRowIndex];
+      const name = String(row[headerIdx["name"]] || "").trim();
+      const email = String(row[headerIdx["email"]] || "").trim();
+      return reply(200, { ok: true, profile: { name, email, user_id: uid } }, origin);
     }
 
-    if (foundRowIndex === -1) {
-      return reply(404, { error: "user_not_found" });
+    if (action === "update") {
+      const name = String(body.name || "").trim();
+      const email = String(body.email || "").trim();
+      if (!name) return reply(400, { ok: false, error: "name_required" }, origin);
+      if (!email) return reply(400, { ok: false, error: "email_required" }, origin);
+
+      const colName = colToLetter(headerIdx["name"] + 1);
+      const colEmail = colToLetter(headerIdx["email"] + 1);
+
+      await updateCell(sheets, spreadsheetId, usersSheet, rowNumber1Based, colName, name);
+      await updateCell(sheets, spreadsheetId, usersSheet, rowNumber1Based, colEmail, email);
+
+      return reply(200, { ok: true }, origin);
     }
 
-    const row = rows[foundRowIndex];
-    const username = headerIdx["username"] !== undefined ? String(row[headerIdx["username"]] || "").trim() : (authPayload.username || "");
-    const name = headerIdx["name"] !== undefined ? String(row[headerIdx["name"]] || "").trim() : "";
-    const email = headerIdx["email"] !== undefined ? String(row[headerIdx["email"]] || "").trim() : "";
-
-    return reply(200, {
-      ok: true,
-      user: { user_id: uid, username, name, email },
-    });
+    return reply(400, { ok: false, error: "unknown_action" }, origin);
   } catch (err) {
-    return reply(500, { error: "server_error", detail: String(err?.message || err) });
+    console.error("user-profile.cjs error:", err);
+    return reply(500, { ok: false, error: "server_error" }, origin);
   }
 };

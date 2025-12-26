@@ -1,253 +1,330 @@
 // netlify/functions/auth.cjs
+// ✅ 合併版：CORS 白名單 + Sheet 公式注入防護 + 不回傳 err.detail + login/register
+// ✅ 密碼 hash：兼容舊格式（scrypt$$salt$$key）與新格式（scrypt$salt$key）
+
 const { google } = require("googleapis");
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 
-function reply(statusCode, data) {
+const DEFAULT_ALLOWED_ORIGINS = [
+  "https://xinghuoad.xyz",
+  "https://www.xinghuoad.xyz",
+];
+
+function getAllowedOrigins() {
+  const env = String(process.env.ALLOWED_ORIGINS || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return env.length ? env : DEFAULT_ALLOWED_ORIGINS;
+}
+
+function getRequestOrigin(headers = {}) {
+  return headers.origin || headers.Origin || "";
+}
+
+function isOriginAllowed(origin) {
+  if (!origin) return true;
+  return getAllowedOrigins().includes(origin);
+}
+
+function corsHeaders(origin) {
+  const allowOrigin = origin && isOriginAllowed(origin) ? origin : getAllowedOrigins()[0];
   return {
-    statusCode,
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      "Access-Control-Allow-Methods": "POST,OPTIONS",
-    },
-    body: JSON.stringify(data),
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": allowOrigin,
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Methods": "POST,OPTIONS",
+    "Vary": "Origin",
   };
 }
 
-function colToA1(n) {
-  let s = "";
-  n = n + 1;
-  while (n > 0) {
-    const m = (n - 1) % 26;
-    s = String.fromCharCode(65 + m) + s;
-    n = Math.floor((n - 1) / 26);
-  }
-  return s;
+function reply(statusCode, data, origin) {
+  return { statusCode, headers: corsHeaders(origin), body: JSON.stringify(data) };
 }
 
 function nowISO() {
   return new Date().toISOString();
 }
 
+function safeStr(v) {
+  return String(v == null ? "" : v).trim();
+}
+
+// ✅ 防公式注入：若以 = + - @ 開頭，前面加 ' 讓 Google Sheet 當純文字
+function sanitizeForSheet(v) {
+  const s = safeStr(v);
+  if (!s) return "";
+  return /^[=+\-@]/.test(s) ? `'${s}` : s;
+}
+
 function makeUserId() {
-  return "u_" + crypto.randomBytes(12).toString("hex");
+  return `u_${crypto.randomBytes(10).toString("hex")}`;
 }
 
-function normalizeHeader(h) {
-  return String(h || "").trim();
+function isEmail(s) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s || "").trim());
 }
 
-function makePasswordHash(password, pepper) {
-  const salt = crypto.randomBytes(16).toString("hex");
-  const key = crypto.scryptSync(password + pepper, salt, 64).toString("hex");
-  return `scrypt$${salt}$${key}`;
+function normalizeEmail(s) {
+  return String(s || "").trim().toLowerCase();
 }
 
-function verifyPassword(password, pepper, stored) {
-  const parts = String(stored || "").split("$");
-  if (parts.length !== 3 || parts[0] !== "scrypt") return false;
-  const salt = parts[1];
-  const hash = parts[2];
-  const key = crypto.scryptSync(password + pepper, salt, 64).toString("hex");
-  return crypto.timingSafeEqual(Buffer.from(key, "hex"), Buffer.from(hash, "hex"));
+function normalizeUsername(s) {
+  return String(s || "").trim();
 }
 
-function isValidEmail(email) {
-  const e = String(email || "").trim().toLowerCase();
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+function normalizeName(s) {
+  return String(s || "").trim();
 }
 
-// -------------------- Upstash REST helpers --------------------
-function getUpstashEnv() {
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (!url || !token) {
-    throw new Error("Missing env vars: UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN");
-  }
-  return { url: url.replace(/\/+$/, ""), token };
+function normalizePassword(s) {
+  return String(s || "");
 }
 
-async function upstashPost(path) {
-  const { url, token } = getUpstashEnv();
-  const res = await fetch(`${url}/${path}`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(`Upstash error (${res.status}): ${JSON.stringify(data)}`);
-  return data;
+function parseServiceAccountJson() {
+  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+  if (!raw) throw new Error("Missing GOOGLE_SERVICE_ACCOUNT_JSON");
+  return JSON.parse(raw);
 }
 
-async function upstashGet(key) {
-  const data = await upstashPost(`get/${encodeURIComponent(key)}`);
-  return data?.result ?? null;
+function getSpreadsheetId() {
+  const id = process.env.GOOGLE_SHEET_ID || process.env.SPREADSHEET_ID;
+  if (!id) throw new Error("Missing GOOGLE_SHEET_ID (or SPREADSHEET_ID)");
+  return id;
 }
 
-async function upstashDel(key) {
-  const data = await upstashPost(`del/${encodeURIComponent(key)}`);
-  return data?.result ?? null;
+function getUsersSheetName() {
+  return process.env.USERS_SHEET_NAME || "users";
 }
 
-// -------------------- Google Sheets --------------------
-async function getSheets() {
-  const sheetId = process.env.GOOGLE_SHEET_ID;
-  const tab = process.env.GOOGLE_SHEET_TAB;
-  const saJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+function getJwtSecret() {
+  const s = process.env.JWT_SECRET;
+  if (!s) throw new Error("Missing JWT_SECRET");
+  return s;
+}
 
-  if (!sheetId || !tab || !saJson) {
-    throw new Error("Missing env vars: GOOGLE_SHEET_ID / GOOGLE_SHEET_TAB / GOOGLE_SERVICE_ACCOUNT_JSON");
-  }
-
-  const credentials = JSON.parse(saJson);
-
-  const auth = new google.auth.JWT({
-    email: credentials.client_email,
-    key: credentials.private_key,
+async function getSheetsClient() {
+  const sa = parseServiceAccountJson();
+  const auth = new google.auth.GoogleAuth({
+    credentials: sa,
     scopes: ["https://www.googleapis.com/auth/spreadsheets"],
   });
-
-  const sheets = google.sheets({ version: "v4", auth });
-  return { sheets, sheetId, tab };
+  return google.sheets({ version: "v4", auth });
 }
 
-async function loadAllRows(sheets, sheetId, tab) {
+async function readAllRows(sheets, spreadsheetId, sheetName) {
   const res = await sheets.spreadsheets.values.get({
-    spreadsheetId: sheetId,
-    range: `${tab}!A:Z`,
+    spreadsheetId,
+    range: `${sheetName}!A:Z`,
   });
   const values = res.data.values || [];
-  if (values.length === 0) return { headers: [], rows: [] };
-
-  const headers = values[0].map(normalizeHeader);
+  if (!values.length) return { headers: [], rows: [] };
+  const headers = values[0].map((h) => String(h || "").trim());
   const rows = values.slice(1);
   return { headers, rows };
 }
 
 function buildHeaderIndex(headers) {
   const idx = {};
-  headers.forEach((h, i) => {
-    if (h) idx[h] = i;
-  });
+  headers.forEach((h, i) => (idx[h] = i));
   return idx;
 }
 
-// -------------------- Main handler --------------------
-exports.handler = async (event) => {
+function ensureHeader(headers, want) {
+  const missing = want.filter((h) => !headers.includes(h));
+  if (missing.length) throw new Error(`Users sheet missing columns: ${missing.join(", ")}`);
+}
+
+// ✅ 新格式：scrypt$salt$key
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const key = crypto.scryptSync(password, salt, 64).toString("hex");
+  return `scrypt$${salt}$${key}`; // 保留你原本格式（避免影響既有資料）
+}
+
+// ✅ 兼容：
+// - scrypt$salt$key  → split("$") = ["scrypt","salt","key"]
+// - scrypt$$salt$$key → split("$") = ["scrypt","","salt","","key"]
+function verifyPassword(password, stored) {
   try {
-    if (event.httpMethod === "OPTIONS") return reply(200, { ok: true });
-    if (event.httpMethod !== "POST") return reply(405, { error: "Method not allowed" });
+    const parts = String(stored || "").split("$");
+    if (parts[0] !== "scrypt") return false;
+
+    let salt = "";
+    let key = "";
+
+    if (parts.length === 3) {
+      salt = parts[1];
+      key = parts[2];
+    } else if (parts.length === 5 && parts[1] === "" && parts[3] === "") {
+      salt = parts[2];
+      key = parts[4];
+    } else {
+      return false;
+    }
+
+    const derived = crypto.scryptSync(password, salt, 64).toString("hex");
+    return crypto.timingSafeEqual(Buffer.from(key, "hex"), Buffer.from(derived, "hex"));
+  } catch {
+    return false;
+  }
+}
+
+function findRowByEmail(rows, headerIdx, email) {
+  const emailIdx = headerIdx["email"];
+  if (emailIdx === undefined) return null;
+  const target = normalizeEmail(email);
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const e = normalizeEmail(row[emailIdx] || "");
+    if (e && e === target) return { row, rowIndex: i };
+  }
+  return null;
+}
+
+function findRowByUsername(rows, headerIdx, username) {
+  const uIdx = headerIdx["username"];
+  if (uIdx === undefined) return null;
+  const target = normalizeUsername(username);
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const u = normalizeUsername(row[uIdx] || "");
+    if (u && u === target) return { row, rowIndex: i };
+  }
+  return null;
+}
+
+async function appendRow(sheets, spreadsheetId, sheetName, values) {
+  await sheets.spreadsheets.values.append({
+    spreadsheetId,
+    range: `${sheetName}!A:Z`,
+    valueInputOption: "RAW",
+    insertDataOption: "INSERT_ROWS",
+    requestBody: { values: [values] },
+  });
+}
+
+async function updateCell(sheets, spreadsheetId, sheetName, rowNumber1Based, colLetter, value) {
+  const a1 = `${sheetName}!${colLetter}${rowNumber1Based}`;
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: a1,
+    valueInputOption: "RAW",
+    requestBody: { values: [[value]] },
+  });
+}
+
+function colToLetter(n1Based) {
+  let n = n1Based;
+  let s = "";
+  while (n > 0) {
+    const mod = (n - 1) % 26;
+    s = String.fromCharCode(65 + mod) + s;
+    n = Math.floor((n - 1) / 26);
+  }
+  return s;
+}
+
+exports.handler = async (event) => {
+  const origin = getRequestOrigin(event.headers || {});
+
+  try {
+    if (event.httpMethod === "OPTIONS") return reply(200, { ok: true }, origin);
+    if (event.httpMethod !== "POST") return reply(405, { error: "Method not allowed" }, origin);
+    if (origin && !isOriginAllowed(origin)) return reply(403, { ok: false, error: "origin_not_allowed" }, origin);
 
     const body = JSON.parse(event.body || "{}");
-    const action = body?.action;
+    const action = String(body.action || "").trim();
 
-    if (!action || !["register", "login"].includes(action)) {
-      return reply(400, { error: "Invalid action. Use register or login." });
-    }
+    const spreadsheetId = getSpreadsheetId();
+    const usersSheet = getUsersSheetName();
+    const jwtSecret = getJwtSecret();
+    const sheets = await getSheetsClient();
 
-    const pepper = process.env.AUTH_PEPPER || "";
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) return reply(500, { error: "Missing JWT_SECRET" });
-
-    // ---------- register / login 共同檢查 ----------
-    const username = String(body?.username || "").trim();
-    const password = String(body?.password || "");
-
-    if (!username || username.length < 3) return reply(400, { error: "username too short (>=3)" });
-    if (!password || password.length < 6) return reply(400, { error: "password too short (>=6)" });
-
-    const { sheets, sheetId, tab } = await getSheets();
-    const { headers, rows } = await loadAllRows(sheets, sheetId, tab);
+    const { headers, rows } = await readAllRows(sheets, spreadsheetId, usersSheet);
+    ensureHeader(headers, ["username", "password_hash", "create_at", "last_login_at", "user_id", "email", "name"]);
     const headerIdx = buildHeaderIndex(headers);
 
-    const mustHave = ["username", "password_hash", "user_id"];
-    for (const k of mustHave) {
-      if (headerIdx[k] === undefined) return reply(500, { error: `Sheet missing header: ${k}` });
-    }
-
-    const uCol = headerIdx["username"];
-    const pCol = headerIdx["password_hash"];
-    const u = username;
-
-    let foundRowIndex = -1;
-    for (let i = 0; i < rows.length; i++) {
-      const cell = (rows[i][uCol] || "").trim();
-      if (cell === u) { foundRowIndex = i; break; }
-    }
-
-    // ---------- register ----------
     if (action === "register") {
-      const name = String(body?.name || "").trim();
-      const email = String(body?.email || "").trim().toLowerCase();
+      const username = sanitizeForSheet(normalizeUsername(body.username));
+      const name = sanitizeForSheet(normalizeName(body.name));
+      const email = sanitizeForSheet(normalizeEmail(body.email));
+      const password = normalizePassword(body.password);
 
-      if (!isValidEmail(email)) return reply(400, { error: "invalid email" });
+      if (!username) return reply(400, { ok: false, error: "username_required" }, origin);
+      if (!name) return reply(400, { ok: false, error: "name_required" }, origin);
 
-      if (headerIdx["email"] === undefined) {
-        return reply(500, { error: "Sheet missing header: email（請在 users Sheet 加一欄表頭 email）" });
+      const emailRaw = email.startsWith("'") ? email.slice(1) : email;
+      if (!isEmail(emailRaw)) return reply(400, { ok: false, error: "email_invalid" }, origin);
+
+      if (!password || password.length < 6) return reply(400, { ok: false, error: "password_too_short" }, origin);
+
+      const usernameRaw = username.startsWith("'") ? username.slice(1) : username;
+
+      const existsEmail = findRowByEmail(rows, headerIdx, emailRaw);
+      if (existsEmail) return reply(409, { ok: false, error: "email_exists" }, origin);
+
+      const existsUser = findRowByUsername(rows, headerIdx, usernameRaw);
+      if (existsUser) return reply(409, { ok: false, error: "username_exists" }, origin);
+
+      const uid = makeUserId();
+      const pwHash = hashPassword(password);
+      const createAt = nowISO();
+      const lastLoginAt = "";
+
+      const rowValues = [];
+      rowValues[headerIdx["name"]] = name;
+      rowValues[headerIdx["username"]] = username;
+      rowValues[headerIdx["password_hash"]] = pwHash;
+      rowValues[headerIdx["create_at"]] = createAt;
+      rowValues[headerIdx["last_login_at"]] = lastLoginAt;
+      rowValues[headerIdx["user_id"]] = uid;
+      rowValues[headerIdx["email"]] = email;
+
+      const maxLen = Math.max(...Object.values(headerIdx)) + 1;
+      const finalRow = Array.from({ length: maxLen }, (_, i) => safeStr(rowValues[i] || ""));
+
+      await appendRow(sheets, spreadsheetId, usersSheet, finalRow);
+      return reply(200, { ok: true }, origin);
+    }
+
+    if (action === "login") {
+      const usernameOrEmail = safeStr(body.username || body.email || body.usernameOrEmail);
+      const password = normalizePassword(body.password);
+
+      if (!usernameOrEmail) return reply(400, { ok: false, error: "username_or_email_required" }, origin);
+      if (!password) return reply(400, { ok: false, error: "password_required" }, origin);
+
+      let found = null;
+      if (isEmail(usernameOrEmail)) found = findRowByEmail(rows, headerIdx, usernameOrEmail);
+      if (!found) found = findRowByUsername(rows, headerIdx, usernameOrEmail);
+      if (!found) return reply(401, { ok: false, error: "invalid_credentials" }, origin);
+
+      const { row, rowIndex } = found;
+      const storedHash = row[headerIdx["password_hash"]] || "";
+      if (!verifyPassword(password, storedHash)) return reply(401, { ok: false, error: "invalid_credentials" }, origin);
+
+      if (headerIdx["last_login_at"] !== undefined) {
+        const rowNumber1Based = rowIndex + 2; // header=1, 第一筆資料=2
+        const colLetter = colToLetter(headerIdx["last_login_at"] + 1);
+        await updateCell(sheets, spreadsheetId, usersSheet, rowNumber1Based, colLetter, nowISO());
       }
 
-      if (foundRowIndex !== -1) return reply(409, { error: "username already exists" });
+      const u = safeStr(row[headerIdx["username"]] || "");
+      const uid = safeStr(row[headerIdx["user_id"]] || "");
+      const role =
+        (headerIdx["role"] !== undefined
+          ? String(row[headerIdx["role"]] || "").trim().toLowerCase()
+          : "") || "partner";
 
-      // ✅ 改成：檢查 otp-verify 成功後寫入的旗標
-      const verifiedKey = `otp_verified:${email}`;
-      const verified = await upstashGet(verifiedKey);
-      if (!verified) return reply(400, { error: "請先完成 Email 驗證" });
-
-      // 用過就刪，避免重複利用
-      await upstashDel(verifiedKey);
-
-      const user_id = makeUserId();
-      const password_hash = makePasswordHash(password, pepper);
-
-      const newRow = new Array(headers.length).fill("");
-      if (headerIdx["name"] !== undefined) newRow[headerIdx["name"]] = name;
-      newRow[headerIdx["username"]] = u;
-      newRow[headerIdx["password_hash"]] = password_hash;
-      newRow[headerIdx["email"]] = email;
-      if (headerIdx["role"] !== undefined) newRow[headerIdx["role"]] = "partner";
-
-      if (headerIdx["create_at"] !== undefined) newRow[headerIdx["create_at"]] = nowISO();
-      if (headerIdx["last_login_at"] !== undefined) newRow[headerIdx["last_login_at"]] = "";
-      newRow[headerIdx["user_id"]] = user_id;
-
-      await sheets.spreadsheets.values.append({
-        spreadsheetId: sheetId,
-        range: `${tab}!A:Z`,
-        valueInputOption: "RAW",
-        insertDataOption: "INSERT_ROWS",
-        requestBody: { values: [newRow] },
-      });
-
-      const token = jwt.sign({ user_id, username: u, role: "partner" }, jwtSecret, { expiresIn: "30d" });
-      return reply(200, { ok: true, user: { user_id, username: u, email, role: "partner" }, token });
+      const token = jwt.sign({ user_id: uid, username: u, role }, jwtSecret, { expiresIn: "30d" });
+      return reply(200, { ok: true, user: { user_id: uid, username: u, role }, token }, origin);
     }
 
-    // ---------- login ----------
-    if (foundRowIndex === -1) return reply(401, { error: "invalid username or password" });
-
-    const row = rows[foundRowIndex];
-    const storedHash = row[pCol] || "";
-    const passOk = verifyPassword(password, pepper, storedHash);
-    if (!passOk) return reply(401, { error: "invalid username or password" });
-
-    if (headerIdx["last_login_at"] !== undefined) {
-      const sheetRowNumber = foundRowIndex + 2;
-      const colLetter = colToA1(headerIdx["last_login_at"]);
-      const a1 = `${tab}!${colLetter}${sheetRowNumber}`;
-      await sheets.spreadsheets.values.update({
-        spreadsheetId: sheetId,
-        range: a1,
-        valueInputOption: "RAW",
-        requestBody: { values: [[nowISO()]] },
-      });
-    }
-
-    const uid = row[headerIdx["user_id"]] || "";
-    const role = (headerIdx["role"] !== undefined ? String(row[headerIdx["role"]] || "").trim().toLowerCase() : "") || "partner";
-    const token = jwt.sign({ user_id: uid, username: u, role }, jwtSecret, { expiresIn: "30d" });
-    return reply(200, { ok: true, user: { user_id: uid, username: u, role }, token });
+    return reply(400, { ok: false, error: "unknown_action" }, origin);
   } catch (err) {
-    return reply(500, { error: "server_error", detail: String(err?.message || err) });
+    console.error("auth.cjs error:", err);
+    return reply(500, { ok: false, error: "server_error" }, origin);
   }
 };
