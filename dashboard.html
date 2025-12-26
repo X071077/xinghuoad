@@ -872,7 +872,8 @@
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ' + token
         },
-        body: JSON.stringify({})
+        // ✅ 修正：user-profile 需要 action=get
+        body: JSON.stringify({ action: 'get' })
       });
       return await res.json();
     }
@@ -1123,7 +1124,10 @@
         // profile(name/email) from users sheet
         if(rProfile.status === 'fulfilled' && rProfile.value?.ok){
           okProfile = true;
-          const u2 = rProfile.value.user || {};
+
+          // ✅ 修正：user-profile 回傳的是 profile
+          const u2 = rProfile.value.profile || {};
+
           setText('kvName', u2.name ? u2.name : '(未填)');
           setText('kvEmail', u2.email ? u2.email : '(未填)');
 
