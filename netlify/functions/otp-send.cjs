@@ -1,5 +1,7 @@
 // netlify/functions/otp-send.cjs
-// ✅ 合併版：IP 寄送限流 + Upstash OTP 儲存 + Resend 寄信 + CORS 白名單 + 不回傳內部錯誤細節
+// ✅ 合併版：IP 寄送限流 + Upstash OTP 儲存 + Resend 寄信 + CORS 白名單
+// ✅ 反枚舉：不論 email 是否有效/是否寄信成功，對外一律回 200 {ok:true}
+// ✅ 保留：403(非白名單 Origin)、405(Method)、429(限流)
 
 const crypto = require("crypto");
 
@@ -136,7 +138,9 @@ exports.handler = async (event) => {
 
     const { email } = JSON.parse(event.body || "{}");
     const e = String(email || "").trim().toLowerCase();
-    if (!isEmail(e)) return reply(400, { ok: false, error: "invalid_email" }, origin);
+
+    // ✅ 反枚舉：email 格式不合法也回 ok:true（不讓外部用 400/200 當訊號）
+    if (!isEmail(e)) return reply(200, { ok: true }, origin);
 
     // --- Rate limit: 同 IP 10 分鐘最多 20 次寄 OTP ---
     const ip = getClientIp(event.headers || {});
@@ -154,12 +158,18 @@ exports.handler = async (event) => {
     // 存 OTP 10 分鐘
     await upstashSet(`otp:${e}`, code, 600);
 
-    // 寄信
-    await resendSend(e, code);
+    // ✅ 反枚舉：寄信失敗也不回錯（避免被用來判斷狀態）
+    try {
+      await resendSend(e, code);
+    } catch (err) {
+      console.error("otp-send resend error:", err);
+      // 仍然回 ok:true
+    }
 
     return reply(200, { ok: true }, origin);
   } catch (err) {
     console.error("otp-send error:", err);
-    return reply(500, { ok: false, error: "server_error" }, origin);
+    // ✅ 反枚舉：任何內部錯誤也回 ok:true（不暴露訊號）
+    return reply(200, { ok: true }, origin);
   }
 };
