@@ -69,6 +69,12 @@ function normalizeHeader(s) {
   return String(s || "").trim().toLowerCase();
 }
 
+function toNumber(v) {
+  const n = Number(String(v || "").replace(/,/g, "").trim());
+  return Number.isFinite(n) ? n : 0;
+}
+
+
 function colToA1(colIndex0Based) {
   let n = colIndex0Based + 1;
   let s = "";
@@ -142,6 +148,8 @@ exports.handler = async (event) => {
       }
     }
 
+    const coinsCalcIdx = headerIdx["coins_calc"]; // optional
+
     const uid = String(authPayload.user_id);
     const uidCol = headerIdx["user_id"];
 
@@ -171,12 +179,14 @@ exports.handler = async (event) => {
           requestBody: { values: [newRow] },
         });
 
-        return reply(200, { ok: true, data: initData, updated_at: updatedAt, created: true }, origin);
+        return reply(200, { ok: true, data: initData, updated_at: updatedAt, created: true, coins_calc: 0 }, origin);
       }
 
       const row = rows[foundRowIndex];
       const dataJson = String(row[headerIdx["data_json"]] || "").trim();
       const updatedAt = String(row[headerIdx["updated_at"]] || "").trim();
+      const coinsCalc = coinsCalcIdx === undefined ? 0 : toNumber(row[coinsCalcIdx]);
+
 
       let parsed = null;
       try {
@@ -193,18 +203,24 @@ exports.handler = async (event) => {
         ...(statsIn && typeof statsIn === "object" ? statsIn : {}),
       };
 
+      // ✅ coins 以 dashboard.coins_calc 為準（由 economy_ledger 自動加總）
+      stats.coins = coinsCalc;
+      stats.totalEarned = coinsCalc;
+
       const data = {
         stats,
         my_quests: Array.isArray(myQuestsIn) ? myQuestsIn : DEFAULT_DATA.my_quests,
       };
 
-      return reply(200, { ok: true, data, updated_at: updatedAt }, origin);
+      return reply(200, { ok: true, data, updated_at: updatedAt, coins_calc: coinsCalc }, origin);
     }
 
     if (action === "save") {
       if (foundRowIndex === -1) return reply(404, { ok: false, error: "user_not_found" }, origin);
 
       const payload = body.data || {};
+      const row = rows[foundRowIndex];
+      const coinsCalc = coinsCalcIdx === undefined ? 0 : toNumber(row[coinsCalcIdx]);
       const statsIn = payload && payload.stats ? payload.stats : null;
       const myQuestsIn = payload && Array.isArray(payload.my_quests) ? payload.my_quests : null;
 
@@ -212,6 +228,10 @@ exports.handler = async (event) => {
         ...DEFAULT_DATA.stats,
         ...(statsIn && typeof statsIn === "object" ? statsIn : {}),
       };
+
+      // ✅ 不允許前台自行改動 coins：以 coins_calc 為準
+      safeStats.coins = coinsCalc;
+      safeStats.totalEarned = coinsCalc;
 
       const safeData = {
         stats: safeStats,

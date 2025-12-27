@@ -884,14 +884,14 @@
       const xp = Number(s.xp) || 0;
       const nextLevelXP = Number(s.nextLevelXP) || 100;
 
-      const totalEarned = Number(s.totalEarned) || 0;
+      const coins = Number((s.coins !== undefined ? s.coins : s.totalEarned)) || 0;
       const todayEarnings = Number(s.todayEarnings) || 0;
       const monthEarnings = Number(s.monthEarnings) || 0;
       const completedQuests = Number(s.completedQuests) || 0;
       const activeDays = Number(s.activeDays) || 0;
 
       setText('userLevel', String(level));
-      setText('totalEarned', totalEarned.toLocaleString());
+      setText('totalEarned', coins.toLocaleString());
 
       setText('currentXP', xp.toLocaleString());
       setText('nextLevelXP', nextLevelXP.toLocaleString());
