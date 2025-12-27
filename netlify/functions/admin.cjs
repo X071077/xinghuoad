@@ -1,39 +1,23 @@
 // netlify/functions/admin.cjs
 // ✅ Admin API：JWT 驗證 + CORS 白名單 + Sheet 公式注入防護 + 讀取範圍 A:ZZ
-// ✅ 第2版：補齊 Quests / Submissions actions + snapshot 統計 + 修正 dealer summary bug
-//
 // action:
-// - snapshot:               後台總覽（回傳 users 總數 + social submitted 待審數 + dealers總數 + dealers pending + 任務統計 + payout 統計）
-// - users_preview:          隨機 5 筆用戶（給前台預設顯示）
-// - users_list:             用戶清單（q/role 篩選）
-// - users_get:              讀取單一用戶（排除 password_hash）
-// - users_update_role:      更新用戶 role（admin/dealer/partner）
-//
-// - social_list_submitted:  列出 users 中 social_status=submitted 的待審清單
-// - social_get:             讀取指定 target_user_id 的社群驗證資料
-// - social_approve:         submitted → approved + verified_at/by + level=1 + 開權限 + 設定 tier/platform
-// - social_need_fix:        submitted → need_fix + verified_at/by + level=0 + 關權限 (+ 可選寫入補件原因)
-// - social_reject:          submitted → rejected + verified_at/by + level=0 + 關權限
+// - snapshot:              後台總覽（回傳 users 總數 + social submitted 待審數 + dealers總數 + dealers pending + 隨機預覽）
+// - users_preview:         隨機 5 筆用戶（給前台預設顯示）
+// - users_list:            用戶清單（q/role 篩選）
+// - users_get:             讀取單一用戶（排除 password_hash）
+// - users_update_role:     更新用戶 role（admin/dealer/partner）
+// - social_list_submitted: 列出 users 中 social_status=submitted 的待審清單
+// - social_get:            讀取指定 target_user_id 的社群驗證資料（可選回傳 need_fix_reason/need_fix_at）
+// - social_approve:        (admin only) submitted → approved + verified_at/by + level=1 + 開權限 + 設定 tier/platform
+// - social_need_fix:       (admin only) submitted → need_fix + verified_at/by + level=0 + 關權限 (+ 可選寫入補件原因)
+// - social_reject:         (admin only) submitted → rejected + verified_at/by + level=0 + 關權限
 //
 // ✅ Dealer 管理（dealers sheet）
-// - dealers_list:           dealers 清單（q/status/limit/offset）
-// - dealers_get:            讀取單一 dealer（by dealer_id）
-// - dealers_approve:        submitted → approved（寫入 verified_at/by）+ 可選同步 users.role=dealer
-// - dealers_need_fix:       submitted → need_fix（寫入 need_fix_reason/need_fix_at + verified_at/by）
-// - dealers_reject:         submitted → rejected（寫入 verified_at/by）
-//
-// ✅ Quests（quests sheet）
-// - quests_list:            任務清單（q/status/limit/offset）
-// - quests_get:             讀取單一任務（by quest_id）
-// - quests_create:          新增任務（自動寫 created_at/by、quest_id 可自動生成）
-// - quests_update:          更新任務（by quest_id，寫 updated_at/by）
-// - quests_set_status:      更新任務 status（draft/active/paused/closed）
-////
-// ✅ Submissions（quest_submissions sheet）
-// - submissions_list:       交付清單（q/status/payout_status/limit/offset）
-// - submissions_get:        讀取單一交付（by submission_id）
-// - submissions_review:     審核交付（submitted → approved/rejected/need_fix，寫 reviewed_at/by + 可選 reason）
-// - submissions_payout:     發放款項（approved 且未 paid → paid，寫 payout_at/by + payout_amount）
+// - dealers_list:          dealers 清單（q/status/limit/offset）
+// - dealers_get:           讀取單一 dealer（by dealer_id）
+// - dealers_approve:       submitted → approved（寫入 verified_at/by）+ 可選同步 users.role=dealer
+// - dealers_need_fix:      submitted → need_fix（寫入 need_fix_reason/need_fix_at + verified_at/by）
+// - dealers_reject:        submitted → rejected（寫入 verified_at/by）
 
 const { google } = require("googleapis");
 const jwt = require("jsonwebtoken");
@@ -157,14 +141,6 @@ function getDealersSheetName() {
   return process.env.DEALERS_SHEET || "dealers";
 }
 
-function getQuestsSheetName() {
-  return process.env.QUESTS_SHEET || "quests";
-}
-
-function getQuestSubmissionsSheetName() {
-  return process.env.QUEST_SUBMISSIONS_SHEET || "quest_submissions";
-}
-
 async function readAllRows(sheets, spreadsheetId, sheetName) {
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId,
@@ -230,16 +206,6 @@ function ensureDealerHeader(headers, want) {
   if (missing.length) throw new Error(`Dealers sheet missing columns: ${missing.join(", ")}`);
 }
 
-function ensureQuestHeader(headers, want) {
-  const missing = want.filter((h) => !headers.includes(h));
-  if (missing.length) throw new Error(`Quests sheet missing columns: ${missing.join(", ")}`);
-}
-
-function ensureSubmissionHeader(headers, want) {
-  const missing = want.filter((h) => !headers.includes(h));
-  if (missing.length) throw new Error(`Quest submissions sheet missing columns: ${missing.join(", ")}`);
-}
-
 // ✅ 可選欄位（存在才寫/才讀）
 function hasHeader(headers, name) {
   return Array.isArray(headers) && headers.includes(name);
@@ -263,16 +229,6 @@ async function updateRowRange(sheets, spreadsheetId, sheetName, rowNumber1Based,
     spreadsheetId,
     range,
     valueInputOption: "RAW",
-    requestBody: { values: [valuesRow] },
-  });
-}
-
-async function appendRow(sheets, spreadsheetId, sheetName, valuesRow) {
-  await sheets.spreadsheets.values.append({
-    spreadsheetId,
-    range: `${sheetName}!A:ZZ`,
-    valueInputOption: "RAW",
-    insertDataOption: "INSERT_ROWS",
     requestBody: { values: [valuesRow] },
   });
 }
@@ -302,48 +258,8 @@ function normalizeTier(v) {
   return s;
 }
 
-function normalizeDealerStatus(v) {
-  const s = safeStr(v).toLowerCase();
-  if (!s) return "";
-  if (["submitted", "approved", "need_fix", "rejected"].includes(s)) return s;
-  return s;
-}
-
-function normalizeQuestStatus(v) {
-  const s = safeStr(v).toLowerCase();
-  if (!s) return "";
-  if (["draft", "active", "paused", "closed"].includes(s)) return s;
-  return s;
-}
-
-function normalizeSubmissionStatus(v) {
-  const s = safeStr(v).toLowerCase();
-  if (!s) return "";
-  if (["submitted", "approved", "need_fix", "rejected", "paid"].includes(s)) return s; // paid 可用於部分前台顯示（可選）
-  return s;
-}
-
-function normalizePayoutStatus(v) {
-  const s = safeStr(v).toLowerCase();
-  if (!s) return "";
-  if (["unpaid", "paid"].includes(s)) return s;
-  return s;
-}
-
 function nowISO() {
   return new Date().toISOString();
-}
-
-function isTodayISO(iso) {
-  const t = Date.parse(iso || "");
-  if (!t) return false;
-  const d = new Date(t);
-  const n = new Date();
-  return (
-    d.getUTCFullYear() === n.getUTCFullYear() &&
-    d.getUTCMonth() === n.getUTCMonth() &&
-    d.getUTCDate() === n.getUTCDate()
-  );
 }
 
 function inferSuggestPlatform(ig_url, fb_url) {
@@ -354,11 +270,25 @@ function inferSuggestPlatform(ig_url, fb_url) {
   return "";
 }
 
-function safeId(prefix) {
-  // 不依賴外部 lib，簡單可用：q_20251227_xxxxxx
-  const r = Math.random().toString(36).slice(2, 8);
-  const ts = new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14);
-  return `${prefix}_${ts}_${r}`;
+function normalizeDealerStatus(v) {
+  const s = safeStr(v).toLowerCase();
+  if (!s) return "";
+  if (["submitted", "approved", "need_fix", "rejected"].includes(s)) return s;
+  return s;
+}
+
+function toDealerSummary(row, headerIdx) {
+  return {
+    dealer_id: safeStr(row[headerIdx["dealer_id"]]),
+    user_id: safeStr(row[headerIdx["user_id"]]),
+    dealer_name: safeStr(row[headerIdx["dealer_name"]]),
+    email: safeStr(row[headerIdx["email"]]),
+    dealer_status: safeStr(row[headerIdx["dealer_status"]]),
+    submitted_at: safeStr(row[headerIdx["submitted_at"]]),
+    verified_at: safeStr(row[headerIdx["verified_at"]]),
+    verified_by: safeStr(row[headerIdx["verified_by"]]),
+    need_fix_reason: hasHeader(Object.keys(headerIdx), "need_fix_reason") ? safeStr(row[headerIdx["need_fix_reason"]]) : safeStr(row[headerIdx["need_fix_reason"]]),
+  };
 }
 
 exports.handler = async (event) => {
@@ -390,29 +320,12 @@ exports.handler = async (event) => {
       safeStr(body.dealer_id) ||
       "";
 
-    // quests target
-    const target_quest_id =
-      safeStr(body.target_quest_id) ||
-      safeStr(body.targetQuestId) ||
-      safeStr(body.quest_id) ||
-      "";
-
-    // submissions target
-    const target_submission_id =
-      safeStr(body.target_submission_id) ||
-      safeStr(body.targetSubmissionId) ||
-      safeStr(body.submission_id) ||
-      "";
-
     const data = (body && typeof body === "object" ? body.data : {}) || {};
 
     const sheets = await getSheetsClient();
     const spreadsheetId = getSpreadsheetId();
-
-    // =========================
-    // ✅ Users sheet (always read)
-    // =========================
     const usersSheet = getUsersSheetName();
+
     const { headers, rows } = await readAllRows(sheets, spreadsheetId, usersSheet);
 
     ensureHeader(headers, [
@@ -592,12 +505,7 @@ exports.handler = async (event) => {
     }
 
     // ===== social get / approve / need_fix / reject need target_user_id =====
-    if (
-      action === "social_get" ||
-      action === "social_approve" ||
-      action === "social_need_fix" ||
-      action === "social_reject"
-    ) {
+    if (action === "social_get" || action === "social_approve" || action === "social_need_fix" || action === "social_reject") {
       const tUid = safeStr(target_user_id);
       if (!tUid) return reply(400, { ok: false, error: "target_user_id_required" }, origin);
 
@@ -678,7 +586,6 @@ exports.handler = async (event) => {
         return reply(200, { ok: true, social_status: "rejected" }, origin);
       }
 
-      // approve
       const primary_platform = normalizePrimaryPlatform(body.primary_platform || data.primary_platform || "");
       const influence_tier = normalizeTier(body.influence_tier || data.influence_tier || "");
 
@@ -730,43 +637,6 @@ exports.handler = async (event) => {
       const dUserIdIdx = dIdx["user_id"];
       const dHeadersLen = dHeaders.length;
 
-      // =========================
-      // ✅ Quests + Submissions (for snapshot + quest actions)
-      // =========================
-      const questsSheet = getQuestsSheetName();
-      const subsSheet = getQuestSubmissionsSheetName();
-
-      // 這兩張表只有在需要時才讀，但 snapshot 會用到
-      const needQuestRead =
-        action === "snapshot" ||
-        action.startsWith("quests_") ||
-        action.startsWith("submissions_");
-
-      let qHeaders = [];
-      let qRows = [];
-      let qIdx = {};
-      let sHeaders = [];
-      let sRows = [];
-      let sIdx = {};
-
-      if (needQuestRead) {
-        const qr = await readAllRows(sheets, spreadsheetId, questsSheet);
-        qHeaders = qr.headers;
-        qRows = qr.rows;
-
-        // 任務表：最小必需欄位（其他欄位存在就一併回傳/可更新）
-        ensureQuestHeader(qHeaders, ["quest_id", "title", "status", "created_at", "created_by"]);
-        qIdx = buildHeaderIndex(qHeaders);
-
-        const sr = await readAllRows(sheets, spreadsheetId, subsSheet);
-        sHeaders = sr.headers;
-        sRows = sr.rows;
-
-        // 交付表：最小必需欄位
-        ensureSubmissionHeader(sHeaders, ["submission_id", "quest_id", "user_id", "status", "submitted_at"]);
-        sIdx = buildHeaderIndex(sHeaders);
-      }
-
       // ===== snapshot =====
       if (action === "snapshot") {
         const totalUsers = rows.length;
@@ -774,19 +644,6 @@ exports.handler = async (event) => {
 
         const totalDealers = dRows.length;
         const pendingDealers = dRows.filter((r) => safeStr(r[dIdx["dealer_status"]]).toLowerCase() === "submitted").length;
-
-        const activeQuests = qRows.filter((r) => safeStr(r[qIdx["status"]]).toLowerCase() === "active").length;
-
-        const paidCount = sRows.filter((r) => {
-          const ps = hasHeader(sHeaders, "payout_status") ? safeStr(r[sIdx["payout_status"]]).toLowerCase() : "";
-          return ps === "paid";
-        }).length;
-
-        const todayPaidCount = sRows.filter((r) => {
-          const ps = hasHeader(sHeaders, "payout_status") ? safeStr(r[sIdx["payout_status"]]).toLowerCase() : "";
-          const pat = hasHeader(sHeaders, "payout_at") ? safeStr(r[sIdx["payout_at"]]) : "";
-          return ps === "paid" && isTodayISO(pat);
-        }).length;
 
         const dealerPreview = pickRandomSample(dRows, 5).map((r) => ({
           dealer_id: safeStr(r[dIdx["dealer_id"]]),
@@ -805,11 +662,11 @@ exports.handler = async (event) => {
               users: totalUsers,
               dealers: totalDealers,
               pending: pendingSocial,
-              payouts: paidCount,
-              todayUsers: 0, // 若你未來要算「今天註冊數」，再加 users.created_at 判斷即可
+              payouts: 0,
+              todayUsers: 0,
               pendingDealers,
-              activeQuests,
-              todayPayouts: todayPaidCount,
+              activeQuests: 0,
+              todayPayouts: 0,
             },
             users: pickRandomSample(rows, 5).map((r) => toUserSummary(r, headerIdx)),
             dealers: dealerPreview,
@@ -954,363 +811,6 @@ exports.handler = async (event) => {
 
         return reply(200, { ok: true, dealer_status: "approved", verified_at: ts, verified_by: adminId }, origin);
       }
-
-      // =========================
-      // ✅ Quests actions
-      // =========================
-      if (action === "quests_list") {
-        const qRaw = safeStr(body.q || body.query || "");
-        const q = qRaw.trim().toLowerCase();
-
-        const statusRaw = safeStr(body.status || "");
-        const status = normalizeQuestStatus(statusRaw);
-
-        const limitIn = Number(body.limit ?? 50);
-        const offsetIn = Number(body.offset ?? 0);
-        const limit = Math.max(1, Math.min(200, Number.isFinite(limitIn) ? limitIn : 50));
-        const offset = Math.max(0, Number.isFinite(offsetIn) ? offsetIn : 0);
-
-        const matched = [];
-        for (let i = 0; i < qRows.length; i++) {
-          const row = qRows[i] || [];
-          const st = safeStr(row[qIdx["status"]]).toLowerCase();
-          if (status && st !== status) continue;
-
-          if (q) {
-            const hay = [
-              safeStr(row[qIdx["quest_id"]]),
-              safeStr(row[qIdx["title"]]),
-              hasHeader(qHeaders, "description") ? safeStr(row[qIdx["description"]]) : "",
-            ]
-              .join(" ")
-              .toLowerCase();
-            if (!hay.includes(q)) continue;
-          }
-
-          matched.push(row);
-        }
-
-        // 預設依 created_at 新到舊
-        if (hasHeader(qHeaders, "created_at")) {
-          matched.sort((a, b) => {
-            const ta = Date.parse(safeStr(a[qIdx["created_at"]])) || 0;
-            const tb = Date.parse(safeStr(b[qIdx["created_at"]])) || 0;
-            return tb - ta;
-          });
-        }
-
-        const total = matched.length;
-        const slice = matched.slice(offset, offset + limit);
-        const items = slice.map((r) => ({
-          quest_id: safeStr(r[qIdx["quest_id"]]),
-          title: safeStr(r[qIdx["title"]]),
-          status: safeStr(r[qIdx["status"]]),
-          created_at: hasHeader(qHeaders, "created_at") ? safeStr(r[qIdx["created_at"]]) : "",
-          created_by: hasHeader(qHeaders, "created_by") ? safeStr(r[qIdx["created_by"]]) : "",
-        }));
-
-        return reply(200, { ok: true, total, items }, origin);
-      }
-
-      if (action === "quests_get") {
-        const tQid = safeStr(target_quest_id);
-        if (!tQid) return reply(400, { ok: false, error: "target_quest_id_required" }, origin);
-
-        const qidIdx = qIdx["quest_id"];
-        const found = findRowIndexByColValue(qRows, qidIdx, tQid);
-        if (found === -1) return reply(404, { ok: false, error: "quest_not_found" }, origin);
-
-        const row = qRows[found] || [];
-        const fullRow = Array.from({ length: qHeaders.length }, (_, j) => safeStr(row[j] || ""));
-        const quest = rowToObject(qHeaders, fullRow, { omit: [] });
-
-        return reply(200, { ok: true, quest }, origin);
-      }
-
-      if (action === "quests_create") {
-        const adminId = safeStr(authPayload.user_id);
-        const ts = nowISO();
-
-        const qLen = qHeaders.length;
-        const fullRow = Array.from({ length: qLen }, () => "");
-
-        const quest_id = sanitizeForSheet(data.quest_id || body.quest_id || safeId("q"));
-        const title = sanitizeForSheet(data.title || body.title || "");
-        if (!title) return reply(400, { ok: false, error: "title_required" }, origin);
-
-        const status = normalizeQuestStatus(data.status || body.status || "draft") || "draft";
-
-        fullRow[qIdx["quest_id"]] = quest_id;
-        fullRow[qIdx["title"]] = title;
-        fullRow[qIdx["status"]] = status;
-
-        if (hasHeader(qHeaders, "description")) fullRow[qIdx["description"]] = sanitizeForSheet(data.description || body.description || "");
-        if (hasHeader(qHeaders, "reward_min")) fullRow[qIdx["reward_min"]] = sanitizeForSheet(data.reward_min || body.reward_min || "");
-        if (hasHeader(qHeaders, "reward_max")) fullRow[qIdx["reward_max"]] = sanitizeForSheet(data.reward_max || body.reward_max || "");
-        if (hasHeader(qHeaders, "reward_note")) fullRow[qIdx["reward_note"]] = sanitizeForSheet(data.reward_note || body.reward_note || "");
-
-        if (hasHeader(qHeaders, "created_at")) fullRow[qIdx["created_at"]] = ts;
-        if (hasHeader(qHeaders, "created_by")) fullRow[qIdx["created_by"]] = adminId;
-
-        // 一些常見可選欄位（存在就寫）
-        const optionalFields = [
-          "start_at",
-          "end_at",
-          "region",
-          "platform",
-          "tier_min",
-          "tier_max",
-          "budget",
-          "notes",
-        ];
-        for (const f of optionalFields) {
-          if (hasHeader(qHeaders, f)) fullRow[qIdx[f]] = sanitizeForSheet(data[f] ?? body[f] ?? "");
-        }
-
-        await appendRow(sheets, spreadsheetId, questsSheet, fullRow);
-
-        return reply(200, { ok: true, quest_id }, origin);
-      }
-
-      if (action === "quests_update") {
-        const tQid = safeStr(target_quest_id);
-        if (!tQid) return reply(400, { ok: false, error: "target_quest_id_required" }, origin);
-
-        const qidIdx = qIdx["quest_id"];
-        const found = findRowIndexByColValue(qRows, qidIdx, tQid);
-        if (found === -1) return reply(404, { ok: false, error: "quest_not_found" }, origin);
-
-        const rowNumber1Based = found + 2;
-        const row = qRows[found] || [];
-        const qLen = qHeaders.length;
-        const fullRow = Array.from({ length: qLen }, (_, j) => safeStr(row[j] || ""));
-
-        // 允許更新的欄位：除了 quest_id / created_* 以外，其他存在就可改
-        const deny = new Set(["quest_id", "created_at", "created_by"]);
-        for (const k of Object.keys(data || {})) {
-          const key = String(k || "").trim();
-          if (!key || deny.has(key)) continue;
-          if (!hasHeader(qHeaders, key)) continue;
-          fullRow[qIdx[key]] = sanitizeForSheet(data[key]);
-        }
-
-        // body 也可直傳欄位
-        const bodyFields = Object.keys(body || {});
-        for (const k of bodyFields) {
-          if (["action", "target_quest_id", "targetQuestId", "quest_id", "data"].includes(k)) continue;
-          const key = String(k || "").trim();
-          if (!key || deny.has(key)) continue;
-          if (!hasHeader(qHeaders, key)) continue;
-          fullRow[qIdx[key]] = sanitizeForSheet(body[key]);
-        }
-
-        const adminId = safeStr(authPayload.user_id);
-        const ts = nowISO();
-        if (hasHeader(qHeaders, "updated_at")) fullRow[qIdx["updated_at"]] = ts;
-        if (hasHeader(qHeaders, "updated_by")) fullRow[qIdx["updated_by"]] = adminId;
-
-        await updateRowRange(sheets, spreadsheetId, questsSheet, rowNumber1Based, qLen, fullRow);
-
-        return reply(200, { ok: true }, origin);
-      }
-
-      if (action === "quests_set_status") {
-        const tQid = safeStr(target_quest_id);
-        if (!tQid) return reply(400, { ok: false, error: "target_quest_id_required" }, origin);
-
-        const statusNext = normalizeQuestStatus(data.status || body.status || "");
-        if (!statusNext) return reply(400, { ok: false, error: "status_invalid" }, origin);
-
-        const qidIdx = qIdx["quest_id"];
-        const found = findRowIndexByColValue(qRows, qidIdx, tQid);
-        if (found === -1) return reply(404, { ok: false, error: "quest_not_found" }, origin);
-
-        const rowNumber1Based = found + 2;
-        const row = qRows[found] || [];
-        const qLen = qHeaders.length;
-        const fullRow = Array.from({ length: qLen }, (_, j) => safeStr(row[j] || ""));
-
-        fullRow[qIdx["status"]] = statusNext;
-
-        const adminId = safeStr(authPayload.user_id);
-        const ts = nowISO();
-        if (hasHeader(qHeaders, "updated_at")) fullRow[qIdx["updated_at"]] = ts;
-        if (hasHeader(qHeaders, "updated_by")) fullRow[qIdx["updated_by"]] = adminId;
-
-        await updateRowRange(sheets, spreadsheetId, questsSheet, rowNumber1Based, qLen, fullRow);
-
-        return reply(200, { ok: true, status: statusNext }, origin);
-      }
-
-      // =========================
-      // ✅ Submissions actions
-      // =========================
-      if (action === "submissions_list") {
-        const qRaw = safeStr(body.q || body.query || "");
-        const q = qRaw.trim().toLowerCase();
-
-        const statusRaw = safeStr(body.status || "");
-        const status = normalizeSubmissionStatus(statusRaw);
-
-        const payoutRaw = safeStr(body.payout_status || body.payoutStatus || "");
-        const payout_status = normalizePayoutStatus(payoutRaw);
-
-        const limitIn = Number(body.limit ?? 50);
-        const offsetIn = Number(body.offset ?? 0);
-        const limit = Math.max(1, Math.min(200, Number.isFinite(limitIn) ? limitIn : 50));
-        const offset = Math.max(0, Number.isFinite(offsetIn) ? offsetIn : 0);
-
-        const matched = [];
-        for (let i = 0; i < sRows.length; i++) {
-          const row = sRows[i] || [];
-
-          const st = safeStr(row[sIdx["status"]]).toLowerCase();
-          if (status && st !== status) continue;
-
-          if (payout_status && hasHeader(sHeaders, "payout_status")) {
-            const ps = safeStr(row[sIdx["payout_status"]]).toLowerCase();
-            if (ps !== payout_status) continue;
-          }
-
-          if (q) {
-            const hay = [
-              safeStr(row[sIdx["submission_id"]]),
-              safeStr(row[sIdx["quest_id"]]),
-              safeStr(row[sIdx["user_id"]]),
-              hasHeader(sHeaders, "username") ? safeStr(row[sIdx["username"]]) : "",
-              hasHeader(sHeaders, "note") ? safeStr(row[sIdx["note"]]) : "",
-            ]
-              .join(" ")
-              .toLowerCase();
-            if (!hay.includes(q)) continue;
-          }
-
-          matched.push(row);
-        }
-
-        // 預設依 submitted_at 新到舊
-        matched.sort((a, b) => {
-          const ta = Date.parse(safeStr(a[sIdx["submitted_at"]])) || 0;
-          const tb = Date.parse(safeStr(b[sIdx["submitted_at"]])) || 0;
-          return tb - ta;
-        });
-
-        const total = matched.length;
-        const slice = matched.slice(offset, offset + limit);
-        const items = slice.map((r) => ({
-          submission_id: safeStr(r[sIdx["submission_id"]]),
-          quest_id: safeStr(r[sIdx["quest_id"]]),
-          user_id: safeStr(r[sIdx["user_id"]]),
-          status: safeStr(r[sIdx["status"]]),
-          submitted_at: safeStr(r[sIdx["submitted_at"]]),
-          payout_status: hasHeader(sHeaders, "payout_status") ? safeStr(r[sIdx["payout_status"]]) : "",
-          payout_amount: hasHeader(sHeaders, "payout_amount") ? safeStr(r[sIdx["payout_amount"]]) : "",
-        }));
-
-        return reply(200, { ok: true, total, items }, origin);
-      }
-
-      if (action === "submissions_get") {
-        const tSid = safeStr(target_submission_id);
-        if (!tSid) return reply(400, { ok: false, error: "target_submission_id_required" }, origin);
-
-        const sidIdx = sIdx["submission_id"];
-        const found = findRowIndexByColValue(sRows, sidIdx, tSid);
-        if (found === -1) return reply(404, { ok: false, error: "submission_not_found" }, origin);
-
-        const row = sRows[found] || [];
-        const sLen = sHeaders.length;
-        const fullRow = Array.from({ length: sLen }, (_, j) => safeStr(row[j] || ""));
-        const submission = rowToObject(sHeaders, fullRow, { omit: [] });
-
-        return reply(200, { ok: true, submission }, origin);
-      }
-
-      if (action === "submissions_review") {
-        const tSid = safeStr(target_submission_id);
-        if (!tSid) return reply(400, { ok: false, error: "target_submission_id_required" }, origin);
-
-        const decisionRaw = safeStr(data.decision || body.decision || data.status || body.status || "");
-        const decision = normalizeSubmissionStatus(decisionRaw);
-        if (!["approved", "rejected", "need_fix"].includes(decision)) {
-          return reply(400, { ok: false, error: "decision_invalid" }, origin);
-        }
-
-        const sidIdx = sIdx["submission_id"];
-        const found = findRowIndexByColValue(sRows, sidIdx, tSid);
-        if (found === -1) return reply(404, { ok: false, error: "submission_not_found" }, origin);
-
-        const rowNumber1Based = found + 2;
-        const row = sRows[found] || [];
-        const sLen = sHeaders.length;
-        const fullRow = Array.from({ length: sLen }, (_, j) => safeStr(row[j] || ""));
-
-        const currentStatus = safeStr(fullRow[sIdx["status"]]).toLowerCase();
-        if (currentStatus !== "submitted") return reply(400, { ok: false, error: "not_submitted" }, origin);
-
-        const adminId = safeStr(authPayload.user_id);
-        const ts = nowISO();
-
-        fullRow[sIdx["status"]] = decision;
-
-        if (hasHeader(sHeaders, "reviewed_at")) fullRow[sIdx["reviewed_at"]] = ts;
-        if (hasHeader(sHeaders, "reviewed_by")) fullRow[sIdx["reviewed_by"]] = adminId;
-
-        const reason = sanitizeForSheet(data.reason || body.reason || "");
-        if (reason) {
-          if (hasHeader(sHeaders, "review_reason")) fullRow[sIdx["review_reason"]] = reason;
-          if (hasHeader(sHeaders, "need_fix_reason") && decision === "need_fix") fullRow[sIdx["need_fix_reason"]] = reason;
-        }
-        if (hasHeader(sHeaders, "need_fix_at") && decision === "need_fix") fullRow[sIdx["need_fix_at"]] = ts;
-
-        await updateRowRange(sheets, spreadsheetId, subsSheet, rowNumber1Based, sLen, fullRow);
-
-        return reply(200, { ok: true, status: decision }, origin);
-      }
-
-      if (action === "submissions_payout") {
-        const tSid = safeStr(target_submission_id);
-        if (!tSid) return reply(400, { ok: false, error: "target_submission_id_required" }, origin);
-
-        const sidIdx = sIdx["submission_id"];
-        const found = findRowIndexByColValue(sRows, sidIdx, tSid);
-        if (found === -1) return reply(404, { ok: false, error: "submission_not_found" }, origin);
-
-        const rowNumber1Based = found + 2;
-        const row = sRows[found] || [];
-        const sLen = sHeaders.length;
-        const fullRow = Array.from({ length: sLen }, (_, j) => safeStr(row[j] || ""));
-
-        const st = safeStr(fullRow[sIdx["status"]]).toLowerCase();
-        if (st !== "approved") return reply(400, { ok: false, error: "not_approved" }, origin);
-
-        const payoutAlready = hasHeader(sHeaders, "payout_status") ? safeStr(fullRow[sIdx["payout_status"]]).toLowerCase() : "";
-        if (payoutAlready === "paid") return reply(400, { ok: false, error: "already_paid" }, origin);
-
-        const adminId = safeStr(authPayload.user_id);
-        const ts = nowISO();
-
-        const payoutAmount = sanitizeForSheet(data.payout_amount || body.payout_amount || data.amount || body.amount || "");
-        if (hasHeader(sHeaders, "payout_amount") && payoutAmount) fullRow[sIdx["payout_amount"]] = payoutAmount;
-
-        if (hasHeader(sHeaders, "payout_status")) fullRow[sIdx["payout_status"]] = "paid";
-        if (hasHeader(sHeaders, "payout_at")) fullRow[sIdx["payout_at"]] = ts;
-        if (hasHeader(sHeaders, "payout_by")) fullRow[sIdx["payout_by"]] = adminId;
-
-        // 有些 UI 會想看到狀態變 paid（可選）
-        // 不強制改 status，避免你未來狀態機想分開
-        // 若你希望 payout 後 status=paid，可在表有該規則時自行調整
-        if (hasHeader(sHeaders, "status_after_paid") && safeStr(fullRow[sIdx["status_after_paid"]])) {
-          // nothing
-        }
-
-        await updateRowRange(sheets, spreadsheetId, subsSheet, rowNumber1Based, sLen, fullRow);
-
-        return reply(200, { ok: true, payout_status: "paid", payout_at: ts, payout_by: adminId }, origin);
-      }
-
-      // 若進到這裡，表示是 dealers/snapshot/quests/submissions 但沒命中
-      return reply(400, { ok: false, error: "unknown_action" }, origin);
     }
 
     // ===== fallback unknown action =====
