@@ -262,7 +262,7 @@
     .select{ min-width: 160px; }
     .input::placeholder{ color: rgba(255,255,255,.42); font-weight:800; }
 
-    /* ✅ 第4版：textarea */
+    /* ✅ 第5版：textarea（縮小） */
     .textarea{
       width:100%;
       background: rgba(255,255,255,.03);
@@ -275,7 +275,7 @@
       font-size: 13px;
       outline: none;
       resize: vertical;
-      min-height: 92px;
+      min-height: 70px; /* 原 92px → 縮小 */
       line-height: 1.6;
     }
     .textarea::placeholder{ color: rgba(255,255,255,.42); }
@@ -396,8 +396,11 @@
       padding: 18px;
     }
     .modal-mask.show{ display:flex; }
+
+    /* ✅ 第5版：Modal 變窄 + 限高 */
     .modal{
-      width: min(820px, 96vw);
+      width: min(720px, 92vw);  /* 原 96vw → 更窄 */
+      max-height: 90vh;         /* 限制高度避免爆版 */
       border:1px solid rgba(255,255,255,.14);
       border-radius: 18px;
       background: rgba(12,16,26,.92);
@@ -425,17 +428,30 @@
       font-size: 16px;
       font-weight: 950;
     }
-    .modal-body{ padding: 14px 16px 18px; }
+
+    /* ✅ 第5版：Modal 內容區可捲動 */
+    .modal-body{
+      padding: 14px 16px 18px;
+      max-height: calc(90vh - 64px); /* 扣掉 head 高度 */
+      overflow: auto;
+    }
+
+    /* ✅ 第5版：明細行更緊湊（補件/明細不會撐爆） */
     .kv{
       display:grid;
-      grid-template-columns: 180px 1fr;
-      gap:10px;
-      padding:10px 0;
+      grid-template-columns: 130px 1fr; /* 原 180px → 縮小 */
+      gap:8px;
+      padding:8px 0;
       border-bottom:1px dashed rgba(255,255,255,.12);
     }
     .kv:last-child{ border-bottom:0; }
-    .kv .k{ color: rgba(255,255,255,.68); font-weight: 950; font-size: 12px; }
-    .kv .v{ font-weight: 850; font-size: 13px; color: rgba(255,255,255,.9); word-break:break-all; }
+    .kv .k{ color: rgba(255,255,255,.68); font-weight: 950; font-size: 11px; }
+    .kv .v{ font-weight: 850; font-size: 12px; color: rgba(255,255,255,.9); word-break:break-all; }
+
+    /* ✅ 第5版：手機/窄螢幕上下排 */
+    @media (max-width: 520px){
+      .kv{ grid-template-columns: 1fr; }
+    }
 
     .preview-img{
       margin-top:10px;
@@ -1300,7 +1316,6 @@
         <div class="kv"><div class="k">verified_at</div><div class="v">${escapeHtml(social.verified_at || '')}</div></div>
         <div class="kv"><div class="k">verified_by</div><div class="v">${escapeHtml(social.verified_by || '')}</div></div>
 
-        <!-- ✅ 第4版：若後端有回傳，就顯示 -->
         ${(social.need_fix_reason !== undefined) ? `<div class="kv"><div class="k">need_fix_reason</div><div class="v">${escapeHtml(social.need_fix_reason || '')}</div></div>` : ''}
         ${(social.need_fix_at !== undefined) ? `<div class="kv"><div class="k">need_fix_at</div><div class="v">${escapeHtml(social.need_fix_at || '')}</div></div>` : ''}
 
@@ -1326,7 +1341,6 @@
           </div>
         </div>
 
-        <!-- ✅ 第4版：補件原因輸入 -->
         <div style="height:12px"></div>
         <div class="muted" style="font-weight:900; font-size:12px; margin-bottom:8px;">
           補件原因（會寫入 need_fix_reason；若你的 Sheet 有該欄位）
@@ -1350,7 +1364,6 @@
       if(p && (social.suggest_platform || '')) p.value = String(social.suggest_platform || '');
       if(t && (social.influence_tier || '')) t.value = String(social.influence_tier || '');
 
-      // ✅ 第4版：如果後端有回傳歷史原因，帶入 textarea
       const reasonEl = $('#svNeedFixReason');
       if(reasonEl && (social.need_fix_reason || '')) reasonEl.value = String(social.need_fix_reason || '');
 
@@ -1458,7 +1471,6 @@
           const act = e.target.closest('.mini-btn')?.dataset?.act || '';
           if(!uid) return;
 
-          // 都先進明細，避免誤按
           if(act === 'detail' || act === 'approve' || act === 'reject' || act === 'needfix'){
             openSocialDetail(uid);
           }
