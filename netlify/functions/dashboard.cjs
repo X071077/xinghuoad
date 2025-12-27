@@ -122,6 +122,38 @@ async function loadAllRows(sheets, sheetId, tab) {
   return { headers, rows };
 }
 
+// ✅ 以 economy_ledger 為單一真實來源：計算某 user 的 approved coins
+async function sumApprovedCoinsFromLedger(sheets, sheetId, ledgerTab, userId) {
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: sheetId,
+    range: `${ledgerTab}!A:Z`,
+  });
+  const values = res.data.values || [];
+  if (values.length === 0) return 0;
+
+  const headers = values[0].map(normalizeHeader);
+  const rows = values.slice(1);
+
+  const idx = {};
+  headers.forEach((h, i) => (idx[h] = i));
+
+  // 必要欄位：user_id / delta / status
+  const userIdx = idx["user_id"];
+  const deltaIdx = idx["delta"];
+  const statusIdx = idx["status"];
+  if (userIdx === undefined || deltaIdx === undefined || statusIdx === undefined) return 0;
+
+  let sum = 0;
+  for (const r of rows) {
+    const uid = String(r[userIdx] || "").trim();
+    if (!uid || uid !== userId) continue;
+    const status = String(r[statusIdx] || "").trim().toLowerCase();
+    if (status !== "approved") continue;
+    sum += toNumber(r[deltaIdx]);
+  }
+  return sum;
+}
+
 exports.handler = async (event) => {
   const origin = getRequestOrigin(event.headers || {});
 
@@ -149,6 +181,7 @@ exports.handler = async (event) => {
     }
 
     const coinsCalcIdx = headerIdx["coins_calc"]; // optional
+    const ledgerTab = process.env.ECONOMY_LEDGER_TAB || "economy_ledger";
 
     const uid = String(authPayload.user_id);
     const uidCol = headerIdx["user_id"];
@@ -166,10 +199,16 @@ exports.handler = async (event) => {
       if (foundRowIndex === -1) {
         const initData = DEFAULT_DATA;
         const updatedAt = nowISO();
+
+        // ✅ 新用戶初始 coins 也以 ledger approved 加總為準（避免先入帳後建立 dashboard row 顯示錯誤）
+        const initCoins = await sumApprovedCoinsFromLedger(sheets, sheetId, ledgerTab, uid);
         const newRow = new Array(headers.length).fill("");
         newRow[headerIdx["user_id"]] = uid;
         newRow[headerIdx["data_json"]] = JSON.stringify(initData);
         newRow[headerIdx["updated_at"]] = updatedAt;
+
+        // 初始化 coins_calc（若欄位存在）
+        if (coinsCalcIdx !== undefined) newRow[coinsCalcIdx] = String(initCoins);
 
         await sheets.spreadsheets.values.append({
           spreadsheetId: sheetId,
@@ -179,13 +218,29 @@ exports.handler = async (event) => {
           requestBody: { values: [newRow] },
         });
 
-        return reply(200, { ok: true, data: initData, updated_at: updatedAt, created: true, coins_calc: 0 }, origin);
+        return reply(200, { ok: true, data: initData, updated_at: updatedAt, created: true, coins_calc: initCoins }, origin);
       }
 
       const row = rows[foundRowIndex];
       const dataJson = String(row[headerIdx["data_json"]] || "").trim();
       const updatedAt = String(row[headerIdx["updated_at"]] || "").trim();
-      const coinsCalc = coinsCalcIdx === undefined ? 0 : toNumber(row[coinsCalcIdx]);
+      // 先讀 sheet 的 coins_calc（快取/顯示用）
+      const coinsCalcInSheet = coinsCalcIdx === undefined ? 0 : toNumber(row[coinsCalcIdx]);
+
+      // ✅ 真實 coins 以 economy_ledger approved 加總為準
+      const coinsCalc = await sumApprovedCoinsFromLedger(sheets, sheetId, ledgerTab, uid);
+
+      // 若 dashboard.coins_calc 與真實值不同，順手回寫（保持快取一致）
+      if (coinsCalcIdx !== undefined && coinsCalc !== coinsCalcInSheet) {
+        const sheetRowNumber = foundRowIndex + 2;
+        const colCoins = colToA1(coinsCalcIdx);
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: sheetId,
+          range: `${tab}!${colCoins}${sheetRowNumber}:${colCoins}${sheetRowNumber}`,
+          valueInputOption: "RAW",
+          requestBody: { values: [[String(coinsCalc)]] },
+        });
+      }
 
 
       let parsed = null;
@@ -203,7 +258,7 @@ exports.handler = async (event) => {
         ...(statsIn && typeof statsIn === "object" ? statsIn : {}),
       };
 
-      // ✅ coins 以 dashboard.coins_calc 為準（由 economy_ledger 自動加總）
+      // ✅ coins 以 economy_ledger 為單一真實來源
       stats.coins = coinsCalc;
       stats.totalEarned = coinsCalc;
 
@@ -220,7 +275,8 @@ exports.handler = async (event) => {
 
       const payload = body.data || {};
       const row = rows[foundRowIndex];
-      const coinsCalc = coinsCalcIdx === undefined ? 0 : toNumber(row[coinsCalcIdx]);
+      // ✅ 真實 coins 以 economy_ledger approved 加總為準
+      const coinsCalc = await sumApprovedCoinsFromLedger(sheets, sheetId, ledgerTab, uid);
       const statsIn = payload && payload.stats ? payload.stats : null;
       const myQuestsIn = payload && Array.isArray(payload.my_quests) ? payload.my_quests : null;
 
@@ -229,7 +285,7 @@ exports.handler = async (event) => {
         ...(statsIn && typeof statsIn === "object" ? statsIn : {}),
       };
 
-      // ✅ 不允許前台自行改動 coins：以 coins_calc 為準
+      // ✅ 不允許前台自行改動 coins：以 ledger 加總為準
       safeStats.coins = coinsCalc;
       safeStats.totalEarned = coinsCalc;
 
@@ -251,6 +307,17 @@ exports.handler = async (event) => {
         valueInputOption: "RAW",
         requestBody: { values: [[dataJson, updatedAt]] },
       });
+
+      // 同步回寫 coins_calc（若欄位存在）
+      if (coinsCalcIdx !== undefined) {
+        const colCoins = colToA1(coinsCalcIdx);
+        await sheets.spreadsheets.values.update({
+          spreadsheetId: sheetId,
+          range: `${tab}!${colCoins}${sheetRowNumber}:${colCoins}${sheetRowNumber}`,
+          valueInputOption: "RAW",
+          requestBody: { values: [[String(coinsCalc)]] },
+        });
+      }
 
       return reply(200, { ok: true, updated_at: updatedAt }, origin);
     }
