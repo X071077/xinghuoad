@@ -174,6 +174,7 @@ function toUserSummary(row, headerIdx) {
   return {
     user_id: safeStr(row[headerIdx["user_id"]]),
     username: safeStr(row[headerIdx["username"]]),
+    name: safeStr(row[headerIdx["name"]]), // ✅ 第2版：補回 name，前台可用
     email: safeStr(row[headerIdx["email"]]),
     role: safeStr(row[headerIdx["role"]]),
   };
@@ -422,7 +423,7 @@ exports.handler = async (event) => {
             todayPayouts: 0,
           },
           users: pickRandomSample(rows, 5).map((r) => toUserSummary(r, headerIdx)), // ✅ 隨機 5 筆預覽
-          dealers: [], // 目前先留空：UI 已備妥，後續可擴充
+          dealers: [],
         },
         origin
       );
@@ -476,7 +477,6 @@ exports.handler = async (event) => {
         });
       }
 
-      // sort by submitted_at desc
       items.sort((a, b) => {
         const ta = Date.parse(a.social_submitted_at || "") || 0;
         const tb = Date.parse(b.social_submitted_at || "") || 0;
@@ -528,7 +528,6 @@ exports.handler = async (event) => {
         return reply(200, { ok: true, user_id, username, email, social }, origin);
       }
 
-      // approve / reject: only allow when submitted
       if (currentStatus !== "submitted") return reply(400, { ok: false, error: "not_submitted" }, origin);
 
       const adminId = safeStr(authPayload.user_id);
@@ -560,7 +559,6 @@ exports.handler = async (event) => {
         );
       }
 
-      // social_approve
       const primary_platform = normalizePrimaryPlatform(body.primary_platform || data.primary_platform || "");
       const influence_tier = normalizeTier(body.influence_tier || data.influence_tier || "");
 

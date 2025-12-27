@@ -247,6 +247,7 @@
       border:1px solid rgba(255,255,255,.12);
       border-radius: 12px;
       padding: 8px 10px;
+      flex-wrap:wrap;
     }
     .input, .select{
       background: transparent;
@@ -526,7 +527,7 @@
           <div class="container">
             <div class="section-head">
               <h2 class="section-title"><i class="fas fa-users"></i> 用戶管理</h2>
-              <p class="section-sub">搜尋、檢視、角色調整、停權/解鎖（UI 已備妥，後端可後續串接）。</p>
+              <p class="section-sub">搜尋、檢視、角色調整、停權/解鎖（停權先預留）。</p>
             </div>
 
             <div class="card">
@@ -783,12 +784,27 @@
     </div>
   </div>
 
+  <!-- Modal: User detail / role -->
+  <div class="modal-mask" id="userModalMask" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-head">
+        <h3 class="modal-title" id="userModalTitle">用戶</h3>
+        <button class="modal-close" id="userModalClose" type="button" aria-label="Close"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" id="userModalBody">
+        <div class="skeleton sk-line wide"></div>
+        <div style="height:10px"></div>
+        <div class="skeleton sk-line mid"></div>
+        <div style="height:10px"></div>
+        <div class="skeleton sk-line wide"></div>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"><span class="tag" id="toastTag">INFO</span><span id="toastText"></span></div>
 
   <script>
     const $ = (sel) => document.querySelector(sel);
-
-    function nowISO(){ return new Date().toISOString(); }
 
     function escapeHtml(s){
       return String(s ?? '').replace(/[&<>"']/g, c => ({
@@ -892,7 +908,6 @@
       set('#activeQuests', s.activeQuests);
       set('#todayPayouts', s.todayPayouts);
 
-      // 目前仍保留：之後你要擴充也不會卡住
       USERS_CACHE = (snapshot?.users || []);
       USERS_TOTAL = Number(s.users || 0);
       renderUsers(USERS_CACHE);
@@ -909,31 +924,19 @@
 
       $('#navUsername').textContent = auth.user.username || auth.user.name || 'admin';
 
-      // skeleton
-      setSkeleton(true);
-
       try{
         const snap = await adminApi(auth.token, { action:'snapshot' });
         if(!snap?.ok) throw new Error(snap?.error || 'snapshot_failed');
         applySnapshotUI(snap);
-
-        // also refresh pending list
         await loadSubmittedList({ silent:true });
       }catch(err){
         console.error(err);
-        showToast('後端尚未串接完成：你仍可先使用介面（可先使用介面）', 'warn');
+        showToast('後端尚未串接完成：你仍可先使用介面', 'warn');
         applySnapshotUI({ stats: { users:0, dealers:0, pending:0, payouts:0, todayUsers:0, pendingDealers:0, activeQuests:0, todayPayouts:0 }, users: [], dealers: [] });
-      } finally{
-        setSkeleton(false);
       }
     }
 
-    function setSkeleton(on){
-      // minimal skeleton: just placeholders (keep existing UI stable)
-      // This is kept for future expansion
-    }
-
-    // ===== 原本 users/dealers render（保留）=====
+    // ===== 原本 users/dealers render（保留並強化 actions）=====
     function renderUsers(users=[]){
       const tbody = $('#usersTbody');
       if(!tbody) return;
@@ -951,13 +954,14 @@
 
       tbody.innerHTML = users.map(u => {
         const role = (u.role || '').toLowerCase();
-        const status = (u.status || 'active').toLowerCase();
+        const status = (u.status || 'active').toLowerCase(); // status 目前是 UI 預留
         const statusLabel = status === 'blocked' ? '停權' : (status === 'pending' ? '待補資料' : '正常');
         const dotColor = status === 'blocked' ? 'rgba(255,70,90,.95)' : (status === 'pending' ? 'rgba(255,190,80,.95)' : 'rgba(90,255,190,.95)');
+
         return `
           <tr data-userid="${escapeHtml(u.user_id || '')}">
             <td>${escapeHtml(u.user_id || '')}</td>
-            <td>${escapeHtml(u.username || '')}</td>
+            <td title="${escapeHtml(u.name || '')}">${escapeHtml(u.username || '')}</td>
             <td>${escapeHtml(u.email || '')}</td>
             <td><span class="status-pill"><span class="status-dot" style="background:${dotColor}"></span>${escapeHtml(role || '-')}</span></td>
             <td><span class="status-pill"><span class="status-dot" style="background:${dotColor}"></span>${statusLabel}</span></td>
@@ -978,12 +982,14 @@
           const uid = tr?.dataset?.userid || '';
           const act = e.target.closest('.mini-btn')?.dataset?.act || '';
           if(!uid) return;
+
           if(act === 'view'){
-            showToast('查看（可擴充 users_get）','info');
+            openUserModal('view', uid);
           }else if(act === 'role'){
-            showToast('角色調整（可擴充 users_update_role）','info');
+            const u = (USERS_CACHE || []).find(x => String(x.user_id||'') === String(uid));
+            openUserModal('role', uid, u?.role || '');
           }else if(act === 'block'){
-            showToast('停權/解鎖（預留）','info');
+            showToast('停權/解鎖（預留：欄位未定）','info');
           }
         });
       });
@@ -991,6 +997,176 @@
 
     function renderDealers(dealers=[]){
       // dealers section remains UI placeholder
+    }
+
+    // ===== User Modal (view / role) =====
+    function openUserModal(mode, user_id, currentRole=''){
+      const mask = $('#userModalMask');
+      const title = $('#userModalTitle');
+      const body = $('#userModalBody');
+
+      if(title) title.textContent = mode === 'role' ? `角色調整：${user_id}` : `用戶資料：${user_id}`;
+      if(body){
+        body.innerHTML = `
+          <div class="skeleton sk-line wide"></div>
+          <div style="height:10px"></div>
+          <div class="skeleton sk-line mid"></div>
+          <div style="height:10px"></div>
+          <div class="skeleton sk-line wide"></div>
+        `;
+      }
+      if(mask) mask.classList.add('show');
+
+      if(mode === 'role'){
+        loadUserDetailAndRenderRole(user_id, currentRole).catch(err=>{
+          console.error(err);
+          showToast('載入用戶失敗：' + (err?.message || ''), 'error');
+        });
+      }else{
+        loadUserDetailAndRenderView(user_id).catch(err=>{
+          console.error(err);
+          showToast('載入用戶失敗：' + (err?.message || ''), 'error');
+        });
+      }
+    }
+
+    function closeUserModal(){
+      const mask = $('#userModalMask');
+      if(mask) mask.classList.remove('show');
+    }
+
+    $('#userModalClose')?.addEventListener('click', closeUserModal);
+    $('#userModalMask')?.addEventListener('click', (e)=>{
+      if(e.target?.id === 'userModalMask') closeUserModal();
+    });
+
+    async function fetchUser(user_id){
+      const auth = requireLogin();
+      if(!auth) throw new Error('not_logged_in');
+      guardAdmin(auth.user);
+
+      const out = await adminApi(auth.token, { action:'users_get', target_user_id: user_id });
+      if(!out?.ok) throw new Error(out?.error || 'users_get_failed');
+      return out.user || {};
+    }
+
+    function kvRow(k, v){
+      return `<div class="kv"><div class="k">${escapeHtml(k)}</div><div class="v">${escapeHtml(v ?? '')}</div></div>`;
+    }
+
+    async function loadUserDetailAndRenderView(user_id){
+      const user = await fetchUser(user_id);
+      const body = $('#userModalBody');
+      if(!body) return;
+
+      const fields = [
+        ['user_id', user.user_id],
+        ['username', user.username],
+        ['name', user.name],
+        ['email', user.email],
+        ['role', user.role],
+        ['level', user.level],
+        ['xp_total', user.xp_total],
+        ['social_status', user.social_status],
+        ['primary_platform', user.primary_platform],
+        ['influence_tier', user.influence_tier],
+        ['can_take_tasks', user.can_take_tasks],
+        ['can_withdraw', user.can_withdraw],
+        ['social_submitted_at', user.social_submitted_at],
+        ['verified_at', user.verified_at],
+        ['verified_by', user.verified_by],
+      ];
+
+      body.innerHTML = `
+        ${fields.map(([k,v]) => kvRow(k, v)).join('')}
+        <div style="height:14px"></div>
+        <div class="row-actions">
+          <button class="mini-btn" id="userCopyBtn"><i class="fas fa-copy"></i> 複製 user_id</button>
+          <button class="mini-btn warn" id="userGoRoleBtn"><i class="fas fa-user-gear"></i> 改角色</button>
+        </div>
+      `;
+
+      $('#userCopyBtn')?.addEventListener('click', async ()=>{
+        try{
+          await navigator.clipboard.writeText(String(user.user_id || user_id || ''));
+          showToast('已複製 user_id', 'info');
+        }catch(e){
+          showToast('複製失敗（瀏覽器權限限制）', 'warn');
+        }
+      });
+
+      $('#userGoRoleBtn')?.addEventListener('click', ()=>{
+        openUserModal('role', user_id, user.role || '');
+      });
+    }
+
+    async function loadUserDetailAndRenderRole(user_id, currentRole=''){
+      const user = await fetchUser(user_id);
+      const body = $('#userModalBody');
+      if(!body) return;
+
+      const roleNow = (user.role || currentRole || '').toLowerCase();
+
+      body.innerHTML = `
+        ${kvRow('user_id', user.user_id || user_id)}
+        ${kvRow('username', user.username)}
+        ${kvRow('name', user.name)}
+        ${kvRow('email', user.email)}
+        <div style="height:10px"></div>
+
+        <div class="field" style="justify-content:space-between; width:100%;">
+          <div class="muted" style="font-weight:900; font-size:12px;">選擇新角色</div>
+          <select class="select" id="userRoleSelect" style="min-width:200px;">
+            <option value="admin">admin</option>
+            <option value="dealer">dealer</option>
+            <option value="partner">partner</option>
+          </select>
+        </div>
+
+        <div style="height:12px"></div>
+        <div class="row-actions">
+          <button class="mini-btn warn" id="userRoleSaveBtn"><i class="fas fa-floppy-disk"></i> 儲存角色</button>
+          <button class="mini-btn" id="userRoleBackBtn"><i class="fas fa-arrow-left"></i> 返回查看</button>
+        </div>
+        <div style="height:8px"></div>
+        <div class="muted" style="font-size:12px;">提醒：此操作會直接更新 users Sheet 的 role 欄位。</div>
+      `;
+
+      const sel = $('#userRoleSelect');
+      if(sel){
+        sel.value = ['admin','dealer','partner'].includes(roleNow) ? roleNow : 'partner';
+      }
+
+      $('#userRoleBackBtn')?.addEventListener('click', ()=>{
+        openUserModal('view', user_id);
+      });
+
+      $('#userRoleSaveBtn')?.addEventListener('click', async ()=>{
+        const auth = requireLogin();
+        if(!auth) return;
+        const role = ($('#userRoleSelect')?.value || '').trim().toLowerCase();
+        if(!['admin','dealer','partner'].includes(role)){
+          showToast('角色不合法', 'error');
+          return;
+        }
+        try{
+          showToast('更新角色中…', 'info');
+          const out = await adminApi(auth.token, { action:'users_update_role', target_user_id: user_id, role });
+          if(!out?.ok) throw new Error(out?.error || 'update_role_failed');
+
+          // 更新快取（避免使用者覺得沒變）
+          (USERS_CACHE || []).forEach(x=>{
+            if(String(x.user_id||'') === String(user_id)) x.role = role;
+          });
+          renderUsers(USERS_CACHE);
+
+          showToast('已更新角色', 'info');
+          openUserModal('view', user_id);
+        }catch(e){
+          console.error(e);
+          showToast('更新失敗：' + (e?.message || ''), 'error');
+        }
+      });
     }
 
     // ===== Social Verify UI =====
@@ -1072,6 +1248,10 @@
         <div class="kv"><div class="k">fb_url</div><div class="v">${escapeHtml(social.fb_url || '')}</div></div>
         <div class="kv"><div class="k">followers_count</div><div class="v">${escapeHtml(social.followers_count || '')}</div></div>
         <div class="kv"><div class="k">avg_views_7d</div><div class="v">${escapeHtml(social.avg_views_7d || '')}</div></div>
+        <div class="kv"><div class="k">social_submitted_at</div><div class="v">${escapeHtml(social.social_submitted_at || '')}</div></div>
+
+        <div class="kv"><div class="k">verified_at</div><div class="v">${escapeHtml(social.verified_at || '')}</div></div>
+        <div class="kv"><div class="k">verified_by</div><div class="v">${escapeHtml(social.verified_by || '')}</div></div>
 
         <div style="height:14px"></div>
 
@@ -1106,7 +1286,6 @@
         <div class="muted" style="font-size:12px;">通過會：social_status=approved、level=1、can_take_tasks/can_withdraw=true；拒絕會：social_status=rejected、level=0、權限=false。</div>
       `;
 
-      // prefill from suggested
       const p = $('#svSetPlatform');
       const t = $('#svSetTier');
       if(p && (social.suggest_platform || '')) p.value = String(social.suggest_platform || '');
@@ -1191,11 +1370,7 @@
           const act = e.target.closest('.mini-btn')?.dataset?.act || '';
           if(!uid) return;
 
-          if(act === 'detail'){
-            openSocialDetail(uid);
-          }else if(act === 'approve'){
-            openSocialDetail(uid);
-          }else if(act === 'reject'){
+          if(act === 'detail' || act === 'approve' || act === 'reject'){
             openSocialDetail(uid);
           }else if(act === 'needfix'){
             showToast('補件流程：此功能先預留（可後續補 social_need_fix）','info');
@@ -1228,11 +1403,14 @@
     $('#refreshBtn')?.addEventListener('click', syncAll);
     $('#btnCreateQuest')?.addEventListener('click', ()=>showToast('此功能為 UI 預留，後端串接後即可使用。','info'));
     $('#btnCreateUser')?.addEventListener('click', ()=>showToast('此功能為 UI 預留，後端串接後即可使用。','info'));
+
     $('#usersRefreshBtn')?.addEventListener('click', () => {
       const qEl = $('#userSearch');
       const rEl = $('#userRoleFilter');
+      const sEl = $('#userStatusFilter');
       if(qEl) qEl.value = '';
       if(rEl) rEl.value = '';
+      if(sEl) sEl.value = '';
       loadUsers({ silent: false });
     });
 
@@ -1282,7 +1460,6 @@
     }
 
     function wireFilters(){
-      // users: 改成後端查詢（預設隨機 5 筆；搜尋/角色篩選才查詢）
       $('#userSearch')?.addEventListener('input', () => scheduleUsersReload());
       $('#userRoleFilter')?.addEventListener('change', () => scheduleUsersReload());
       $('#userStatusFilter')?.addEventListener('change', () => { /* 預留：目前無後端欄位 */ });
