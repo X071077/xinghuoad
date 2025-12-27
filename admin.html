@@ -102,9 +102,7 @@
       box-shadow:0 16px 40px rgba(124,92,255,.24);
     }
     .btn-primary:hover{ border-color: rgba(124,92,255,.8); background: linear-gradient(135deg, rgba(124,92,255,.98), rgba(74,163,255,.65)); }
-    .btn-ghost{
-      background: rgba(255,255,255,.03);
-    }
+    .btn-ghost{ background: rgba(255,255,255,.03); }
 
     /* Layout */
     main{ padding: 26px 0 70px; }
@@ -170,12 +168,8 @@
       gap:18px;
     }
 
-    .section{
-      scroll-margin-top: 96px;
-    }
-    .section-head{
-      margin-bottom:10px;
-    }
+    .section{ scroll-margin-top: 96px; }
+    .section-head{ margin-bottom:10px; }
     .section-title{
       margin:0 0 6px;
       font-size: 18px;
@@ -371,7 +365,7 @@
       opacity: 0;
       pointer-events:none;
       transition: .18s ease;
-      max-width: min(640px, 90vw);
+      max-width: min(740px, 90vw);
       display:flex; align-items:center; gap:10px;
     }
     .toast.show{ opacity:1; pointer-events:auto; }
@@ -397,7 +391,7 @@
     .modal-mask.show{ display:flex; }
 
     .modal{
-      width: min(720px, 92vw);
+      width: min(760px, 92vw);
       max-height: 90vh;
       border:1px solid rgba(255,255,255,.14);
       border-radius: 18px;
@@ -435,7 +429,7 @@
 
     .kv{
       display:grid;
-      grid-template-columns: 130px 1fr;
+      grid-template-columns: 140px 1fr;
       gap:8px;
       padding:8px 0;
       border-bottom:1px dashed rgba(255,255,255,.12);
@@ -473,6 +467,49 @@
     .sk-line.wide{ width: 220px; }
     .sk-line.mid{ width: 160px; }
     .sk-line.narrow{ width: 120px; }
+
+    .form-grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width: 720px){
+      .form-grid{ grid-template-columns: 1fr; }
+    }
+    .form-item{
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:14px;
+      background: rgba(255,255,255,.03);
+      padding:10px 12px;
+    }
+    .form-item .label{
+      font-size:12px;
+      font-weight:950;
+      color: rgba(255,255,255,.72);
+      margin-bottom:6px;
+      display:flex; align-items:center; gap:8px;
+    }
+    .form-item input, .form-item select{
+      width:100%;
+      background: transparent;
+      border:0;
+      outline:none;
+      color: var(--text);
+      font-weight: 900;
+      font-family: inherit;
+      font-size: 13px;
+    }
+    .chip{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.04);
+      font-weight:900;
+      font-size:12px;
+      color: rgba(255,255,255,.88);
+      white-space:nowrap;
+    }
   </style>
 </head>
 <body>
@@ -511,7 +548,7 @@
         <section class="section" id="overview">
           <div class="section-head">
             <h2 class="section-title"><i class="fas fa-chart-pie"></i> 後台總覽</h2>
-            <p class="section-sub">顯示目前平台統計資訊（users / dealers / 待審核社群驗證等）。</p>
+            <p class="section-sub">顯示目前平台統計資訊（users / dealers / 任務等）。</p>
           </div>
 
           <div class="card">
@@ -550,7 +587,7 @@
               <div class="stat">
                 <div class="k"><i class="fas fa-bullseye"></i> Active Quests</div>
                 <div class="v" id="activeQuests">0</div>
-                <div class="hint">進行中任務（預留）</div>
+                <div class="hint">進行中任務</div>
               </div>
               <div class="stat">
                 <div class="k"><i class="fas fa-sack-dollar"></i> Today Payouts</div>
@@ -766,17 +803,28 @@
           <div class="container">
             <div class="section-head">
               <h2 class="section-title"><i class="fas fa-bullseye"></i> 任務管理</h2>
-              <p class="section-sub">建立任務、上下架、審核（目前仍為 UI 預留）。</p>
+              <p class="section-sub">建立任務、上下架、審核提交、後台發放（已串接 quests / quest_submissions Sheet）。</p>
             </div>
 
+            <!-- Quests list -->
             <div class="card">
               <div class="toolbar">
                 <div class="left">
-                  <div class="muted">提示：此區塊為 UI 預留，待任務系統串接。</div>
+                  <div class="field">
+                    <input class="input" id="questSearch" placeholder="搜尋 quest_id / title" />
+                    <select class="select" id="questStatusFilter">
+                      <option value="">狀態（全部）</option>
+                      <option value="draft">draft</option>
+                      <option value="active">active</option>
+                      <option value="paused">paused</option>
+                      <option value="ended">ended</option>
+                    </select>
+                  </div>
                 </div>
                 <div class="right">
+                  <button class="btn" id="questsRefreshBtn" type="button"><i class="fas fa-rotate"></i> 重新載入</button>
                   <button class="btn btn-primary" id="btnCreateQuest" type="button">
-                    <i class="fas fa-plus"></i> 建立任務（規劃）
+                    <i class="fas fa-plus"></i> 建立任務
                   </button>
                 </div>
               </div>
@@ -785,26 +833,80 @@
                 <table>
                   <thead>
                     <tr>
-                      <th style="width:220px">quest_id</th>
-                      <th style="width:240px">title</th>
-                      <th style="width:120px">status</th>
-                      <th style="width:160px">reward</th>
-                      <th style="width:240px">操作</th>
+                      <th style="width:190px">quest_id</th>
+                      <th style="width:300px">title</th>
+                      <th style="width:130px">status</th>
+                      <th style="width:160px">reward_min~max</th>
+                      <th style="width:160px">start/end</th>
+                      <th style="width:260px">操作</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    <tr>
-                      <td colspan="5">
-                        <div class="empty">
-                          <div><b>目前沒有資料</b></div>
-                          <div class="muted">此區塊為 UI 預留，後端串接後即可使用。</div>
-                        </div>
-                      </td>
-                    </tr>
+                  <tbody id="questsTbody">
+                    <tr><td colspan="6">
+                      <div class="empty">
+                        <div><b>尚未載入任務</b></div>
+                        <div class="muted">點「重新載入」或「重新同步」。</div>
+                      </div>
+                    </td></tr>
                   </tbody>
                 </table>
               </div>
 
+              <div class="muted" style="padding: 0 14px 14px;" id="questsHint">
+                提示：最多顯示 50 筆；可用搜尋/狀態篩選。
+              </div>
+            </div>
+
+            <div style="height:16px"></div>
+
+            <!-- Submissions list -->
+            <div class="card">
+              <div class="toolbar">
+                <div class="left">
+                  <div class="field">
+                    <input class="input" id="subSearch" placeholder="搜尋 submission_id / quest_id / user_id" />
+                    <select class="select" id="subStatusFilter">
+                      <option value="">狀態（全部）</option>
+                      <option value="submitted">submitted</option>
+                      <option value="approved">approved</option>
+                      <option value="need_fix">need_fix</option>
+                      <option value="rejected">rejected</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="right">
+                  <button class="btn btn-primary" id="subsRefreshBtn" type="button"><i class="fas fa-rotate"></i> 重新載入提交</button>
+                </div>
+              </div>
+
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th style="width:200px">submission_id</th>
+                      <th style="width:190px">quest_id</th>
+                      <th style="width:190px">user_id</th>
+                      <th style="width:140px">status</th>
+                      <th style="width:170px">submitted_at</th>
+                      <th style="width:140px">payout_amount</th>
+                      <th style="width:170px">payout_at</th>
+                      <th style="width:240px">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="subsTbody">
+                    <tr><td colspan="8">
+                      <div class="empty">
+                        <div><b>尚未載入提交</b></div>
+                        <div class="muted">點「重新載入提交」或「重新同步」。</div>
+                      </div>
+                    </td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="muted" style="padding: 0 14px 14px;" id="subsHint">
+                提示：最多顯示 50 筆；可用搜尋/狀態篩選。
+              </div>
             </div>
           </div>
         </section>
@@ -861,6 +963,28 @@
         <div style="height:10px"></div>
         <div class="skeleton sk-line wide"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- ✅ Modal: Quest create/edit -->
+  <div class="modal-mask" id="questModalMask" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-head">
+        <h3 class="modal-title" id="questModalTitle">任務</h3>
+        <button class="modal-close" id="questModalClose" type="button" aria-label="Close"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" id="questModalBody"></div>
+    </div>
+  </div>
+
+  <!-- ✅ Modal: Submission review/payout -->
+  <div class="modal-mask" id="subModalMask" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-head">
+        <h3 class="modal-title" id="subModalTitle">提交</h3>
+        <button class="modal-close" id="subModalClose" type="button" aria-label="Close"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" id="subModalBody"></div>
     </div>
   </div>
 
@@ -974,6 +1098,14 @@
     let DEALERS_TOTAL = 0;
     let DEALER_SELECTED_ID = "";
 
+    let QUESTS_LIST = [];
+    let QUESTS_TOTAL = 0;
+    let QUEST_SELECTED_ID = "";
+
+    let SUBS_LIST = [];
+    let SUBS_TOTAL = 0;
+    let SUB_SELECTED_ID = "";
+
     function applySnapshotUI(snapshot){
       const s = snapshot?.stats || {};
       const set = (id, val) => { const el = $(id); if(el) el.textContent = String(val ?? 0); };
@@ -992,7 +1124,6 @@
       const uh = $('#usersHint');
       if(uh) uh.textContent = `已隨機抽樣 ${USERS_CACHE.length} 筆（total ${USERS_TOTAL}）。需要時用搜尋/角色篩選查詢。`;
 
-      // overview 只顯示預覽
       renderDealers(snapshot?.dealers || [], { preview:true });
     }
 
@@ -1010,6 +1141,8 @@
 
         await loadSubmittedList({ silent:true });
         await loadDealers({ silent:true });
+        await loadQuests({ silent:true });
+        await loadSubs({ silent:true });
       }catch(err){
         console.error(err);
         showToast('後端尚未串接完成：你仍可先使用介面', 'warn');
@@ -1527,7 +1660,7 @@
     }
 
     // =========================
-    // Dealers
+    // Dealers（保持你原本功能）
     // =========================
     function dealerDotColor(status){
       const s = String(status||'').toLowerCase();
@@ -1541,10 +1674,6 @@
     function renderDealers(items=[], { preview=false } = {}){
       const tbody = $('#dealersTbody');
       if(!tbody) return;
-
-      if(preview){
-        // overview preview: 若你剛好正在 dealers 區，仍可看到完整列表，由 loadDealers 會覆蓋
-      }
 
       if(!items.length){
         tbody.innerHTML = `
@@ -1766,10 +1895,636 @@
     }
 
     // =========================
+    // ✅ Quests
+    // =========================
+    function questDotColor(status){
+      const s = String(status||'').toLowerCase();
+      if(s === 'active') return 'rgba(90,255,190,.95)';
+      if(s === 'draft') return 'rgba(255,190,80,.95)';
+      if(s === 'paused') return 'rgba(255,190,80,.95)';
+      if(s === 'ended') return 'rgba(255,70,90,.95)';
+      return 'rgba(255,255,255,.65)';
+    }
+
+    function renderQuests(items=[]){
+      const tbody = $('#questsTbody');
+      const hint = $('#questsHint');
+      if(!tbody) return;
+
+      if(!items.length){
+        tbody.innerHTML = `
+          <tr><td colspan="6">
+            <div class="empty">
+              <div><b>目前沒有任務</b></div>
+              <div class="muted">你可以按「建立任務」新增一筆 draft。</div>
+            </div>
+          </td></tr>
+        `;
+        if(hint) hint.textContent = '提示：目前沒有資料。';
+        return;
+      }
+
+      tbody.innerHTML = items.map(q=>{
+        const st = String(q.status||'').toLowerCase();
+        const dot = questDotColor(st);
+        const reward = `${q.reward_min || ''}~${q.reward_max || ''}`.trim();
+        const se = `${q.start_at || '-'} / ${q.end_at || '-'}`;
+        return `
+          <tr data-qid="${escapeHtml(q.quest_id||'')}">
+            <td>${escapeHtml(q.quest_id||'')}</td>
+            <td title="${escapeHtml(q.description||'')}">${escapeHtml(q.title||'')}</td>
+            <td><span class="status-pill"><span class="status-dot" style="background:${dot}"></span>${escapeHtml(st||'-')}</span></td>
+            <td>${escapeHtml(reward || '-')}</td>
+            <td>${escapeHtml(se)}</td>
+            <td>
+              <div class="row-actions">
+                <button class="mini-btn" data-act="view"><i class="fas fa-eye"></i> 明細</button>
+                <button class="mini-btn warn" data-act="edit"><i class="fas fa-pen"></i> 編輯</button>
+                <button class="mini-btn good" data-act="active"><i class="fas fa-play"></i> 上架</button>
+                <button class="mini-btn warn" data-act="paused"><i class="fas fa-pause"></i> 暫停</button>
+                <button class="mini-btn bad" data-act="ended"><i class="fas fa-flag-checkered"></i> 結束</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      tbody.querySelectorAll('tr[data-qid] .mini-btn').forEach(btn=>{
+        btn.addEventListener('click', (e)=>{
+          const tr = e.target.closest('tr[data-qid]');
+          const qid = tr?.dataset?.qid || '';
+          const act = e.target.closest('.mini-btn')?.dataset?.act || '';
+          if(!qid) return;
+          if(act === 'view') return openQuestModal('view', qid);
+          if(act === 'edit') return openQuestModal('edit', qid);
+          if(['active','paused','ended'].includes(act)) return setQuestStatus(qid, act);
+        });
+      });
+
+      if(hint) hint.textContent = `已載入 ${items.length} 筆（符合 ${QUESTS_TOTAL}）。(最多顯示 50 筆)`;
+    }
+
+    function getQuestQuery(){
+      return {
+        q: ($('#questSearch')?.value || '').trim(),
+        status: ($('#questStatusFilter')?.value || '').trim().toLowerCase()
+      };
+    }
+
+    async function loadQuests({ silent=true } = {}){
+      const auth = requireLogin();
+      if(!auth) return;
+      guardAdmin(auth.user);
+
+      const { q, status } = getQuestQuery();
+      try{
+        if(!silent) showToast('載入任務…','info');
+        const out = await adminApi(auth.token, { action:'quests_list', q, status, limit: 50, offset: 0 });
+        if(!out?.ok) throw new Error(out?.error || 'quests_list_failed');
+
+        QUESTS_LIST = out.items || [];
+        QUESTS_TOTAL = Number(out.total || QUESTS_LIST.length || 0);
+        renderQuests(QUESTS_LIST);
+      }catch(e){
+        console.error(e);
+        showToast('任務載入失敗（確認 quests Sheet 欄位是否正確）', 'error');
+      }
+    }
+
+    async function setQuestStatus(quest_id, status){
+      const auth = requireLogin();
+      if(!auth) return;
+      guardAdmin(auth.user);
+
+      const s = String(status||'').toLowerCase();
+      if(!['draft','active','paused','ended'].includes(s)){
+        showToast('狀態不合法', 'error');
+        return;
+      }
+
+      const msg =
+        s === 'active' ? '確定要「上架」這個任務嗎？' :
+        s === 'paused' ? '確定要「暫停」這個任務嗎？' :
+        '確定要「結束」這個任務嗎？';
+      if(!confirm(msg)) return;
+
+      try{
+        showToast('更新狀態中…','info');
+        const out = await adminApi(auth.token, { action:'quests_set_status', target_quest_id: quest_id, status: s });
+        if(!out?.ok) throw new Error(out?.error || 'quests_set_status_failed');
+        showToast('已更新狀態','info');
+        await loadQuests({ silent:true });
+        await syncAll(); // 更新總覽 active count
+      }catch(e){
+        console.error(e);
+        showToast('更新失敗：' + (e?.message || ''), 'error');
+      }
+    }
+
+    // Quest Modal
+    function openQuestModal(mode, quest_id=''){
+      QUEST_SELECTED_ID = quest_id || '';
+      const mask = $('#questModalMask');
+      const title = $('#questModalTitle');
+      const body = $('#questModalBody');
+      if(title) title.textContent = mode === 'create' ? '建立任務' : (mode === 'edit' ? `編輯任務：${QUEST_SELECTED_ID}` : `任務明細：${QUEST_SELECTED_ID}`);
+      if(body) body.innerHTML = `<div class="skeleton sk-line wide"></div><div style="height:10px"></div><div class="skeleton sk-line mid"></div><div style="height:10px"></div><div class="skeleton sk-line wide"></div>`;
+      if(mask) mask.classList.add('show');
+
+      if(mode === 'create'){
+        renderQuestForm({ mode:'create', quest:{} });
+        return;
+      }
+
+      loadQuestDetail(QUEST_SELECTED_ID)
+        .then(q => {
+          if(mode === 'view') renderQuestView(q);
+          else renderQuestForm({ mode:'edit', quest:q });
+        })
+        .catch(e=>{
+          console.error(e);
+          showToast('載入任務失敗：' + (e?.message||''), 'error');
+        });
+    }
+
+    function closeQuestModal(){
+      const mask = $('#questModalMask');
+      if(mask) mask.classList.remove('show');
+      QUEST_SELECTED_ID = "";
+    }
+    $('#questModalClose')?.addEventListener('click', closeQuestModal);
+    $('#questModalMask')?.addEventListener('click', (e)=>{ if(e.target?.id === 'questModalMask') closeQuestModal(); });
+
+    async function loadQuestDetail(quest_id){
+      const auth = requireLogin();
+      if(!auth) throw new Error('not_logged_in');
+      guardAdmin(auth.user);
+
+      const out = await adminApi(auth.token, { action:'quests_get', target_quest_id: quest_id });
+      if(!out?.ok) throw new Error(out?.error || 'quests_get_failed');
+      return out.quest || {};
+    }
+
+    function renderQuestView(q){
+      const body = $('#questModalBody');
+      if(!body) return;
+
+      body.innerHTML = `
+        ${kvRow('quest_id', q.quest_id)}
+        ${kvRow('title', q.title)}
+        ${kvRow('status', q.status)}
+        ${kvRow('description', q.description)}
+        ${kvRow('start_at', q.start_at)}
+        ${kvRow('end_at', q.end_at)}
+        ${kvRow('reward_min', q.reward_min)}
+        ${kvRow('reward_max', q.reward_max)}
+        ${kvRow('quota_total', q.quota_total)}
+        ${kvRow('quota_per_user', q.quota_per_user)}
+        ${kvRow('require_level', q.require_level)}
+        ${kvRow('require_social_status', q.require_social_status)}
+        ${kvRow('require_role', q.require_role)}
+        ${kvRow('region_filter', q.region_filter)}
+        ${kvRow('created_at', q.created_at)}
+        ${kvRow('created_by', q.created_by)}
+        ${kvRow('updated_at', q.updated_at)}
+        ${kvRow('updated_by', q.updated_by)}
+
+        <div style="height:14px"></div>
+        <div class="row-actions">
+          <button class="mini-btn warn" id="questGoEditBtn"><i class="fas fa-pen"></i> 編輯</button>
+          <button class="mini-btn good" id="questGoActiveBtn"><i class="fas fa-play"></i> 上架</button>
+          <button class="mini-btn warn" id="questGoPausedBtn"><i class="fas fa-pause"></i> 暫停</button>
+          <button class="mini-btn bad" id="questGoEndedBtn"><i class="fas fa-flag-checkered"></i> 結束</button>
+        </div>
+      `;
+
+      $('#questGoEditBtn')?.addEventListener('click', ()=> openQuestModal('edit', q.quest_id));
+      $('#questGoActiveBtn')?.addEventListener('click', ()=> setQuestStatus(q.quest_id, 'active'));
+      $('#questGoPausedBtn')?.addEventListener('click', ()=> setQuestStatus(q.quest_id, 'paused'));
+      $('#questGoEndedBtn')?.addEventListener('click', ()=> setQuestStatus(q.quest_id, 'ended'));
+    }
+
+    function renderQuestForm({ mode, quest }){
+      const isCreate = mode === 'create';
+      const q = quest || {};
+      const body = $('#questModalBody');
+      if(!body) return;
+
+      const val = (k, d='') => (q[k] !== undefined && q[k] !== null && String(q[k]).trim() !== '') ? String(q[k]) : d;
+
+      body.innerHTML = `
+        ${!isCreate ? `<div class="chip"><i class="fas fa-id-badge"></i> quest_id：<b>${escapeHtml(val('quest_id',''))}</b></div><div style="height:12px"></div>` : ''}
+
+        <div class="form-grid">
+          <div class="form-item">
+            <div class="label"><i class="fas fa-heading"></i> title</div>
+            <input id="qTitle" value="${escapeHtml(val('title',''))}" placeholder="例：IG 限動分享（車行導流）" />
+          </div>
+          <div class="form-item">
+            <div class="label"><i class="fas fa-toggle-on"></i> status</div>
+            <select id="qStatus">
+              <option value="draft">draft</option>
+              <option value="active">active</option>
+              <option value="paused">paused</option>
+              <option value="ended">ended</option>
+            </select>
+          </div>
+
+          <div class="form-item">
+            <div class="label"><i class="fas fa-calendar"></i> start_at（可空）</div>
+            <input id="qStart" value="${escapeHtml(val('start_at',''))}" placeholder="2025-01-01 或 ISO" />
+          </div>
+          <div class="form-item">
+            <div class="label"><i class="fas fa-calendar-check"></i> end_at（可空）</div>
+            <input id="qEnd" value="${escapeHtml(val('end_at',''))}" placeholder="2025-12-31 或 ISO" />
+          </div>
+
+          <div class="form-item">
+            <div class="label"><i class="fas fa-coins"></i> reward_min</div>
+            <input id="qRewardMin" value="${escapeHtml(val('reward_min','5000'))}" placeholder="5000" />
+          </div>
+          <div class="form-item">
+            <div class="label"><i class="fas fa-coins"></i> reward_max</div>
+            <input id="qRewardMax" value="${escapeHtml(val('reward_max','20000'))}" placeholder="20000" />
+          </div>
+
+          <div class="form-item">
+            <div class="label"><i class="fas fa-users"></i> quota_total（可空）</div>
+            <input id="qQuotaTotal" value="${escapeHtml(val('quota_total',''))}" placeholder="例：100" />
+          </div>
+          <div class="form-item">
+            <div class="label"><i class="fas fa-user"></i> quota_per_user（可空）</div>
+            <input id="qQuotaPerUser" value="${escapeHtml(val('quota_per_user','1'))}" placeholder="例：1" />
+          </div>
+
+          <div class="form-item">
+            <div class="label"><i class="fas fa-signal"></i> require_level（可空）</div>
+            <input id="qReqLevel" value="${escapeHtml(val('require_level',''))}" placeholder="例：1" />
+          </div>
+          <div class="form-item">
+            <div class="label"><i class="fas fa-circle-check"></i> require_social_status</div>
+            <select id="qReqSocial">
+              <option value="">（不限制）</option>
+              <option value="approved">approved</option>
+            </select>
+          </div>
+
+          <div class="form-item">
+            <div class="label"><i class="fas fa-user-tag"></i> require_role</div>
+            <select id="qReqRole">
+              <option value="">（不限制）</option>
+              <option value="partner">partner</option>
+              <option value="dealer">dealer</option>
+            </select>
+          </div>
+          <div class="form-item">
+            <div class="label"><i class="fas fa-location-dot"></i> region_filter（可空）</div>
+            <input id="qRegion" value="${escapeHtml(val('region_filter',''))}" placeholder="例：台北/桃園/全台" />
+          </div>
+        </div>
+
+        <div style="height:10px"></div>
+        <div class="muted" style="font-weight:950; font-size:12px; margin-bottom:8px;"><i class="fas fa-align-left"></i> description</div>
+        <textarea class="textarea" id="qDesc" placeholder="任務說明：如何完成、提交什麼證明、注意事項...">${escapeHtml(val('description',''))}</textarea>
+
+        <div style="height:12px"></div>
+        <div class="row-actions">
+          <button class="mini-btn good" id="qSaveBtn"><i class="fas fa-floppy-disk"></i> ${isCreate ? '建立' : '儲存'}</button>
+          ${!isCreate ? `<button class="mini-btn" id="qViewBtn"><i class="fas fa-eye"></i> 返回明細</button>` : ''}
+        </div>
+        <div style="height:8px"></div>
+        <div class="muted" style="font-size:12px;">提醒：reward_min~max 只顯示範圍；實際發放金額在提交審核時由後台填 payout_amount。</div>
+      `;
+
+      // set select values
+      const status = ($('#qStatus')); if(status) status.value = val('status', isCreate ? 'draft' : 'draft');
+      const rs = ($('#qReqSocial')); if(rs) rs.value = val('require_social_status','');
+      const rr = ($('#qReqRole')); if(rr) rr.value = val('require_role','');
+
+      $('#qViewBtn')?.addEventListener('click', ()=> openQuestModal('view', q.quest_id));
+
+      $('#qSaveBtn')?.addEventListener('click', async ()=>{
+        const auth = requireLogin();
+        if(!auth) return;
+        guardAdmin(auth.user);
+
+        const payload = {
+          title: ($('#qTitle')?.value || '').trim(),
+          description: ($('#qDesc')?.value || '').trim(),
+          status: ($('#qStatus')?.value || '').trim().toLowerCase(),
+          start_at: ($('#qStart')?.value || '').trim(),
+          end_at: ($('#qEnd')?.value || '').trim(),
+          reward_min: ($('#qRewardMin')?.value || '').trim(),
+          reward_max: ($('#qRewardMax')?.value || '').trim(),
+          quota_total: ($('#qQuotaTotal')?.value || '').trim(),
+          quota_per_user: ($('#qQuotaPerUser')?.value || '').trim(),
+          require_level: ($('#qReqLevel')?.value || '').trim(),
+          require_social_status: ($('#qReqSocial')?.value || '').trim(),
+          require_role: ($('#qReqRole')?.value || '').trim(),
+          region_filter: ($('#qRegion')?.value || '').trim(),
+        };
+
+        if(!payload.title){
+          showToast('title 不能為空', 'error');
+          return;
+        }
+        if(!['draft','active','paused','ended'].includes(payload.status)){
+          showToast('status 不合法', 'error');
+          return;
+        }
+
+        try{
+          showToast(isCreate ? '建立任務中…' : '儲存任務中…', 'info');
+
+          let out;
+          if(isCreate){
+            out = await adminApi(auth.token, { action:'quests_create', data: payload });
+            if(!out?.ok) throw new Error(out?.error || 'quests_create_failed');
+            showToast('已建立任務', 'info');
+            closeQuestModal();
+          }else{
+            out = await adminApi(auth.token, { action:'quests_update', target_quest_id: q.quest_id, data: payload });
+            if(!out?.ok) throw new Error(out?.error || 'quests_update_failed');
+            showToast('已儲存', 'info');
+            openQuestModal('view', q.quest_id);
+          }
+
+          await loadQuests({ silent:true });
+          await syncAll();
+        }catch(e){
+          console.error(e);
+          showToast('操作失敗：' + (e?.message || ''), 'error');
+        }
+      });
+    }
+
+    // =========================
+    // ✅ Submissions
+    // =========================
+    function subDotColor(status){
+      const s = String(status||'').toLowerCase();
+      if(s === 'approved') return 'rgba(90,255,190,.95)';
+      if(s === 'submitted') return 'rgba(255,190,80,.95)';
+      if(s === 'need_fix') return 'rgba(255,190,80,.95)';
+      if(s === 'rejected') return 'rgba(255,70,90,.95)';
+      return 'rgba(255,255,255,.65)';
+    }
+
+    function getSubQuery(){
+      return {
+        q: ($('#subSearch')?.value || '').trim(),
+        status: ($('#subStatusFilter')?.value || '').trim().toLowerCase()
+      };
+    }
+
+    function renderSubs(items=[]){
+      const tbody = $('#subsTbody');
+      const hint = $('#subsHint');
+      if(!tbody) return;
+
+      if(!items.length){
+        tbody.innerHTML = `
+          <tr><td colspan="8">
+            <div class="empty">
+              <div><b>目前沒有提交</b></div>
+              <div class="muted">之後前台接任務/提交證明後，這裡會出現。</div>
+            </div>
+          </td></tr>
+        `;
+        if(hint) hint.textContent = '提示：目前沒有資料。';
+        return;
+      }
+
+      tbody.innerHTML = items.map(s=>{
+        const st = String(s.status||'').toLowerCase();
+        const dot = subDotColor(st);
+        return `
+          <tr data-sid="${escapeHtml(s.submission_id||'')}">
+            <td>${escapeHtml(s.submission_id||'')}</td>
+            <td>${escapeHtml(s.quest_id||'')}</td>
+            <td>${escapeHtml(s.user_id||'')}</td>
+            <td><span class="status-pill"><span class="status-dot" style="background:${dot}"></span>${escapeHtml(st||'-')}</span></td>
+            <td>${escapeHtml(s.submitted_at||'')}</td>
+            <td>${escapeHtml(s.payout_amount||'')}</td>
+            <td>${escapeHtml(s.payout_at||'')}</td>
+            <td>
+              <div class="row-actions">
+                <button class="mini-btn" data-act="detail"><i class="fas fa-magnifying-glass"></i> 明細</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      tbody.querySelectorAll('tr[data-sid] .mini-btn').forEach(btn=>{
+        btn.addEventListener('click', (e)=>{
+          const tr = e.target.closest('tr[data-sid]');
+          const sid = tr?.dataset?.sid || '';
+          if(!sid) return;
+          openSubModal(sid);
+        });
+      });
+
+      if(hint) hint.textContent = `已載入 ${items.length} 筆（符合 ${SUBS_TOTAL}）。(最多顯示 50 筆)`;
+    }
+
+    async function loadSubs({ silent=true } = {}){
+      const auth = requireLogin();
+      if(!auth) return;
+      guardAdmin(auth.user);
+
+      const { q, status } = getSubQuery();
+      try{
+        if(!silent) showToast('載入提交…','info');
+        const out = await adminApi(auth.token, { action:'submissions_list', q, status, limit: 50, offset: 0 });
+        if(!out?.ok) throw new Error(out?.error || 'submissions_list_failed');
+
+        SUBS_LIST = out.items || [];
+        SUBS_TOTAL = Number(out.total || SUBS_LIST.length || 0);
+        renderSubs(SUBS_LIST);
+      }catch(e){
+        console.error(e);
+        showToast('提交載入失敗（確認 quest_submissions Sheet 欄位是否正確）', 'error');
+      }
+    }
+
+    // Submission Modal
+    function openSubModal(submission_id){
+      SUB_SELECTED_ID = submission_id || '';
+      if(!SUB_SELECTED_ID) return;
+
+      const mask = $('#subModalMask');
+      const title = $('#subModalTitle');
+      const body = $('#subModalBody');
+      if(title) title.textContent = '提交審核：' + SUB_SELECTED_ID;
+      if(body) body.innerHTML = `<div class="skeleton sk-line wide"></div><div style="height:10px"></div><div class="skeleton sk-line mid"></div><div style="height:10px"></div><div class="skeleton sk-line wide"></div>`;
+      if(mask) mask.classList.add('show');
+
+      loadSubDetail(SUB_SELECTED_ID).catch(e=>{
+        console.error(e);
+        showToast('載入提交失敗：' + (e?.message||''), 'error');
+      });
+    }
+
+    function closeSubModal(){
+      const mask = $('#subModalMask');
+      if(mask) mask.classList.remove('show');
+      SUB_SELECTED_ID = "";
+    }
+    $('#subModalClose')?.addEventListener('click', closeSubModal);
+    $('#subModalMask')?.addEventListener('click', (e)=>{ if(e.target?.id === 'subModalMask') closeSubModal(); });
+
+    async function loadSubDetail(submission_id){
+      const auth = requireLogin();
+      if(!auth) return;
+      guardAdmin(auth.user);
+
+      const out = await adminApi(auth.token, { action:'submissions_get', target_submission_id: submission_id });
+      if(!out?.ok) throw new Error(out?.error || 'submissions_get_failed');
+
+      const s = out.submission || {};
+      const body = $('#subModalBody');
+      if(!body) return;
+
+      const st = String(s.status||'').toLowerCase();
+      const canReview = st === 'submitted';
+      const canPayout = st === 'approved' && !String(s.payout_at||'').trim();
+
+      body.innerHTML = `
+        ${kvRow('submission_id', s.submission_id)}
+        ${kvRow('quest_id', s.quest_id)}
+        ${kvRow('user_id', s.user_id)}
+        ${kvRow('status', s.status)}
+        ${kvRow('submitted_at', s.submitted_at)}
+        ${kvRow('proof_url', '')}
+        <div class="kv"><div class="k">proof_url</div><div class="v">${linkOrDash(s.proof_url||'')}</div></div>
+        ${kvRow('note', s.note)}
+        ${kvRow('review_reason', s.review_reason)}
+        ${kvRow('reviewed_at', s.reviewed_at)}
+        ${kvRow('reviewed_by', s.reviewed_by)}
+        ${kvRow('payout_amount', s.payout_amount)}
+        ${kvRow('payout_at', s.payout_at)}
+        ${kvRow('payout_by', s.payout_by)}
+
+        <div style="height:12px"></div>
+
+        ${canReview ? `
+          <div class="muted" style="font-weight:950; font-size:12px; margin-bottom:8px;">補件/拒絕原因（review_reason）</div>
+          <textarea class="textarea" id="subReason" placeholder="例：請補上完整截圖/連結無法開啟/內容不符合任務規範..."></textarea>
+          <div style="height:12px"></div>
+          <div class="row-actions">
+            <button class="mini-btn good" id="subApproveBtn"><i class="fas fa-check"></i> 通過</button>
+            <button class="mini-btn warn" id="subNeedFixBtn"><i class="fas fa-file-circle-exclamation"></i> 補件</button>
+            <button class="mini-btn bad" id="subRejectBtn"><i class="fas fa-xmark"></i> 拒絕</button>
+          </div>
+          <div style="height:8px"></div>
+          <div class="muted" style="font-size:12px;">規則：只允許 submitted → approved/need_fix/rejected。</div>
+        ` : `
+          <div class="muted" style="font-size:12px;">此提交目前狀態為 <b>${escapeHtml(st)}</b>，若要再次審核請先由你手動調整（目前不開放回退）。</div>
+        `}
+
+        ${canPayout ? `
+          <div style="height:14px"></div>
+          <div class="field" style="justify-content:space-between; width:100%;">
+            <div class="muted" style="font-weight:950; font-size:12px;">發放金額（payout_amount）</div>
+            <input class="input" id="subPayoutAmount" style="min-width:220px;" placeholder="例：12000" />
+          </div>
+          <div style="height:12px"></div>
+          <div class="row-actions">
+            <button class="mini-btn good" id="subPayoutBtn"><i class="fas fa-sack-dollar"></i> 確認發放</button>
+          </div>
+          <div style="height:8px"></div>
+          <div class="muted" style="font-size:12px;">安全規則：只有 approved 才能發放；發放會寫入 payout_at / payout_by。</div>
+        ` : `
+          <div style="height:8px"></div>
+          <div class="muted" style="font-size:12px;">發放狀態：${String(s.payout_at||'').trim() ? '已發放（不可重複）' : '未發放（需 approved 才能發放）'}</div>
+        `}
+      `;
+
+      if(canReview){
+        $('#subApproveBtn')?.addEventListener('click', async ()=>{
+          try{
+            showToast('審核中（通過）…','info');
+            const out2 = await adminApi(auth.token, { action:'submissions_review', target_submission_id: submission_id, status:'approved' });
+            if(!out2?.ok) throw new Error(out2?.error || 'sub_review_failed');
+            showToast('已通過','info');
+            await loadSubs({ silent:true });
+            await syncAll();
+            await loadSubDetail(submission_id);
+          }catch(e){
+            console.error(e);
+            showToast('通過失敗：' + (e?.message||''), 'error');
+          }
+        });
+
+        $('#subNeedFixBtn')?.addEventListener('click', async ()=>{
+          const reason = ($('#subReason')?.value || '').trim();
+          const msg = reason ? `確定補件？\n\n原因：\n${reason}` : '確定補件？（未填原因）';
+          if(!confirm(msg)) return;
+          try{
+            showToast('審核中（補件）…','info');
+            const out2 = await adminApi(auth.token, { action:'submissions_review', target_submission_id: submission_id, status:'need_fix', reason });
+            if(!out2?.ok) throw new Error(out2?.error || 'sub_review_failed');
+            showToast('已補件','info');
+            await loadSubs({ silent:true });
+            await syncAll();
+            closeSubModal();
+          }catch(e){
+            console.error(e);
+            showToast('補件失敗：' + (e?.message||''), 'error');
+          }
+        });
+
+        $('#subRejectBtn')?.addEventListener('click', async ()=>{
+          const reason = ($('#subReason')?.value || '').trim();
+          if(!confirm('確定拒絕？')) return;
+          try{
+            showToast('審核中（拒絕）…','info');
+            const out2 = await adminApi(auth.token, { action:'submissions_review', target_submission_id: submission_id, status:'rejected', reason });
+            if(!out2?.ok) throw new Error(out2?.error || 'sub_review_failed');
+            showToast('已拒絕','info');
+            await loadSubs({ silent:true });
+            await syncAll();
+            closeSubModal();
+          }catch(e){
+            console.error(e);
+            showToast('拒絕失敗：' + (e?.message||''), 'error');
+          }
+        });
+      }
+
+      if(canPayout){
+        $('#subPayoutBtn')?.addEventListener('click', async ()=>{
+          const amt = ($('#subPayoutAmount')?.value || '').trim();
+          if(!amt){
+            showToast('請填 payout_amount', 'error');
+            return;
+          }
+          if(!confirm(`確定要發放 ${amt} 嗎？此操作會寫入 payout_at 並鎖定。`)) return;
+
+          try{
+            showToast('發放中…','info');
+            const out2 = await adminApi(auth.token, { action:'submissions_payout', target_submission_id: submission_id, payout_amount: amt });
+            if(!out2?.ok) throw new Error(out2?.error || 'sub_payout_failed');
+            showToast('已發放','info');
+            await loadSubs({ silent:true });
+            await syncAll();
+            await loadSubDetail(submission_id);
+          }catch(e){
+            console.error(e);
+            showToast('發放失敗：' + (e?.message||''), 'error');
+          }
+        });
+      }
+    }
+
+    // =========================
     // Wire filters / reload
     // =========================
     let _usersReloadTimer = null;
     let _dealersReloadTimer = null;
+    let _questsReloadTimer = null;
+    let _subsReloadTimer = null;
 
     function getUsersQueryState(){
       const q = ($('#userSearch')?.value || '').trim();
@@ -1818,6 +2573,16 @@
       _dealersReloadTimer = setTimeout(() => loadDealers({ silent: true }), 450);
     }
 
+    function scheduleQuestsReload(){
+      clearTimeout(_questsReloadTimer);
+      _questsReloadTimer = setTimeout(() => loadQuests({ silent: true }), 450);
+    }
+
+    function scheduleSubsReload(){
+      clearTimeout(_subsReloadTimer);
+      _subsReloadTimer = setTimeout(() => loadSubs({ silent: true }), 450);
+    }
+
     function wireFilters(){
       $('#userSearch')?.addEventListener('input', () => scheduleUsersReload());
       $('#userRoleFilter')?.addEventListener('change', () => scheduleUsersReload());
@@ -1825,13 +2590,23 @@
 
       $('#dealerSearch')?.addEventListener('input', () => scheduleDealersReload());
       $('#dealerVerifyFilter')?.addEventListener('change', () => scheduleDealersReload());
+
+      $('#questSearch')?.addEventListener('input', () => scheduleQuestsReload());
+      $('#questStatusFilter')?.addEventListener('change', () => scheduleQuestsReload());
+
+      $('#subSearch')?.addEventListener('input', () => scheduleSubsReload());
+      $('#subStatusFilter')?.addEventListener('change', () => scheduleSubsReload());
     }
 
     // actions
     $('#refreshBtn')?.addEventListener('click', syncAll);
     $('#dealersRefreshBtn')?.addEventListener('click', ()=> loadDealers({ silent:false }));
 
-    $('#btnCreateQuest')?.addEventListener('click', ()=>showToast('此功能為 UI 預留，後端串接後即可使用。','info'));
+    $('#questsRefreshBtn')?.addEventListener('click', ()=> loadQuests({ silent:false }));
+    $('#subsRefreshBtn')?.addEventListener('click', ()=> loadSubs({ silent:false }));
+
+    $('#btnCreateQuest')?.addEventListener('click', ()=> openQuestModal('create'));
+
     $('#btnCreateUser')?.addEventListener('click', ()=>showToast('此功能為 UI 預留，後端串接後即可使用。','info'));
     $('#btnCreateDealer')?.addEventListener('click', ()=>showToast('此功能為 UI 預留（後續可做 dealer 申請流程）。','info'));
 
