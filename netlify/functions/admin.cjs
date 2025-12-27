@@ -9,6 +9,7 @@
 // - social_list_submitted: 列出 users 中 social_status=submitted 的待審清單
 // - social_get:            讀取指定 target_user_id 的社群驗證資料
 // - social_approve:        (admin only) 僅能審核 submitted → approved + verified_at/by + level=1 + 開權限 + 設定 tier/platform
+// - social_need_fix:       (admin only) 僅能審核 submitted → need_fix + verified_at/by + level=0 + 關權限 (+ 可選寫入補件原因)
 // - social_reject:         (admin only) 僅能審核 submitted → rejected + verified_at/by + level=0 + 關權限
 
 const { google } = require("googleapis");
@@ -21,13 +22,7 @@ const DEFAULT_ALLOWED_ORIGINS = [
 
 function getRequestOrigin(headers) {
   const h = headers || {};
-  return (
-    h.origin ||
-    h.Origin ||
-    h.referer ||
-    h.Referer ||
-    ""
-  );
+  return h.origin || h.Origin || h.referer || h.Referer || "";
 }
 
 function getAllowedOrigins() {
@@ -194,6 +189,11 @@ function rowToObject(headers, row, { omit = [] } = {}) {
 function ensureHeader(headers, want) {
   const missing = want.filter((h) => !headers.includes(h));
   if (missing.length) throw new Error(`Users sheet missing columns: ${missing.join(", ")}`);
+}
+
+// ✅ 第3版：可選欄位（存在才寫）
+function hasHeader(headers, name) {
+  return Array.isArray(headers) && headers.includes(name);
 }
 
 function colToLetter(n1Based) {
@@ -486,8 +486,8 @@ exports.handler = async (event) => {
       return reply(200, { ok: true, items }, origin);
     }
 
-    // ===== social get / approve / reject need target_user_id =====
-    if (action === "social_get" || action === "social_approve" || action === "social_reject") {
+    // ===== social get / approve / need_fix / reject need target_user_id =====
+    if (action === "social_get" || action === "social_approve" || action === "social_need_fix" || action === "social_reject") {
       const tUid = safeStr(target_user_id);
       if (!tUid) return reply(400, { ok: false, error: "target_user_id_required" }, origin);
 
@@ -528,11 +528,51 @@ exports.handler = async (event) => {
         return reply(200, { ok: true, user_id, username, email, social }, origin);
       }
 
+      // approve / need_fix / reject：只允許 submitted 狀態
       if (currentStatus !== "submitted") return reply(400, { ok: false, error: "not_submitted" }, origin);
 
       const adminId = safeStr(authPayload.user_id);
       const ts = nowISO();
 
+      // ===== social need fix =====
+      if (action === "social_need_fix") {
+        fullRow[headerIdx["social_status"]] = "need_fix";
+        fullRow[headerIdx["verified_at"]] = ts;
+        fullRow[headerIdx["verified_by"]] = adminId;
+
+        fullRow[headerIdx["level"]] = "0";
+        fullRow[headerIdx["can_take_tasks"]] = "false";
+        fullRow[headerIdx["can_withdraw"]] = "false";
+
+        // ✅ 第3版：若 sheet 有可選欄位，才寫入補件原因/時間
+        const reason = sanitizeForSheet(body.reason || data.reason || "");
+        if (hasHeader(headers, "need_fix_reason")) {
+          const idx = buildHeaderIndex(headers)["need_fix_reason"];
+          if (Number.isInteger(idx)) fullRow[idx] = reason;
+        }
+        if (hasHeader(headers, "need_fix_at")) {
+          const idx = buildHeaderIndex(headers)["need_fix_at"];
+          if (Number.isInteger(idx)) fullRow[idx] = ts;
+        }
+
+        await updateRowRange(sheets, spreadsheetId, usersSheet, rowNumber1Based, headersLen, fullRow);
+
+        return reply(
+          200,
+          {
+            ok: true,
+            social_status: "need_fix",
+            verified_at: ts,
+            verified_by: adminId,
+            level: 0,
+            can_take_tasks: false,
+            can_withdraw: false,
+          },
+          origin
+        );
+      }
+
+      // ===== social reject =====
       if (action === "social_reject") {
         fullRow[headerIdx["social_status"]] = "rejected";
         fullRow[headerIdx["verified_at"]] = ts;
@@ -559,6 +599,7 @@ exports.handler = async (event) => {
         );
       }
 
+      // ===== social approve =====
       const primary_platform = normalizePrimaryPlatform(body.primary_platform || data.primary_platform || "");
       const influence_tier = normalizeTier(body.influence_tier || data.influence_tier || "");
 
