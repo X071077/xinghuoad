@@ -7,7 +7,7 @@
 // - users_get:             讀取單一用戶（排除 password_hash）
 // - users_update_role:     更新用戶 role（admin/dealer/partner）
 // - social_list_submitted: 列出 users 中 social_status=submitted 的待審清單
-// - social_get:            讀取指定 target_user_id 的社群驗證資料
+// - social_get:            讀取指定 target_user_id 的社群驗證資料（✅ 第4版：可選回傳 need_fix_reason/need_fix_at）
 // - social_approve:        (admin only) 僅能審核 submitted → approved + verified_at/by + level=1 + 開權限 + 設定 tier/platform
 // - social_need_fix:       (admin only) 僅能審核 submitted → need_fix + verified_at/by + level=0 + 關權限 (+ 可選寫入補件原因)
 // - social_reject:         (admin only) 僅能審核 submitted → rejected + verified_at/by + level=0 + 關權限
@@ -169,7 +169,7 @@ function toUserSummary(row, headerIdx) {
   return {
     user_id: safeStr(row[headerIdx["user_id"]]),
     username: safeStr(row[headerIdx["username"]]),
-    name: safeStr(row[headerIdx["name"]]), // ✅ 第2版：補回 name，前台可用
+    name: safeStr(row[headerIdx["name"]]),
     email: safeStr(row[headerIdx["email"]]),
     role: safeStr(row[headerIdx["role"]]),
   };
@@ -191,7 +191,7 @@ function ensureHeader(headers, want) {
   if (missing.length) throw new Error(`Users sheet missing columns: ${missing.join(", ")}`);
 }
 
-// ✅ 第3版：可選欄位（存在才寫）
+// ✅ 可選欄位（存在才寫/才讀）
 function hasHeader(headers, name) {
   return Array.isArray(headers) && headers.includes(name);
 }
@@ -422,7 +422,7 @@ exports.handler = async (event) => {
             activeQuests: 0,
             todayPayouts: 0,
           },
-          users: pickRandomSample(rows, 5).map((r) => toUserSummary(r, headerIdx)), // ✅ 隨機 5 筆預覽
+          users: pickRandomSample(rows, 5).map((r) => toUserSummary(r, headerIdx)),
           dealers: [],
         },
         origin
@@ -523,6 +523,14 @@ exports.handler = async (event) => {
           verified_by: safeStr(fullRow[headerIdx["verified_by"]]),
         };
 
+        // ✅ 第4版：可選回傳補件原因/時間（欄位存在才有值）
+        if (hasHeader(headers, "need_fix_reason")) {
+          social.need_fix_reason = safeStr(fullRow[headerIdx["need_fix_reason"]]);
+        }
+        if (hasHeader(headers, "need_fix_at")) {
+          social.need_fix_at = safeStr(fullRow[headerIdx["need_fix_at"]]);
+        }
+
         social.suggest_platform = inferSuggestPlatform(social.ig_url, social.fb_url);
 
         return reply(200, { ok: true, user_id, username, email, social }, origin);
@@ -544,14 +552,14 @@ exports.handler = async (event) => {
         fullRow[headerIdx["can_take_tasks"]] = "false";
         fullRow[headerIdx["can_withdraw"]] = "false";
 
-        // ✅ 第3版：若 sheet 有可選欄位，才寫入補件原因/時間
+        // ✅ 可選：寫入補件原因/時間（欄位存在才寫）
         const reason = sanitizeForSheet(body.reason || data.reason || "");
         if (hasHeader(headers, "need_fix_reason")) {
-          const idx = buildHeaderIndex(headers)["need_fix_reason"];
+          const idx = headerIdx["need_fix_reason"];
           if (Number.isInteger(idx)) fullRow[idx] = reason;
         }
         if (hasHeader(headers, "need_fix_at")) {
-          const idx = buildHeaderIndex(headers)["need_fix_at"];
+          const idx = headerIdx["need_fix_at"];
           if (Number.isInteger(idx)) fullRow[idx] = ts;
         }
 

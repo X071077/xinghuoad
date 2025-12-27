@@ -262,6 +262,24 @@
     .select{ min-width: 160px; }
     .input::placeholder{ color: rgba(255,255,255,.42); font-weight:800; }
 
+    /* ✅ 第4版：textarea */
+    .textarea{
+      width:100%;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 14px;
+      padding: 10px 12px;
+      color: var(--text);
+      font-weight: 850;
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+      resize: vertical;
+      min-height: 92px;
+      line-height: 1.6;
+    }
+    .textarea::placeholder{ color: rgba(255,255,255,.42); }
+
     .table-wrap{ padding: 0 14px 14px; overflow:auto; }
     table{
       width:100%;
@@ -958,7 +976,7 @@
       }
     }
 
-    // ===== 原本 users/dealers render（保留並強化 actions）=====
+    // ===== users render =====
     function renderUsers(users=[]){
       const tbody = $('#usersTbody');
       if(!tbody) return;
@@ -976,7 +994,7 @@
 
       tbody.innerHTML = users.map(u => {
         const role = (u.role || '').toLowerCase();
-        const status = (u.status || 'active').toLowerCase(); // status 目前是 UI 預留
+        const status = (u.status || 'active').toLowerCase();
         const statusLabel = status === 'blocked' ? '停權' : (status === 'pending' ? '待補資料' : '正常');
         const dotColor = status === 'blocked' ? 'rgba(255,70,90,.95)' : (status === 'pending' ? 'rgba(255,190,80,.95)' : 'rgba(90,255,190,.95)');
 
@@ -1276,12 +1294,15 @@
         <div class="kv"><div class="k">avg_views_7d</div><div class="v">${escapeHtml(social.avg_views_7d || '')}</div></div>
 
         <div class="kv"><div class="k">social_screenshot_url</div><div class="v">${linkOrDash(screenshotUrl)}</div></div>
-
         ${screenshotUrl && isHttpUrl(screenshotUrl) ? `<img class="preview-img" src="${escapeHtml(screenshotUrl)}" alt="screenshot preview" />` : ''}
 
         <div class="kv"><div class="k">social_submitted_at</div><div class="v">${escapeHtml(social.social_submitted_at || '')}</div></div>
         <div class="kv"><div class="k">verified_at</div><div class="v">${escapeHtml(social.verified_at || '')}</div></div>
         <div class="kv"><div class="k">verified_by</div><div class="v">${escapeHtml(social.verified_by || '')}</div></div>
+
+        <!-- ✅ 第4版：若後端有回傳，就顯示 -->
+        ${(social.need_fix_reason !== undefined) ? `<div class="kv"><div class="k">need_fix_reason</div><div class="v">${escapeHtml(social.need_fix_reason || '')}</div></div>` : ''}
+        ${(social.need_fix_at !== undefined) ? `<div class="kv"><div class="k">need_fix_at</div><div class="v">${escapeHtml(social.need_fix_at || '')}</div></div>` : ''}
 
         <div style="height:14px"></div>
 
@@ -1305,6 +1326,13 @@
           </div>
         </div>
 
+        <!-- ✅ 第4版：補件原因輸入 -->
+        <div style="height:12px"></div>
+        <div class="muted" style="font-weight:900; font-size:12px; margin-bottom:8px;">
+          補件原因（會寫入 need_fix_reason；若你的 Sheet 有該欄位）
+        </div>
+        <textarea class="textarea" id="svNeedFixReason" placeholder="例：請提供可辨識的粉絲數截圖 / 請補上 IG 或 FB 連結 / 7日平均觀看數請填數字..."></textarea>
+
         <div style="height:12px"></div>
 
         <div class="row-actions">
@@ -1321,6 +1349,10 @@
       const t = $('#svSetTier');
       if(p && (social.suggest_platform || '')) p.value = String(social.suggest_platform || '');
       if(t && (social.influence_tier || '')) t.value = String(social.influence_tier || '');
+
+      // ✅ 第4版：如果後端有回傳歷史原因，帶入 textarea
+      const reasonEl = $('#svNeedFixReason');
+      if(reasonEl && (social.need_fix_reason || '')) reasonEl.value = String(social.need_fix_reason || '');
 
       $('#svApproveBtn')?.addEventListener('click', async ()=>{
         const auth2 = requireLogin();
@@ -1343,10 +1375,17 @@
       $('#svNeedFixBtn')?.addEventListener('click', async ()=>{
         const auth2 = requireLogin();
         if(!auth2) return;
+
+        const reason = ($('#svNeedFixReason')?.value || '').trim();
+
         try{
-          if(!confirm('確定要標記為「補件」嗎？（用戶需重新提交）')) return;
+          const msg = reason
+            ? `確定要標記為「補件」嗎？\n\n補件原因：\n${reason}`
+            : '確定要標記為「補件」嗎？（你尚未填補件原因）';
+          if(!confirm(msg)) return;
+
           showToast('審核中（補件）…','info');
-          const out2 = await adminApi(auth2.token, { action:'social_need_fix', target_user_id: user_id });
+          const out2 = await adminApi(auth2.token, { action:'social_need_fix', target_user_id: user_id, reason });
           if(!out2?.ok) throw new Error(out2?.error || 'need_fix_failed');
           showToast('已標記補件','info');
           closeSocialDetail();
@@ -1515,7 +1554,6 @@
       $('#userRoleFilter')?.addEventListener('change', () => scheduleUsersReload());
       $('#userStatusFilter')?.addEventListener('change', () => { /* 預留：目前無後端欄位 */ });
 
-      // dealers: 保留純前端篩選（目前 dealers 仍是 UI 預留）
       function filterDealers(){
         const q = ($('#dealerSearch')?.value || '').trim().toLowerCase();
         const v = ($('#dealerVerifyFilter')?.value || '').trim().toLowerCase();
