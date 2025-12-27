@@ -1,16 +1,23 @@
 // netlify/functions/admin.cjs
 // ✅ Admin API：JWT 驗證 + CORS 白名單 + Sheet 公式注入防護 + 讀取範圍 A:ZZ
 // action:
-// - snapshot:              後台總覽（回傳 users 總數 + social submitted 待審數 + 隨機 5 筆 users 預覽）
+// - snapshot:              後台總覽（回傳 users 總數 + social submitted 待審數 + dealers總數 + dealers pending + 隨機預覽）
 // - users_preview:         隨機 5 筆用戶（給前台預設顯示）
 // - users_list:            用戶清單（q/role 篩選）
 // - users_get:             讀取單一用戶（排除 password_hash）
 // - users_update_role:     更新用戶 role（admin/dealer/partner）
 // - social_list_submitted: 列出 users 中 social_status=submitted 的待審清單
-// - social_get:            讀取指定 target_user_id 的社群驗證資料（✅ 第4版：可選回傳 need_fix_reason/need_fix_at）
-// - social_approve:        (admin only) 僅能審核 submitted → approved + verified_at/by + level=1 + 開權限 + 設定 tier/platform
-// - social_need_fix:       (admin only) 僅能審核 submitted → need_fix + verified_at/by + level=0 + 關權限 (+ 可選寫入補件原因)
-// - social_reject:         (admin only) 僅能審核 submitted → rejected + verified_at/by + level=0 + 關權限
+// - social_get:            讀取指定 target_user_id 的社群驗證資料（可選回傳 need_fix_reason/need_fix_at）
+// - social_approve:        (admin only) submitted → approved + verified_at/by + level=1 + 開權限 + 設定 tier/platform
+// - social_need_fix:       (admin only) submitted → need_fix + verified_at/by + level=0 + 關權限 (+ 可選寫入補件原因)
+// - social_reject:         (admin only) submitted → rejected + verified_at/by + level=0 + 關權限
+//
+// ✅ Dealer 管理（dealers sheet）
+// - dealers_list:          dealers 清單（q/status/limit/offset）
+// - dealers_get:           讀取單一 dealer（by dealer_id）
+// - dealers_approve:       submitted → approved（寫入 verified_at/by）+ 可選同步 users.role=dealer
+// - dealers_need_fix:      submitted → need_fix（寫入 need_fix_reason/need_fix_at + verified_at/by）
+// - dealers_reject:        submitted → rejected（寫入 verified_at/by）
 
 const { google } = require("googleapis");
 const jwt = require("jsonwebtoken");
@@ -130,6 +137,10 @@ function getUsersSheetName() {
   return process.env.USERS_SHEET || "users";
 }
 
+function getDealersSheetName() {
+  return process.env.DEALERS_SHEET || "dealers";
+}
+
 async function readAllRows(sheets, spreadsheetId, sheetName) {
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId,
@@ -154,7 +165,6 @@ function pickRandomSample(arr, n) {
   if (count === 0) return [];
   if (a.length <= count) return a.slice();
 
-  // Partial Fisher–Yates on index array (avoid mutating original rows)
   const idxs = Array.from({ length: a.length }, (_, i) => i);
   for (let i = 0; i < count; i++) {
     const j = i + Math.floor(Math.random() * (idxs.length - i));
@@ -191,6 +201,11 @@ function ensureHeader(headers, want) {
   if (missing.length) throw new Error(`Users sheet missing columns: ${missing.join(", ")}`);
 }
 
+function ensureDealerHeader(headers, want) {
+  const missing = want.filter((h) => !headers.includes(h));
+  if (missing.length) throw new Error(`Dealers sheet missing columns: ${missing.join(", ")}`);
+}
+
 // ✅ 可選欄位（存在才寫/才讀）
 function hasHeader(headers, name) {
   return Array.isArray(headers) && headers.includes(name);
@@ -218,11 +233,11 @@ async function updateRowRange(sheets, spreadsheetId, sheetName, rowNumber1Based,
   });
 }
 
-function findRowIndexByUserId(rows, uidIdx, userId) {
-  const target = String(userId || "").trim();
+function findRowIndexByColValue(rows, colIdx, value) {
+  const target = String(value || "").trim();
   if (!target) return -1;
   for (let i = 0; i < rows.length; i++) {
-    const cell = String(rows[i][uidIdx] || "").trim();
+    const cell = String(rows[i][colIdx] || "").trim();
     if (cell === target) return i;
   }
   return -1;
@@ -255,6 +270,27 @@ function inferSuggestPlatform(ig_url, fb_url) {
   return "";
 }
 
+function normalizeDealerStatus(v) {
+  const s = safeStr(v).toLowerCase();
+  if (!s) return "";
+  if (["submitted", "approved", "need_fix", "rejected"].includes(s)) return s;
+  return s;
+}
+
+function toDealerSummary(row, headerIdx) {
+  return {
+    dealer_id: safeStr(row[headerIdx["dealer_id"]]),
+    user_id: safeStr(row[headerIdx["user_id"]]),
+    dealer_name: safeStr(row[headerIdx["dealer_name"]]),
+    email: safeStr(row[headerIdx["email"]]),
+    dealer_status: safeStr(row[headerIdx["dealer_status"]]),
+    submitted_at: safeStr(row[headerIdx["submitted_at"]]),
+    verified_at: safeStr(row[headerIdx["verified_at"]]),
+    verified_by: safeStr(row[headerIdx["verified_by"]]),
+    need_fix_reason: hasHeader(Object.keys(headerIdx), "need_fix_reason") ? safeStr(row[headerIdx["need_fix_reason"]]) : safeStr(row[headerIdx["need_fix_reason"]]),
+  };
+}
+
 exports.handler = async (event) => {
   const origin = getRequestOrigin(event.headers || {});
 
@@ -270,10 +306,18 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body || "{}");
     const action = safeStr(body.action || "snapshot").toLowerCase();
 
+    // users target
     const target_user_id =
       safeStr(body.target_user_id) ||
       safeStr(body.targetUserId) ||
       safeStr(body.user_id) ||
+      "";
+
+    // dealers target
+    const target_dealer_id =
+      safeStr(body.target_dealer_id) ||
+      safeStr(body.targetDealerId) ||
+      safeStr(body.dealer_id) ||
       "";
 
     const data = (body && typeof body === "object" ? body.data : {}) || {};
@@ -370,7 +414,7 @@ exports.handler = async (event) => {
       const tUid = safeStr(target_user_id);
       if (!tUid) return reply(400, { ok: false, error: "target_user_id_required" }, origin);
 
-      const foundRowIndex = findRowIndexByUserId(rows, uidIdx, tUid);
+      const foundRowIndex = findRowIndexByColValue(rows, uidIdx, tUid);
       if (foundRowIndex === -1) return reply(404, { ok: false, error: "user_not_found" }, origin);
 
       const row = rows[foundRowIndex] || [];
@@ -390,7 +434,7 @@ exports.handler = async (event) => {
         return reply(400, { ok: false, error: "role_invalid" }, origin);
       }
 
-      const foundRowIndex = findRowIndexByUserId(rows, uidIdx, tUid);
+      const foundRowIndex = findRowIndexByColValue(rows, uidIdx, tUid);
       if (foundRowIndex === -1) return reply(404, { ok: false, error: "user_not_found" }, origin);
 
       const rowNumber1Based = foundRowIndex + 2;
@@ -401,32 +445,6 @@ exports.handler = async (event) => {
       await updateRowRange(sheets, spreadsheetId, usersSheet, rowNumber1Based, headersLen, fullRow);
 
       return reply(200, { ok: true }, origin);
-    }
-
-    // ===== snapshot =====
-    if (action === "snapshot") {
-      const totalUsers = rows.length;
-      const pending = rows.filter((r) => safeStr(r[headerIdx["social_status"]]).toLowerCase() === "submitted").length;
-
-      return reply(
-        200,
-        {
-          ok: true,
-          stats: {
-            users: totalUsers,
-            dealers: 0,
-            pending,
-            payouts: 0,
-            todayUsers: 0,
-            pendingDealers: 0,
-            activeQuests: 0,
-            todayPayouts: 0,
-          },
-          users: pickRandomSample(rows, 5).map((r) => toUserSummary(r, headerIdx)),
-          dealers: [],
-        },
-        origin
-      );
     }
 
     // ===== social list submitted =====
@@ -491,7 +509,7 @@ exports.handler = async (event) => {
       const tUid = safeStr(target_user_id);
       if (!tUid) return reply(400, { ok: false, error: "target_user_id_required" }, origin);
 
-      const foundRowIndex = findRowIndexByUserId(rows, uidIdx, tUid);
+      const foundRowIndex = findRowIndexByColValue(rows, uidIdx, tUid);
       if (foundRowIndex === -1) return reply(404, { ok: false, error: "user_not_found" }, origin);
 
       const rowNumber1Based = foundRowIndex + 2;
@@ -523,26 +541,19 @@ exports.handler = async (event) => {
           verified_by: safeStr(fullRow[headerIdx["verified_by"]]),
         };
 
-        // ✅ 第4版：可選回傳補件原因/時間（欄位存在才有值）
-        if (hasHeader(headers, "need_fix_reason")) {
-          social.need_fix_reason = safeStr(fullRow[headerIdx["need_fix_reason"]]);
-        }
-        if (hasHeader(headers, "need_fix_at")) {
-          social.need_fix_at = safeStr(fullRow[headerIdx["need_fix_at"]]);
-        }
+        if (hasHeader(headers, "need_fix_reason")) social.need_fix_reason = safeStr(fullRow[headerIdx["need_fix_reason"]]);
+        if (hasHeader(headers, "need_fix_at")) social.need_fix_at = safeStr(fullRow[headerIdx["need_fix_at"]]);
 
         social.suggest_platform = inferSuggestPlatform(social.ig_url, social.fb_url);
 
         return reply(200, { ok: true, user_id, username, email, social }, origin);
       }
 
-      // approve / need_fix / reject：只允許 submitted 狀態
       if (currentStatus !== "submitted") return reply(400, { ok: false, error: "not_submitted" }, origin);
 
       const adminId = safeStr(authPayload.user_id);
       const ts = nowISO();
 
-      // ===== social need fix =====
       if (action === "social_need_fix") {
         fullRow[headerIdx["social_status"]] = "need_fix";
         fullRow[headerIdx["verified_at"]] = ts;
@@ -552,35 +563,15 @@ exports.handler = async (event) => {
         fullRow[headerIdx["can_take_tasks"]] = "false";
         fullRow[headerIdx["can_withdraw"]] = "false";
 
-        // ✅ 可選：寫入補件原因/時間（欄位存在才寫）
         const reason = sanitizeForSheet(body.reason || data.reason || "");
-        if (hasHeader(headers, "need_fix_reason")) {
-          const idx = headerIdx["need_fix_reason"];
-          if (Number.isInteger(idx)) fullRow[idx] = reason;
-        }
-        if (hasHeader(headers, "need_fix_at")) {
-          const idx = headerIdx["need_fix_at"];
-          if (Number.isInteger(idx)) fullRow[idx] = ts;
-        }
+        if (hasHeader(headers, "need_fix_reason")) fullRow[headerIdx["need_fix_reason"]] = reason;
+        if (hasHeader(headers, "need_fix_at")) fullRow[headerIdx["need_fix_at"]] = ts;
 
         await updateRowRange(sheets, spreadsheetId, usersSheet, rowNumber1Based, headersLen, fullRow);
 
-        return reply(
-          200,
-          {
-            ok: true,
-            social_status: "need_fix",
-            verified_at: ts,
-            verified_by: adminId,
-            level: 0,
-            can_take_tasks: false,
-            can_withdraw: false,
-          },
-          origin
-        );
+        return reply(200, { ok: true, social_status: "need_fix" }, origin);
       }
 
-      // ===== social reject =====
       if (action === "social_reject") {
         fullRow[headerIdx["social_status"]] = "rejected";
         fullRow[headerIdx["verified_at"]] = ts;
@@ -592,22 +583,9 @@ exports.handler = async (event) => {
 
         await updateRowRange(sheets, spreadsheetId, usersSheet, rowNumber1Based, headersLen, fullRow);
 
-        return reply(
-          200,
-          {
-            ok: true,
-            social_status: "rejected",
-            verified_at: ts,
-            verified_by: adminId,
-            level: 0,
-            can_take_tasks: false,
-            can_withdraw: false,
-          },
-          origin
-        );
+        return reply(200, { ok: true, social_status: "rejected" }, origin);
       }
 
-      // ===== social approve =====
       const primary_platform = normalizePrimaryPlatform(body.primary_platform || data.primary_platform || "");
       const influence_tier = normalizeTier(body.influence_tier || data.influence_tier || "");
 
@@ -624,23 +602,218 @@ exports.handler = async (event) => {
 
       await updateRowRange(sheets, spreadsheetId, usersSheet, rowNumber1Based, headersLen, fullRow);
 
-      return reply(
-        200,
-        {
-          ok: true,
-          social_status: "approved",
-          verified_at: ts,
-          verified_by: adminId,
-          primary_platform: fullRow[headerIdx["primary_platform"]],
-          influence_tier: fullRow[headerIdx["influence_tier"]],
-          level: 1,
-          can_take_tasks: true,
-          can_withdraw: true,
-        },
-        origin
-      );
+      return reply(200, { ok: true, social_status: "approved" }, origin);
     }
 
+    // =========================
+    // ✅ Dealers sheet actions
+    // =========================
+    if (
+      action === "dealers_list" ||
+      action === "dealers_get" ||
+      action === "dealers_approve" ||
+      action === "dealers_need_fix" ||
+      action === "dealers_reject" ||
+      action === "snapshot"
+    ) {
+      const dealersSheet = getDealersSheetName();
+      const { headers: dHeaders, rows: dRows } = await readAllRows(sheets, spreadsheetId, dealersSheet);
+
+      ensureDealerHeader(dHeaders, [
+        "dealer_id",
+        "user_id",
+        "dealer_name",
+        "email",
+        "dealer_status",
+        "submitted_at",
+        "verified_at",
+        "verified_by",
+        "need_fix_reason",
+        "need_fix_at",
+      ]);
+
+      const dIdx = buildHeaderIndex(dHeaders);
+      const dDealerIdIdx = dIdx["dealer_id"];
+      const dUserIdIdx = dIdx["user_id"];
+      const dHeadersLen = dHeaders.length;
+
+      // ===== snapshot =====
+      if (action === "snapshot") {
+        const totalUsers = rows.length;
+        const pendingSocial = rows.filter((r) => safeStr(r[headerIdx["social_status"]]).toLowerCase() === "submitted").length;
+
+        const totalDealers = dRows.length;
+        const pendingDealers = dRows.filter((r) => safeStr(r[dIdx["dealer_status"]]).toLowerCase() === "submitted").length;
+
+        const dealerPreview = pickRandomSample(dRows, 5).map((r) => ({
+          dealer_id: safeStr(r[dIdx["dealer_id"]]),
+          dealer_name: safeStr(r[dIdx["dealer_name"]]),
+          email: safeStr(r[dIdx["email"]]),
+          dealer_status: safeStr(r[dIdx["dealer_status"]]),
+          user_id: safeStr(r[dIdx["user_id"]]),
+          submitted_at: safeStr(r[dIdx["submitted_at"]]),
+        }));
+
+        return reply(
+          200,
+          {
+            ok: true,
+            stats: {
+              users: totalUsers,
+              dealers: totalDealers,
+              pending: pendingSocial,
+              payouts: 0,
+              todayUsers: 0,
+              pendingDealers,
+              activeQuests: 0,
+              todayPayouts: 0,
+            },
+            users: pickRandomSample(rows, 5).map((r) => toUserSummary(r, headerIdx)),
+            dealers: dealerPreview,
+          },
+          origin
+        );
+      }
+
+      // ===== dealers list =====
+      if (action === "dealers_list") {
+        const qRaw = safeStr(body.q || body.query || "");
+        const q = qRaw.trim().toLowerCase();
+
+        const statusRaw = safeStr(body.status || body.dealer_status || "");
+        const status = normalizeDealerStatus(statusRaw);
+
+        const limitIn = Number(body.limit ?? 50);
+        const offsetIn = Number(body.offset ?? 0);
+        const limit = Math.max(1, Math.min(200, Number.isFinite(limitIn) ? limitIn : 50));
+        const offset = Math.max(0, Number.isFinite(offsetIn) ? offsetIn : 0);
+
+        const matched = [];
+        for (let i = 0; i < dRows.length; i++) {
+          const row = dRows[i] || [];
+          const st = safeStr(row[dIdx["dealer_status"]]).toLowerCase();
+          if (status && st !== status) continue;
+
+          if (q) {
+            const hay = [
+              safeStr(row[dIdx["dealer_id"]]),
+              safeStr(row[dIdx["dealer_name"]]),
+              safeStr(row[dIdx["email"]]),
+              safeStr(row[dIdx["user_id"]]),
+            ]
+              .join(" ")
+              .toLowerCase();
+            if (!hay.includes(q)) continue;
+          }
+
+          matched.push(row);
+        }
+
+        matched.sort((a, b) => {
+          const ta = Date.parse(safeStr(a[dIdx["submitted_at"]])) || 0;
+          const tb = Date.parse(safeStr(b[dIdx["submitted_at"]])) || 0;
+          return tb - ta;
+        });
+
+        const total = matched.length;
+        const slice = matched.slice(offset, offset + limit);
+        const items = slice.map((r) => ({
+          dealer_id: safeStr(r[dIdx["dealer_id"]]),
+          user_id: safeStr(r[dIdx["user_id"]]),
+          dealer_name: safeStr(r[dIdx["dealer_name"]]),
+          email: safeStr(r[dIdx["email"]]),
+          dealer_status: safeStr(r[dIdx["dealer_status"]]),
+          submitted_at: safeStr(r[dIdx["submitted_at"]]),
+          verified_at: safeStr(r[dIdx["verified_at"]]),
+          verified_by: safeStr(r[dIdx["verified_by"]]),
+          need_fix_reason: safeStr(r[dIdx["need_fix_reason"]]),
+          need_fix_at: safeStr(r[dIdx["need_fix_at"]]),
+        }));
+
+        return reply(200, { ok: true, total, items }, origin);
+      }
+
+      // ===== dealers get =====
+      if (action === "dealers_get") {
+        const tDid = safeStr(target_dealer_id);
+        if (!tDid) return reply(400, { ok: false, error: "target_dealer_id_required" }, origin);
+
+        const foundRowIndex = findRowIndexByColValue(dRows, dDealerIdIdx, tDid);
+        if (foundRowIndex === -1) return reply(404, { ok: false, error: "dealer_not_found" }, origin);
+
+        const row = dRows[foundRowIndex] || [];
+        const fullRow = Array.from({ length: dHeadersLen }, (_, j) => safeStr(row[j] || ""));
+        const dealer = rowToObject(dHeaders, fullRow, { omit: [] });
+
+        return reply(200, { ok: true, dealer }, origin);
+      }
+
+      // ===== dealers approve / need_fix / reject =====
+      if (action === "dealers_approve" || action === "dealers_need_fix" || action === "dealers_reject") {
+        const tDid = safeStr(target_dealer_id);
+        if (!tDid) return reply(400, { ok: false, error: "target_dealer_id_required" }, origin);
+
+        const foundRowIndex = findRowIndexByColValue(dRows, dDealerIdIdx, tDid);
+        if (foundRowIndex === -1) return reply(404, { ok: false, error: "dealer_not_found" }, origin);
+
+        const rowNumber1Based = foundRowIndex + 2;
+        const row = dRows[foundRowIndex] || [];
+        const fullRow = Array.from({ length: dHeadersLen }, (_, j) => safeStr(row[j] || ""));
+
+        const currentStatus = safeStr(fullRow[dIdx["dealer_status"]]).toLowerCase();
+        if (currentStatus !== "submitted") return reply(400, { ok: false, error: "not_submitted" }, origin);
+
+        const adminId = safeStr(authPayload.user_id);
+        const ts = nowISO();
+
+        if (action === "dealers_need_fix") {
+          const reason = sanitizeForSheet(body.reason || data.reason || "");
+          fullRow[dIdx["dealer_status"]] = "need_fix";
+          fullRow[dIdx["verified_at"]] = ts;
+          fullRow[dIdx["verified_by"]] = adminId;
+          fullRow[dIdx["need_fix_reason"]] = reason;
+          fullRow[dIdx["need_fix_at"]] = ts;
+
+          await updateRowRange(sheets, spreadsheetId, dealersSheet, rowNumber1Based, dHeadersLen, fullRow);
+
+          return reply(200, { ok: true, dealer_status: "need_fix", verified_at: ts, verified_by: adminId }, origin);
+        }
+
+        if (action === "dealers_reject") {
+          fullRow[dIdx["dealer_status"]] = "rejected";
+          fullRow[dIdx["verified_at"]] = ts;
+          fullRow[dIdx["verified_by"]] = adminId;
+
+          await updateRowRange(sheets, spreadsheetId, dealersSheet, rowNumber1Based, dHeadersLen, fullRow);
+
+          return reply(200, { ok: true, dealer_status: "rejected", verified_at: ts, verified_by: adminId }, origin);
+        }
+
+        // approve
+        fullRow[dIdx["dealer_status"]] = "approved";
+        fullRow[dIdx["verified_at"]] = ts;
+        fullRow[dIdx["verified_by"]] = adminId;
+
+        await updateRowRange(sheets, spreadsheetId, dealersSheet, rowNumber1Based, dHeadersLen, fullRow);
+
+        // ✅ 可選：同步 users.role = dealer（如果有 user_id 且 users 中存在）
+        const dealerUserId = safeStr(fullRow[dUserIdIdx]);
+        if (dealerUserId) {
+          const uRowIndex = findRowIndexByColValue(rows, uidIdx, dealerUserId);
+          if (uRowIndex !== -1) {
+            const uRowNumber1Based = uRowIndex + 2;
+            const uRow = rows[uRowIndex] || [];
+            const uFullRow = Array.from({ length: headersLen }, (_, j) => safeStr(uRow[j] || ""));
+            uFullRow[headerIdx["role"]] = "dealer";
+            await updateRowRange(sheets, spreadsheetId, usersSheet, uRowNumber1Based, headersLen, uFullRow);
+          }
+        }
+
+        return reply(200, { ok: true, dealer_status: "approved", verified_at: ts, verified_by: adminId }, origin);
+      }
+    }
+
+    // ===== fallback unknown action =====
     return reply(400, { ok: false, error: "unknown_action" }, origin);
   } catch (err) {
     console.error("admin.cjs error:", err);

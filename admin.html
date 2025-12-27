@@ -262,7 +262,6 @@
     .select{ min-width: 160px; }
     .input::placeholder{ color: rgba(255,255,255,.42); font-weight:800; }
 
-    /* ✅ 第5版：textarea（縮小） */
     .textarea{
       width:100%;
       background: rgba(255,255,255,.03);
@@ -275,7 +274,7 @@
       font-size: 13px;
       outline: none;
       resize: vertical;
-      min-height: 70px; /* 原 92px → 縮小 */
+      min-height: 70px;
       line-height: 1.6;
     }
     .textarea::placeholder{ color: rgba(255,255,255,.42); }
@@ -397,10 +396,9 @@
     }
     .modal-mask.show{ display:flex; }
 
-    /* ✅ 第5版：Modal 變窄 + 限高 */
     .modal{
-      width: min(720px, 92vw);  /* 原 96vw → 更窄 */
-      max-height: 90vh;         /* 限制高度避免爆版 */
+      width: min(720px, 92vw);
+      max-height: 90vh;
       border:1px solid rgba(255,255,255,.14);
       border-radius: 18px;
       background: rgba(12,16,26,.92);
@@ -429,17 +427,15 @@
       font-weight: 950;
     }
 
-    /* ✅ 第5版：Modal 內容區可捲動 */
     .modal-body{
       padding: 14px 16px 18px;
-      max-height: calc(90vh - 64px); /* 扣掉 head 高度 */
+      max-height: calc(90vh - 64px);
       overflow: auto;
     }
 
-    /* ✅ 第5版：明細行更緊湊（補件/明細不會撐爆） */
     .kv{
       display:grid;
-      grid-template-columns: 130px 1fr; /* 原 180px → 縮小 */
+      grid-template-columns: 130px 1fr;
       gap:8px;
       padding:8px 0;
       border-bottom:1px dashed rgba(255,255,255,.12);
@@ -448,7 +444,6 @@
     .kv .k{ color: rgba(255,255,255,.68); font-weight: 950; font-size: 11px; }
     .kv .v{ font-weight: 850; font-size: 12px; color: rgba(255,255,255,.9); word-break:break-all; }
 
-    /* ✅ 第5版：手機/窄螢幕上下排 */
     @media (max-width: 520px){
       .kv{ grid-template-columns: 1fr; }
     }
@@ -550,7 +545,7 @@
               <div class="stat">
                 <div class="k"><i class="fas fa-hourglass-half"></i> Pending Dealers</div>
                 <div class="v" id="pendingDealers">0</div>
-                <div class="hint">待審 Dealer（預留）</div>
+                <div class="hint">待審 Dealer</div>
               </div>
               <div class="stat">
                 <div class="k"><i class="fas fa-bullseye"></i> Active Quests</div>
@@ -708,17 +703,17 @@
           <div class="container">
             <div class="section-head">
               <h2 class="section-title"><i class="fas fa-car"></i> Dealer 管理</h2>
-              <p class="section-sub">列表、審核、停權（目前仍為 UI 預留）。</p>
+              <p class="section-sub">列表、審核、補件、拒絕（已串接 dealers Sheet）。</p>
             </div>
 
             <div class="card">
               <div class="toolbar">
                 <div class="left">
                   <div class="field">
-                    <input class="input" id="dealerSearch" placeholder="搜尋 dealer 名稱 / email / user_id" />
+                    <input class="input" id="dealerSearch" placeholder="搜尋 dealer_name / email / user_id / dealer_id" />
                     <select class="select" id="dealerVerifyFilter">
                       <option value="">審核狀態（全部）</option>
-                      <option value="pending">pending</option>
+                      <option value="submitted">submitted</option>
                       <option value="approved">approved</option>
                       <option value="rejected">rejected</option>
                       <option value="need_fix">need_fix</option>
@@ -726,6 +721,7 @@
                   </div>
                 </div>
                 <div class="right">
+                  <button class="btn" id="dealersRefreshBtn" type="button"><i class="fas fa-rotate"></i> 重新載入</button>
                   <button class="btn btn-primary" id="btnCreateDealer" type="button">
                     <i class="fas fa-car-side"></i> 新增 Dealer（規劃）
                   </button>
@@ -736,24 +732,30 @@
                 <table>
                   <thead>
                     <tr>
-                      <th style="width:220px">dealer_id</th>
-                      <th style="width:220px">name</th>
+                      <th style="width:180px">dealer_id</th>
+                      <th style="width:220px">dealer_name</th>
                       <th style="width:240px">email</th>
-                      <th style="width:120px">verify</th>
-                      <th style="width:240px">操作</th>
+                      <th style="width:180px">user_id</th>
+                      <th style="width:120px">dealer_status</th>
+                      <th style="width:160px">submitted_at</th>
+                      <th style="width:260px">操作</th>
                     </tr>
                   </thead>
                   <tbody id="dealersTbody">
                     <tr>
-                      <td colspan="5">
+                      <td colspan="7">
                         <div class="empty">
-                          <div><b>目前沒有資料</b></div>
-                          <div class="muted">此區塊為 UI 預留，後端串接後即可使用。</div>
+                          <div><b>尚未載入 Dealer</b></div>
+                          <div class="muted">點「重新載入」或「重新同步」。</div>
                         </div>
                       </td>
                     </tr>
                   </tbody>
                 </table>
+              </div>
+
+              <div class="muted" style="padding: 0 14px 14px;" id="dealersHint">
+                提示：預設顯示（最多 50 筆）；可用搜尋/狀態篩選。
               </div>
             </div>
           </div>
@@ -836,6 +838,23 @@
         <button class="modal-close" id="userModalClose" type="button" aria-label="Close"><i class="fas fa-xmark"></i></button>
       </div>
       <div class="modal-body" id="userModalBody">
+        <div class="skeleton sk-line wide"></div>
+        <div style="height:10px"></div>
+        <div class="skeleton sk-line mid"></div>
+        <div style="height:10px"></div>
+        <div class="skeleton sk-line wide"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ Modal: Dealer detail -->
+  <div class="modal-mask" id="dealerModalMask" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-head">
+        <h3 class="modal-title" id="dealerModalTitle">Dealer</h3>
+        <button class="modal-close" id="dealerModalClose" type="button" aria-label="Close"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" id="dealerModalBody">
         <div class="skeleton sk-line wide"></div>
         <div style="height:10px"></div>
         <div class="skeleton sk-line mid"></div>
@@ -928,14 +947,6 @@
       location.href = 'index.html';
     });
 
-    // ===== Users (Admin) =====
-    let USERS_CACHE = [];
-    let USERS_TOTAL = 0;
-
-    // ===== Social verify (Admin) =====
-    let SV_LIST = [];
-    let SV_SELECTED_USER_ID = "";
-
     async function adminApi(token, payload){
       const res = await fetch('/.netlify/functions/admin', {
         method: 'POST',
@@ -951,6 +962,17 @@
       }
       return await res.json();
     }
+
+    // ===== Caches =====
+    let USERS_CACHE = [];
+    let USERS_TOTAL = 0;
+
+    let SV_LIST = [];
+    let SV_SELECTED_USER_ID = "";
+
+    let DEALERS_LIST = [];
+    let DEALERS_TOTAL = 0;
+    let DEALER_SELECTED_ID = "";
 
     function applySnapshotUI(snapshot){
       const s = snapshot?.stats || {};
@@ -970,7 +992,8 @@
       const uh = $('#usersHint');
       if(uh) uh.textContent = `已隨機抽樣 ${USERS_CACHE.length} 筆（total ${USERS_TOTAL}）。需要時用搜尋/角色篩選查詢。`;
 
-      renderDealers(snapshot?.dealers || []);
+      // overview 只顯示預覽
+      renderDealers(snapshot?.dealers || [], { preview:true });
     }
 
     async function syncAll(){
@@ -984,15 +1007,23 @@
         const snap = await adminApi(auth.token, { action:'snapshot' });
         if(!snap?.ok) throw new Error(snap?.error || 'snapshot_failed');
         applySnapshotUI(snap);
+
         await loadSubmittedList({ silent:true });
+        await loadDealers({ silent:true });
       }catch(err){
         console.error(err);
         showToast('後端尚未串接完成：你仍可先使用介面', 'warn');
-        applySnapshotUI({ stats: { users:0, dealers:0, pending:0, payouts:0, todayUsers:0, pendingDealers:0, activeQuests:0, todayPayouts:0 }, users: [], dealers: [] });
+        applySnapshotUI({
+          stats: { users:0, dealers:0, pending:0, payouts:0, todayUsers:0, pendingDealers:0, activeQuests:0, todayPayouts:0 },
+          users: [],
+          dealers: []
+        });
       }
     }
 
-    // ===== users render =====
+    // =========================
+    // Users
+    // =========================
     function renderUsers(users=[]){
       const tbody = $('#usersTbody');
       if(!tbody) return;
@@ -1049,10 +1080,6 @@
           }
         });
       });
-    }
-
-    function renderDealers(dealers=[]){
-      // dealers section remains UI placeholder
     }
 
     // ===== User Modal (view / role) =====
@@ -1224,7 +1251,9 @@
       });
     }
 
-    // ===== Social Verify UI =====
+    // =========================
+    // Social Verify
+    // =========================
     function openSocialDetail(user_id){
       SV_SELECTED_USER_ID = user_id || '';
       if(!SV_SELECTED_USER_ID) return;
@@ -1468,12 +1497,8 @@
         btn.addEventListener('click', (e)=>{
           const tr = e.target.closest('tr[data-uid]');
           const uid = tr?.dataset?.uid || '';
-          const act = e.target.closest('.mini-btn')?.dataset?.act || '';
           if(!uid) return;
-
-          if(act === 'detail' || act === 'approve' || act === 'reject' || act === 'needfix'){
-            openSocialDetail(uid);
-          }
+          openSocialDetail(uid);
         });
       });
     }
@@ -1501,23 +1526,250 @@
       $('#svTierFilter')?.addEventListener('change', ()=> $('#svSearch')?.dispatchEvent(new Event('input')));
     }
 
-    // actions
-    $('#refreshBtn')?.addEventListener('click', syncAll);
-    $('#btnCreateQuest')?.addEventListener('click', ()=>showToast('此功能為 UI 預留，後端串接後即可使用。','info'));
-    $('#btnCreateUser')?.addEventListener('click', ()=>showToast('此功能為 UI 預留，後端串接後即可使用。','info'));
+    // =========================
+    // Dealers
+    // =========================
+    function dealerDotColor(status){
+      const s = String(status||'').toLowerCase();
+      if(s === 'approved') return 'rgba(90,255,190,.95)';
+      if(s === 'submitted') return 'rgba(255,190,80,.95)';
+      if(s === 'need_fix') return 'rgba(255,190,80,.95)';
+      if(s === 'rejected') return 'rgba(255,70,90,.95)';
+      return 'rgba(255,255,255,.65)';
+    }
 
-    $('#usersRefreshBtn')?.addEventListener('click', () => {
-      const qEl = $('#userSearch');
-      const rEl = $('#userRoleFilter');
-      const sEl = $('#userStatusFilter');
-      if(qEl) qEl.value = '';
-      if(rEl) rEl.value = '';
-      if(sEl) sEl.value = '';
-      loadUsers({ silent: false });
+    function renderDealers(items=[], { preview=false } = {}){
+      const tbody = $('#dealersTbody');
+      if(!tbody) return;
+
+      if(preview){
+        // overview preview: 若你剛好正在 dealers 區，仍可看到完整列表，由 loadDealers 會覆蓋
+      }
+
+      if(!items.length){
+        tbody.innerHTML = `
+          <tr><td colspan="7">
+            <div class="empty">
+              <div><b>目前沒有 Dealer 資料</b></div>
+              <div class="muted">確認 dealers Sheet 是否有資料，或點「重新載入」。</div>
+            </div>
+          </td></tr>
+        `;
+        const hint = $('#dealersHint');
+        if(hint) hint.textContent = '提示：目前沒有資料。';
+        return;
+      }
+
+      tbody.innerHTML = items.map(d => {
+        const st = String(d.dealer_status || '').toLowerCase();
+        const dot = dealerDotColor(st);
+        return `
+          <tr data-dealerid="${escapeHtml(d.dealer_id || '')}">
+            <td>${escapeHtml(d.dealer_id || '')}</td>
+            <td>${escapeHtml(d.dealer_name || '')}</td>
+            <td>${escapeHtml(d.email || '')}</td>
+            <td>${escapeHtml(d.user_id || '')}</td>
+            <td>
+              <span class="status-pill">
+                <span class="status-dot" style="background:${dot}"></span>
+                ${escapeHtml(st || '-')}
+              </span>
+            </td>
+            <td>${escapeHtml(d.submitted_at || '')}</td>
+            <td>
+              <div class="row-actions">
+                <button class="mini-btn" data-act="detail"><i class="fas fa-magnifying-glass"></i> 明細</button>
+                <button class="mini-btn good" data-act="approve"><i class="fas fa-check"></i> 通過</button>
+                <button class="mini-btn warn" data-act="needfix"><i class="fas fa-file-circle-exclamation"></i> 補件</button>
+                <button class="mini-btn bad" data-act="reject"><i class="fas fa-xmark"></i> 拒絕</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      tbody.querySelectorAll('tr[data-dealerid] .mini-btn').forEach(btn=>{
+        btn.addEventListener('click', (e)=>{
+          const tr = e.target.closest('tr[data-dealerid]');
+          const did = tr?.dataset?.dealerid || '';
+          if(!did) return;
+          openDealerDetail(did);
+        });
+      });
+    }
+
+    function getDealersQueryState(){
+      const q = ($('#dealerSearch')?.value || '').trim();
+      const status = ($('#dealerVerifyFilter')?.value || '').trim().toLowerCase();
+      return { q, status };
+    }
+
+    async function loadDealers({ silent=true } = {}){
+      const auth = requireLogin();
+      if(!auth) return;
+      guardAdmin(auth.user);
+
+      const { q, status } = getDealersQueryState();
+      const hint = $('#dealersHint');
+
+      try{
+        if(!silent) showToast('載入 Dealer…','info');
+        const out = await adminApi(auth.token, { action:'dealers_list', q, status, limit: 50, offset: 0 });
+        if(!out?.ok) throw new Error(out?.error || 'dealers_list_failed');
+
+        DEALERS_LIST = out.items || [];
+        DEALERS_TOTAL = Number(out.total || DEALERS_LIST.length || 0);
+
+        renderDealers(DEALERS_LIST);
+        if(hint) hint.textContent = `已載入 ${DEALERS_LIST.length} 筆（符合 ${DEALERS_TOTAL}）。(最多顯示 50 筆)`;
+      }catch(e){
+        console.error(e);
+        showToast('Dealer 載入失敗（確認 dealers Sheet 欄位是否正確）', 'error');
+      }
+    }
+
+    // Dealer Modal
+    function openDealerDetail(dealer_id){
+      DEALER_SELECTED_ID = dealer_id || '';
+      if(!DEALER_SELECTED_ID) return;
+
+      const mask = $('#dealerModalMask');
+      const title = $('#dealerModalTitle');
+      const body = $('#dealerModalBody');
+      if(title) title.textContent = 'Dealer 審核：' + DEALER_SELECTED_ID;
+      if(body){
+        body.innerHTML = `
+          <div class="skeleton sk-line wide"></div>
+          <div style="height:10px"></div>
+          <div class="skeleton sk-line mid"></div>
+          <div style="height:10px"></div>
+          <div class="skeleton sk-line wide"></div>
+        `;
+      }
+      if(mask) mask.classList.add('show');
+
+      loadDealerDetail(DEALER_SELECTED_ID).catch(err=>{
+        console.error(err);
+        showToast('載入 Dealer 失敗：' + (err?.message || ''), 'error');
+      });
+    }
+
+    function closeDealerDetail(){
+      const mask = $('#dealerModalMask');
+      if(mask) mask.classList.remove('show');
+      DEALER_SELECTED_ID = "";
+    }
+
+    $('#dealerModalClose')?.addEventListener('click', closeDealerDetail);
+    $('#dealerModalMask')?.addEventListener('click', (e)=>{
+      if(e.target?.id === 'dealerModalMask') closeDealerDetail();
     });
 
-    // simple filtering / query
+    async function loadDealerDetail(dealer_id){
+      const auth = requireLogin();
+      if(!auth) return;
+      guardAdmin(auth.user);
+
+      const out = await adminApi(auth.token, { action:'dealers_get', target_dealer_id: dealer_id });
+      if(!out?.ok) throw new Error(out?.error || 'dealers_get_failed');
+
+      const d = out.dealer || {};
+      const body = $('#dealerModalBody');
+      if(!body) return;
+
+      body.innerHTML = `
+        ${kvRow('dealer_id', d.dealer_id || dealer_id)}
+        ${kvRow('dealer_name', d.dealer_name || '')}
+        ${kvRow('email', d.email || '')}
+        ${kvRow('user_id', d.user_id || '')}
+        ${kvRow('dealer_status', d.dealer_status || '')}
+        ${kvRow('submitted_at', d.submitted_at || '')}
+        ${kvRow('verified_at', d.verified_at || '')}
+        ${kvRow('verified_by', d.verified_by || '')}
+        ${kvRow('need_fix_reason', d.need_fix_reason || '')}
+        ${kvRow('need_fix_at', d.need_fix_at || '')}
+
+        <div style="height:12px"></div>
+        <div class="muted" style="font-weight:900; font-size:12px; margin-bottom:8px;">
+          補件原因（need_fix_reason）
+        </div>
+        <textarea class="textarea" id="dealerNeedFixReason" placeholder="例：請補上公司資料/統編/可聯絡電話/店家名稱需完整..."></textarea>
+
+        <div style="height:12px"></div>
+        <div class="row-actions">
+          <button class="mini-btn good" id="dealerApproveBtn"><i class="fas fa-check"></i> 通過</button>
+          <button class="mini-btn warn" id="dealerNeedFixBtn"><i class="fas fa-file-circle-exclamation"></i> 補件</button>
+          <button class="mini-btn bad" id="dealerRejectBtn"><i class="fas fa-xmark"></i> 拒絕</button>
+        </div>
+        <div style="height:8px"></div>
+        <div class="muted" style="font-size:12px;">規則：只允許 submitted → approved/need_fix/rejected。</div>
+      `;
+
+      const r = $('#dealerNeedFixReason');
+      if(r && (d.need_fix_reason || '')) r.value = String(d.need_fix_reason || '');
+
+      $('#dealerApproveBtn')?.addEventListener('click', async ()=>{
+        const auth2 = requireLogin();
+        if(!auth2) return;
+        try{
+          if(!confirm('確定要「通過」這筆 Dealer 嗎？')) return;
+          showToast('審核中（通過）…','info');
+          const out2 = await adminApi(auth2.token, { action:'dealers_approve', target_dealer_id: dealer_id });
+          if(!out2?.ok) throw new Error(out2?.error || 'dealers_approve_failed');
+          showToast('已通過','info');
+          closeDealerDetail();
+          await syncAll();
+        }catch(e){
+          console.error(e);
+          showToast('通過失敗：' + (e?.message || ''), 'error');
+        }
+      });
+
+      $('#dealerNeedFixBtn')?.addEventListener('click', async ()=>{
+        const auth2 = requireLogin();
+        if(!auth2) return;
+        const reason = ($('#dealerNeedFixReason')?.value || '').trim();
+        try{
+          const msg = reason
+            ? `確定要標記為「補件」嗎？\n\n補件原因：\n${reason}`
+            : '確定要標記為「補件」嗎？（你尚未填補件原因）';
+          if(!confirm(msg)) return;
+
+          showToast('審核中（補件）…','info');
+          const out2 = await adminApi(auth2.token, { action:'dealers_need_fix', target_dealer_id: dealer_id, reason });
+          if(!out2?.ok) throw new Error(out2?.error || 'dealers_need_fix_failed');
+          showToast('已標記補件','info');
+          closeDealerDetail();
+          await syncAll();
+        }catch(e){
+          console.error(e);
+          showToast('補件失敗：' + (e?.message || ''), 'error');
+        }
+      });
+
+      $('#dealerRejectBtn')?.addEventListener('click', async ()=>{
+        const auth2 = requireLogin();
+        if(!auth2) return;
+        try{
+          if(!confirm('確定要「拒絕」這筆 Dealer 嗎？')) return;
+          showToast('審核中（拒絕）…','info');
+          const out2 = await adminApi(auth2.token, { action:'dealers_reject', target_dealer_id: dealer_id });
+          if(!out2?.ok) throw new Error(out2?.error || 'dealers_reject_failed');
+          showToast('已拒絕','info');
+          closeDealerDetail();
+          await syncAll();
+        }catch(e){
+          console.error(e);
+          showToast('拒絕失敗：' + (e?.message || ''), 'error');
+        }
+      });
+    }
+
+    // =========================
+    // Wire filters / reload
+    // =========================
     let _usersReloadTimer = null;
+    let _dealersReloadTimer = null;
 
     function getUsersQueryState(){
       const q = ($('#userSearch')?.value || '').trim();
@@ -1561,25 +1813,41 @@
       _usersReloadTimer = setTimeout(() => loadUsers({ silent: true }), 450);
     }
 
+    function scheduleDealersReload(){
+      clearTimeout(_dealersReloadTimer);
+      _dealersReloadTimer = setTimeout(() => loadDealers({ silent: true }), 450);
+    }
+
     function wireFilters(){
       $('#userSearch')?.addEventListener('input', () => scheduleUsersReload());
       $('#userRoleFilter')?.addEventListener('change', () => scheduleUsersReload());
-      $('#userStatusFilter')?.addEventListener('change', () => { /* 預留：目前無後端欄位 */ });
+      $('#userStatusFilter')?.addEventListener('change', () => { /* 預留 */ });
 
-      function filterDealers(){
-        const q = ($('#dealerSearch')?.value || '').trim().toLowerCase();
-        const v = ($('#dealerVerifyFilter')?.value || '').trim().toLowerCase();
-        const rows = Array.from($('#dealersTbody')?.querySelectorAll('tr') || []);
-        rows.forEach(r => {
-          const text = (r.textContent || '').toLowerCase();
-          let ok = !q || text.includes(q);
-          if(ok && v) ok = text.includes(v === 'need_fix' ? '補件' : v);
-          r.style.display = ok ? '' : 'none';
-        });
-      }
+      $('#dealerSearch')?.addEventListener('input', () => scheduleDealersReload());
+      $('#dealerVerifyFilter')?.addEventListener('change', () => scheduleDealersReload());
+    }
 
-      $('#dealerSearch')?.addEventListener('input', filterDealers);
-      $('#dealerVerifyFilter')?.addEventListener('change', filterDealers);
+    // actions
+    $('#refreshBtn')?.addEventListener('click', syncAll);
+    $('#dealersRefreshBtn')?.addEventListener('click', ()=> loadDealers({ silent:false }));
+
+    $('#btnCreateQuest')?.addEventListener('click', ()=>showToast('此功能為 UI 預留，後端串接後即可使用。','info'));
+    $('#btnCreateUser')?.addEventListener('click', ()=>showToast('此功能為 UI 預留，後端串接後即可使用。','info'));
+    $('#btnCreateDealer')?.addEventListener('click', ()=>showToast('此功能為 UI 預留（後續可做 dealer 申請流程）。','info'));
+
+    $('#usersRefreshBtn')?.addEventListener('click', () => {
+      const qEl = $('#userSearch');
+      const rEl = $('#userRoleFilter');
+      const sEl = $('#userStatusFilter');
+      if(qEl) qEl.value = '';
+      if(rEl) rEl.value = '';
+      if(sEl) sEl.value = '';
+      loadUsers({ silent: false });
+    });
+
+    function wireSocialVerifyUIInit(){
+      wireSocialVerifyUI();
+      $('#svRefreshBtn')?.addEventListener('click', ()=> loadSubmittedList({ silent:false }));
     }
 
     // init
@@ -1588,7 +1856,7 @@
       if(!auth) return;
       guardAdmin(auth.user);
       wireFilters();
-      wireSocialVerifyUI();
+      wireSocialVerifyUIInit();
       syncAll();
     })();
   </script>
