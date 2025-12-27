@@ -379,7 +379,7 @@
     }
     .modal-mask.show{ display:flex; }
     .modal{
-      width: min(760px, 96vw);
+      width: min(820px, 96vw);
       border:1px solid rgba(255,255,255,.14);
       border-radius: 18px;
       background: rgba(12,16,26,.92);
@@ -418,6 +418,16 @@
     .kv:last-child{ border-bottom:0; }
     .kv .k{ color: rgba(255,255,255,.68); font-weight: 950; font-size: 12px; }
     .kv .v{ font-weight: 850; font-size: 13px; color: rgba(255,255,255,.9); word-break:break-all; }
+
+    .preview-img{
+      margin-top:10px;
+      width:100%;
+      max-height:360px;
+      object-fit:contain;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+    }
 
     /* Skeleton */
     .skeleton{
@@ -597,7 +607,7 @@
           <div class="container">
             <div class="section-head">
               <h2 class="section-title"><i class="fas fa-circle-check"></i> 社群驗證審核</h2>
-              <p class="section-sub">列出所有 <b>submitted</b> 待審核名單，點選後可檢視明細並進行通過/拒絕。</p>
+              <p class="section-sub">列出所有 <b>submitted</b> 待審核名單，點選後可檢視明細並進行通過/補件/拒絕。</p>
             </div>
 
             <div class="card">
@@ -653,7 +663,7 @@
               </div>
 
               <div class="table-wrap" style="padding-top:0;">
-                <div class="muted" style="padding: 0 14px 14px;">提示：此區塊已與後端 admin.cjs 串接（social_list_submitted / social_get / approve / reject）。</div>
+                <div class="muted" style="padding: 0 14px 14px;">提示：此區塊已與後端 admin.cjs 串接（social_list_submitted / social_get / approve / need_fix / reject）。</div>
               </div>
             </div>
           </div>
@@ -810,6 +820,18 @@
       return String(s ?? '').replace(/[&<>"']/g, c => ({
         '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
       }[c]));
+    }
+
+    function isHttpUrl(u){
+      const s = String(u || '').trim();
+      return /^https?:\/\//i.test(s);
+    }
+
+    function linkOrDash(url){
+      const u = String(url || '').trim();
+      if(!u) return '-';
+      if(!isHttpUrl(u)) return escapeHtml(u);
+      return `<a href="${escapeHtml(u)}" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;">開啟連結</a>`;
     }
 
     function getAuth(){
@@ -1154,7 +1176,6 @@
           const out = await adminApi(auth.token, { action:'users_update_role', target_user_id: user_id, role });
           if(!out?.ok) throw new Error(out?.error || 'update_role_failed');
 
-          // 更新快取（避免使用者覺得沒變）
           (USERS_CACHE || []).forEach(x=>{
             if(String(x.user_id||'') === String(user_id)) x.role = role;
           });
@@ -1187,7 +1208,10 @@
         `;
       }
       if(mask) mask.classList.add('show');
-      loadSocialDetail(SV_SELECTED_USER_ID).catch(()=>{});
+      loadSocialDetail(SV_SELECTED_USER_ID).catch((e)=>{
+        console.error(e);
+        showToast('載入明細失敗：' + (e?.message || ''), 'error');
+      });
     }
 
     function closeSocialDetail(){
@@ -1233,6 +1257,8 @@
         email: out.email || ''
       };
 
+      const screenshotUrl = String(social.social_screenshot_url || '').trim();
+
       body.innerHTML = `
         <div class="kv"><div class="k">user_id</div><div class="v">${escapeHtml(userInfo.user_id)}</div></div>
         <div class="kv"><div class="k">username</div><div class="v">${escapeHtml(userInfo.username)}</div></div>
@@ -1244,12 +1270,16 @@
 
         <div class="kv"><div class="k">primary_platform</div><div class="v">${escapeHtml(social.primary_platform || '')}</div></div>
         <div class="kv"><div class="k">influence_tier</div><div class="v">${escapeHtml(social.influence_tier || '')}</div></div>
-        <div class="kv"><div class="k">ig_url</div><div class="v">${escapeHtml(social.ig_url || '')}</div></div>
-        <div class="kv"><div class="k">fb_url</div><div class="v">${escapeHtml(social.fb_url || '')}</div></div>
+        <div class="kv"><div class="k">ig_url</div><div class="v">${linkOrDash(social.ig_url || '')}</div></div>
+        <div class="kv"><div class="k">fb_url</div><div class="v">${linkOrDash(social.fb_url || '')}</div></div>
         <div class="kv"><div class="k">followers_count</div><div class="v">${escapeHtml(social.followers_count || '')}</div></div>
         <div class="kv"><div class="k">avg_views_7d</div><div class="v">${escapeHtml(social.avg_views_7d || '')}</div></div>
-        <div class="kv"><div class="k">social_submitted_at</div><div class="v">${escapeHtml(social.social_submitted_at || '')}</div></div>
 
+        <div class="kv"><div class="k">social_screenshot_url</div><div class="v">${linkOrDash(screenshotUrl)}</div></div>
+
+        ${screenshotUrl && isHttpUrl(screenshotUrl) ? `<img class="preview-img" src="${escapeHtml(screenshotUrl)}" alt="screenshot preview" />` : ''}
+
+        <div class="kv"><div class="k">social_submitted_at</div><div class="v">${escapeHtml(social.social_submitted_at || '')}</div></div>
         <div class="kv"><div class="k">verified_at</div><div class="v">${escapeHtml(social.verified_at || '')}</div></div>
         <div class="kv"><div class="k">verified_by</div><div class="v">${escapeHtml(social.verified_by || '')}</div></div>
 
@@ -1279,11 +1309,12 @@
 
         <div class="row-actions">
           <button class="mini-btn good" id="svApproveBtn"><i class="fas fa-check"></i> 通過</button>
+          <button class="mini-btn warn" id="svNeedFixBtn"><i class="fas fa-file-circle-exclamation"></i> 補件</button>
           <button class="mini-btn bad" id="svRejectBtn"><i class="fas fa-xmark"></i> 拒絕</button>
         </div>
 
         <div style="height:8px"></div>
-        <div class="muted" style="font-size:12px;">通過會：social_status=approved、level=1、can_take_tasks/can_withdraw=true；拒絕會：social_status=rejected、level=0、權限=false。</div>
+        <div class="muted" style="font-size:12px;">通過：social_status=approved、level=1、can_take_tasks/can_withdraw=true；補件：social_status=need_fix、level=0、權限=false；拒絕：social_status=rejected、level=0、權限=false。</div>
       `;
 
       const p = $('#svSetPlatform');
@@ -1309,10 +1340,28 @@
         }
       });
 
+      $('#svNeedFixBtn')?.addEventListener('click', async ()=>{
+        const auth2 = requireLogin();
+        if(!auth2) return;
+        try{
+          if(!confirm('確定要標記為「補件」嗎？（用戶需重新提交）')) return;
+          showToast('審核中（補件）…','info');
+          const out2 = await adminApi(auth2.token, { action:'social_need_fix', target_user_id: user_id });
+          if(!out2?.ok) throw new Error(out2?.error || 'need_fix_failed');
+          showToast('已標記補件','info');
+          closeSocialDetail();
+          await syncAll();
+        }catch(e){
+          console.error(e);
+          showToast('補件失敗：' + (e?.message || ''), 'error');
+        }
+      });
+
       $('#svRejectBtn')?.addEventListener('click', async ()=>{
         const auth2 = requireLogin();
         if(!auth2) return;
         try{
+          if(!confirm('確定要「拒絕」嗎？')) return;
           showToast('審核中（拒絕）…','info');
           const out2 = await adminApi(auth2.token, { action:'social_reject', target_user_id: user_id });
           if(!out2?.ok) throw new Error(out2?.error || 'reject_failed');
@@ -1342,7 +1391,7 @@
       }
 
       tbody.innerHTML = items.map(it => {
-        const platform = (it.suggest_platform || '').toLowerCase();
+        const platform = (it.primary_platform || it.suggest_platform || '').toLowerCase();
         return `
           <tr data-uid="${escapeHtml(it.user_id || '')}">
             <td>${escapeHtml(it.user_id || '')}</td>
@@ -1370,10 +1419,9 @@
           const act = e.target.closest('.mini-btn')?.dataset?.act || '';
           if(!uid) return;
 
-          if(act === 'detail' || act === 'approve' || act === 'reject'){
+          // 都先進明細，避免誤按
+          if(act === 'detail' || act === 'approve' || act === 'reject' || act === 'needfix'){
             openSocialDetail(uid);
-          }else if(act === 'needfix'){
-            showToast('補件流程：此功能先預留（可後續補 social_need_fix）','info');
           }
         });
       });
@@ -1389,7 +1437,10 @@
         const filtered = (SV_LIST || []).filter(it=>{
           const hay = `${it.user_id||''} ${it.username||''} ${it.email||''}`.toLowerCase();
           if(q && !hay.includes(q)) return false;
-          if(p && String(it.suggest_platform||'').toLowerCase() !== p) return false;
+
+          const pNow = String(it.primary_platform || it.suggest_platform || '').toLowerCase();
+          if(p && pNow !== p) return false;
+
           if(t && String(it.influence_tier||'').toLowerCase() !== t) return false;
           return true;
         });
