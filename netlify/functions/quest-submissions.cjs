@@ -1,6 +1,6 @@
 // netlify/functions/quest-submissions.cjs
 // ✅ Quest Submissions: member submit + list my submissions
-// v2: robust quest_id matching (trim + remove zero-width/whitespace)
+// v3: robust quest_id matching via ID extraction (handles invisible/odd unicode chars)
 
 const { google } = require("googleapis");
 const jwt = require("jsonwebtoken");
@@ -40,11 +40,7 @@ function corsHeaders(origin) {
 }
 
 function json(statusCode, body, origin) {
-  return {
-    statusCode,
-    headers: corsHeaders(origin),
-    body: JSON.stringify(body),
-  };
+  return { statusCode, headers: corsHeaders(origin), body: JSON.stringify(body) };
 }
 
 function getBearerToken(event) {
@@ -67,7 +63,11 @@ function requireAuth(event) {
 }
 
 function normalizeHeader(s) {
-  return String(s || "").trim().toLowerCase();
+  // Also strip common BOM/zero-width characters from headers
+  return String(s || "")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .trim()
+    .toLowerCase();
 }
 
 function sanitizeForSheet(value) {
@@ -77,12 +77,21 @@ function sanitizeForSheet(value) {
   return s;
 }
 
-function normalizeId(s) {
-  // Remove common invisible chars + all whitespace
-  return String(s || "")
-    .replace(/[\u200B-\u200D\uFEFF]/g, "")
-    .replace(/\s+/g, "")
-    .trim();
+function extractQuestId(s) {
+  // Extract canonical quest id from messy strings (handles invisible chars / weird unicode).
+  // Strategy: normalize -> remove everything except [A-Za-z0-9_] -> then match q_<id>.
+  const raw = String(s || "");
+  const cleaned = raw
+    .normalize("NFKC")
+    .replace(/[^A-Za-z0-9_]/g, "");
+  const m = cleaned.match(/q_[A-Za-z0-9]+/);
+  return m ? m[0] : "";
+}
+
+function extractSubmissionId(s) {
+  const raw = String(s || "");
+  const m = raw.match(/sub_[A-Za-z0-9]+/);
+  return m ? m[0] : "";
 }
 
 async function getSheetsClient() {
@@ -185,31 +194,45 @@ exports.handler = async (event) => {
     const questsTab = process.env.QUESTS_TAB || "quests";
 
     if (action === "submit") {
-      const quest_id = String(body.quest_id || "");
+      const rawQuestId = String(body.quest_id || "");
+      const questId = extractQuestId(rawQuestId) || rawQuestId.trim();
       const proof_url = String(body.proof_url || "").trim();
       const note = String(body.note || "").trim();
 
-      const wantId = normalizeId(quest_id);
-      if (!wantId) return json(400, { ok: false, error: "quest_id required" }, origin);
+      const wantId = extractQuestId(questId);
+      if (!wantId) {
+        return json(400, { ok: false, error: "quest_id required" }, origin);
+      }
 
       const { headers: qh, rows: qrows } = await readTab(sheets, sheetId, questsTab);
       const qIdx = qh.indexOf("quest_id");
-      if (qIdx < 0) return json(500, { ok: false, error: "quests header missing quest_id" }, origin);
+      if (qIdx < 0) {
+        return json(500, { ok: false, error: "quests header missing quest_id" }, origin);
+      }
 
-      const questRow = qrows.find((r) => normalizeId(r[qIdx]) === wantId);
+      const questRow = qrows.find((r) => extractQuestId(r[qIdx]) === wantId);
+
       if (!questRow) {
-        // Provide minimal diagnostic without leaking too much
         const sample = qrows
           .map((r) => String(r[qIdx] || ""))
           .filter((x) => String(x).trim() !== "")
           .slice(0, 10);
-        return json(404, { ok: false, error: "quest not found", want: String(quest_id || "").trim(), sample_ids: sample }, origin);
+
+        const sampleExtracted = sample.map(extractQuestId).filter(Boolean);
+
+        return json(
+          404,
+          { ok: false, error: "quest not found", want: wantId, sample_ids: sample, sample_ids_extracted: sampleExtracted },
+          origin
+        );
       }
 
       const quest = rowToObject(qh, questRow);
 
       const status = String(quest.status || "").toLowerCase().trim();
-      if (status && status !== "active") return json(400, { ok: false, error: "quest not active" }, origin);
+      if (status && status !== "active") {
+        return json(400, { ok: false, error: "quest not active", status }, origin);
+      }
 
       const start_at = String(quest.start_at || "").trim();
       const end_at = String(quest.end_at || "").trim();
@@ -238,7 +261,7 @@ exports.handler = async (event) => {
       }
 
       const existing = srows.filter((r) =>
-        normalizeId(r[sQuestIdx]) === wantId &&
+        extractQuestId(r[sQuestIdx]) === wantId &&
         String(r[sUserIdx] || "").trim() === String(user.user_id || "").trim()
       );
 
@@ -255,7 +278,7 @@ exports.handler = async (event) => {
       const quota_total = asInt(quest.quota_total || 0, 0);
       if (quota_total > 0) {
         const questCount = srows.filter((r) => {
-          if (normalizeId(r[sQuestIdx]) !== wantId) return false;
+          if (extractQuestId(r[sQuestIdx]) !== wantId) return false;
           const st = String(r[sStatusIdx] || "").toLowerCase().trim();
           return st !== "rejected";
         }).length;
@@ -270,7 +293,7 @@ exports.handler = async (event) => {
       const obj = {};
       sh.forEach((h) => (obj[h] = ""));
       obj["submission_id"] = submission_id;
-      obj["quest_id"] = String(quest_id || "").trim();
+      obj["quest_id"] = wantId; // store canonical id
       obj["user_id"] = String(user.user_id || "");
       obj["submitted_at"] = submitted_at;
       if (sh.includes("proof_url")) obj["proof_url"] = sanitizeForSheet(proof_url);
@@ -283,7 +306,7 @@ exports.handler = async (event) => {
         ok: true,
         submission: {
           submission_id,
-          quest_id: String(quest_id || "").trim(),
+          quest_id: wantId,
           user_id: String(user.user_id || ""),
           submitted_at,
           status: "submitted",
@@ -294,7 +317,9 @@ exports.handler = async (event) => {
     if (action === "list_my") {
       const { headers: sh, rows: srows } = await readTab(sheets, sheetId, submissionsTab);
       const sUserIdx = sh.indexOf("user_id");
-      if (sUserIdx < 0) return json(500, { ok: false, error: "quest_submissions header missing user_id" }, origin);
+      if (sUserIdx < 0) {
+        return json(500, { ok: false, error: "quest_submissions header missing user_id" }, origin);
+      }
 
       const my = srows
         .filter((r) => String(r[sUserIdx] || "").trim() === String(user.user_id || "").trim())
