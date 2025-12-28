@@ -323,8 +323,24 @@ async function handlerApprove({ sheets, sheetId, tabs, authPayload, body }) {
   let subRow = null;
 
   for (let i = 0; i < subRows.length; i++) {
-    const rid = extractId(cell(subRows[i], idxSubId), "sub");
+    const rawCell = String(cell(subRows[i], idxSubId) ?? "");
+    const rid = extractId(rawCell, "sub");
+
+    // 先做嚴格比對
     if (rid === submission_id) {
+      subRowIdx = i;
+      subRow = subRows[i];
+      break;
+    }
+
+    // 再做寬鬆比對（避免 Sheets 儲存了不可見字元/額外內容）
+    const rawTrim = rawCell.trim();
+    if (rawTrim === submission_id) {
+      subRowIdx = i;
+      subRow = subRows[i];
+      break;
+    }
+    if (rawTrim.includes(submission_id) || submission_id.includes(rid)) {
       subRowIdx = i;
       subRow = subRows[i];
       break;
@@ -461,8 +477,24 @@ async function handlerReject({ sheets, sheetId, tabs, authPayload, body }) {
   let subRow = null;
 
   for (let i = 0; i < subRows.length; i++) {
-    const rid = extractId(cell(subRows[i], idxSubId), "sub");
+    const rawCell = String(cell(subRows[i], idxSubId) ?? "");
+    const rid = extractId(rawCell, "sub");
+
+    // 先做嚴格比對
     if (rid === submission_id) {
+      subRowIdx = i;
+      subRow = subRows[i];
+      break;
+    }
+
+    // 再做寬鬆比對（避免 Sheets 儲存了不可見字元/額外內容）
+    const rawTrim = rawCell.trim();
+    if (rawTrim === submission_id) {
+      subRowIdx = i;
+      subRow = subRows[i];
+      break;
+    }
+    if (rawTrim.includes(submission_id) || submission_id.includes(rid)) {
       subRowIdx = i;
       subRow = subRows[i];
       break;
