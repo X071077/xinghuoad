@@ -240,6 +240,89 @@ exports.handler = async (event) => {
       return json(200, { ok: true, listings: items }, headers);
     }
 
+    // ✅ approve_first: 不帶 listing_id，直接審核第一筆 submitted（測試/快速流程用）
+    // - 只要有 submitted，就直接生成 quests + 回寫該筆 dealer_listings
+    if (action === "approve_first") {
+      let foundRowNumber = -1;
+      let foundRow = null;
+      for (let r = 1; r < listings.length; r++) {
+        const st = safeStr(getCell(listings[r], lidx, "status")).toLowerCase();
+        if (st === "submitted") {
+          foundRowNumber = r + 1;
+          foundRow = listings[r];
+          break;
+        }
+      }
+      if (!foundRow) return json(404, { ok: false, error: "no submitted listing" }, headers);
+
+      // 直接走 approve 的同一套流程：先把 listing_id/rowNumber 設好，往下共用
+      body.listing_id = safeStr(getCell(foundRow, lidx, "listing_id")).trim();
+      // 將 row/rowNumber 複用到後續 approve 流程
+      // 注意：下方 approve 會再依 listing_id 找一次 row；為了避免再次找不到，這裡直接短路進 approve。
+
+      const listing_id = safeStr(body.listing_id).trim();
+      const rowNumber = foundRowNumber;
+      const row = foundRow;
+      const currentStatus = safeStr(getCell(row, lidx, "status")).toLowerCase();
+      if (currentStatus !== "submitted") {
+        return json(409, { ok: false, error: `Cannot approve status=${currentStatus}` }, headers);
+      }
+
+      const title = safeStr(getCell(row, lidx, "title")).trim();
+      const car_info_json = safeStr(getCell(row, lidx, "car_info_json"));
+      const budget_total = safeNum(getCell(row, lidx, "budget_total"), 0);
+      const reward_min = safeNum(getCell(row, lidx, "reward_min"), 0);
+      const reward_max = safeNum(getCell(row, lidx, "reward_max"), 0);
+
+      if (!title) return json(400, { ok: false, error: "title empty" }, headers);
+      if (!(budget_total > 0)) return json(400, { ok: false, error: "budget_total must be > 0" }, headers);
+      if (!(reward_min >= 0 && reward_max > 0 && reward_min <= reward_max)) {
+        return json(400, { ok: false, error: "invalid reward range" }, headers);
+      }
+      if (budget_total < reward_max) {
+        return json(400, { ok: false, error: "budget_total < reward_max (insufficient budget)" }, headers);
+      }
+
+      const quota_total = clampInt(Math.floor(budget_total / reward_max), 1, 1000000);
+      const quest_id = rid("q");
+      const admin_uid = safeStr(payload.user_id || "admin");
+      const ts = nowIso();
+      const description = `來源刊登：${listing_id}\n車源資料：${car_info_json}`;
+
+      const qrow = new Array(qh.length).fill("");
+      setCell(qrow, qidx, "quest_id", quest_id);
+      setCell(qrow, qidx, "title", title);
+      setCell(qrow, qidx, "description", description);
+      setCell(qrow, qidx, "status", "active");
+      setCell(qrow, qidx, "start_at", ts);
+      setCell(qrow, qidx, "end_at", "");
+      setCell(qrow, qidx, "reward_min", reward_min);
+      setCell(qrow, qidx, "reward_max", reward_max);
+      setCell(qrow, qidx, "quota_total", quota_total);
+      setCell(qrow, qidx, "quota_per_user", 1);
+      setCell(qrow, qidx, "require_level", 0);
+      setCell(qrow, qidx, "require_social_status", "approved");
+      setCell(qrow, qidx, "require_role", "");
+      setCell(qrow, qidx, "region_filter", "");
+      setCell(qrow, qidx, "created_at", ts);
+      setCell(qrow, qidx, "created_by", admin_uid);
+      setCell(qrow, qidx, "updated_at", ts);
+      setCell(qrow, qidx, "updated_by", admin_uid);
+
+      await appendRow(sheets, spreadsheetId, QUESTS_TAB, qrow);
+
+      setCell(row, lidx, "status", "approved");
+      setCell(row, lidx, "review_note", safeStr(body.review_note || "approved"));
+      setCell(row, lidx, "reviewed_at", ts);
+      setCell(row, lidx, "reviewed_by", admin_uid);
+      setCell(row, lidx, "quest_id", quest_id);
+      setCell(row, lidx, "updated_at", ts);
+
+      await updateRowByA1(sheets, spreadsheetId, LISTINGS_TAB, rowNumber, row);
+
+      return json(200, { ok: true, listing_id, quest_id, quota_total }, headers);
+    }
+
     const listing_id = safeStr(body.listing_id).trim();
     if (!listing_id) return json(400, { ok: false, error: "listing_id required" }, headers);
 
