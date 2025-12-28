@@ -226,7 +226,7 @@ exports.handler = async (event) => {
         const st = safeStr(getCell(row, lidx, "status")).toLowerCase();
         if (st === "submitted") {
           items.push({
-            listing_id: getCell(row, lidx, "listing_id"),
+            listing_id: safeStr(getCell(row, lidx, "listing_id")).trim(),
             dealer_id: getCell(row, lidx, "dealer_id"),
             user_id: getCell(row, lidx, "user_id"),
             title: getCell(row, lidx, "title"),
@@ -240,13 +240,13 @@ exports.handler = async (event) => {
       return json(200, { ok: true, listings: items }, headers);
     }
 
-    const listing_id = safeStr(body.listing_id);
+    const listing_id = safeStr(body.listing_id).trim();
     if (!listing_id) return json(400, { ok: false, error: "listing_id required" }, headers);
 
     let rowNumber = -1;
     let row = null;
     for (let r = 1; r < listings.length; r++) {
-      const id = safeStr(getCell(listings[r], lidx, "listing_id"));
+      const id = safeStr(getCell(listings[r], lidx, "listing_id")).trim();
       if (id === listing_id) {
         rowNumber = r + 1; // 1-based with header
         row = listings[r];
