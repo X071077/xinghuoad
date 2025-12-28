@@ -1,6 +1,6 @@
 // netlify/functions/quest-submissions.cjs
 // ✅ Quest Submissions: member submit + list my submissions
-// v3: robust quest_id matching via ID extraction (handles invisible/odd unicode chars)
+// v4: fix edge-case questRow lookup (fallback normalized includes)
 
 const { google } = require("googleapis");
 const jwt = require("jsonwebtoken");
@@ -210,7 +210,15 @@ exports.handler = async (event) => {
         return json(500, { ok: false, error: "quests header missing quest_id" }, origin);
       }
 
-      const questRow = qrows.find((r) => extractQuestId(r[qIdx]) === wantId);
+      let questRow = qrows.find((r) => extractQuestId(r[qIdx]) === wantId);
+
+// Fallback: handle cases where the cell contains odd characters that survive extraction/parsing differences
+if (!questRow) {
+  questRow = qrows.find((r) => {
+    const cell = String(r[qIdx] || "").normalize("NFKC").replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
+    return cell.includes(wantId) || extractQuestId(cell) === wantId;
+  });
+}
 
       if (!questRow) {
         const sample = qrows
