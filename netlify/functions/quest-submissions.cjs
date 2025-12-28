@@ -1,8 +1,6 @@
 // netlify/functions/quest-submissions.cjs
 // ✅ Quest Submissions: member submit + list my submissions
-// - CORS allowlist (same pattern as other functions)
-// - JWT required
-// - Basic guardrails: quest must be active; per-user duplicate prevent; quota checks (best-effort)
+// v2: robust quest_id matching (trim + remove zero-width/whitespace)
 
 const { google } = require("googleapis");
 const jwt = require("jsonwebtoken");
@@ -77,6 +75,14 @@ function sanitizeForSheet(value) {
   const s = String(value ?? "");
   if (/^[=\+\-@]/.test(s)) return "'" + s;
   return s;
+}
+
+function normalizeId(s) {
+  // Remove common invisible chars + all whitespace
+  return String(s || "")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .replace(/\s+/g, "")
+    .trim();
 }
 
 async function getSheetsClient() {
@@ -179,25 +185,32 @@ exports.handler = async (event) => {
     const questsTab = process.env.QUESTS_TAB || "quests";
 
     if (action === "submit") {
-      // partner/member submit quest proof
-      const quest_id = String(body.quest_id || "").trim();
+      const quest_id = String(body.quest_id || "");
       const proof_url = String(body.proof_url || "").trim();
       const note = String(body.note || "").trim();
 
-      if (!quest_id) return json(400, { ok: false, error: "quest_id required" }, origin);
+      const wantId = normalizeId(quest_id);
+      if (!wantId) return json(400, { ok: false, error: "quest_id required" }, origin);
 
       const { headers: qh, rows: qrows } = await readTab(sheets, sheetId, questsTab);
       const qIdx = qh.indexOf("quest_id");
       if (qIdx < 0) return json(500, { ok: false, error: "quests header missing quest_id" }, origin);
 
-      const questRow = qrows.find((r) => String(r[qIdx] || "").trim() === quest_id);
-      if (!questRow) return json(404, { ok: false, error: "quest not found" }, origin);
+      const questRow = qrows.find((r) => normalizeId(r[qIdx]) === wantId);
+      if (!questRow) {
+        // Provide minimal diagnostic without leaking too much
+        const sample = qrows
+          .map((r) => String(r[qIdx] || ""))
+          .filter((x) => String(x).trim() !== "")
+          .slice(0, 10);
+        return json(404, { ok: false, error: "quest not found", want: String(quest_id || "").trim(), sample_ids: sample }, origin);
+      }
+
       const quest = rowToObject(qh, questRow);
 
       const status = String(quest.status || "").toLowerCase().trim();
       if (status && status !== "active") return json(400, { ok: false, error: "quest not active" }, origin);
 
-      // Optional time window
       const start_at = String(quest.start_at || "").trim();
       const end_at = String(quest.end_at || "").trim();
       const now = Date.now();
@@ -210,7 +223,6 @@ exports.handler = async (event) => {
         if (!Number.isNaN(t) && now > t) return json(400, { ok: false, error: "quest ended" }, origin);
       }
 
-      // Role gate (quests.require_role)
       const require_role = String(quest.require_role || "").trim();
       if (require_role && String(user.role || "") !== require_role) {
         return json(403, { ok: false, error: "role not allowed" }, origin);
@@ -225,14 +237,12 @@ exports.handler = async (event) => {
         return json(500, { ok: false, error: "quest_submissions headers missing quest_id/user_id" }, origin);
       }
 
-      // Prevent duplicate active/pending submissions for same quest by same user (best-effort)
       const existing = srows.filter((r) =>
-        String(r[sQuestIdx] || "").trim() === quest_id &&
+        normalizeId(r[sQuestIdx]) === wantId &&
         String(r[sUserIdx] || "").trim() === String(user.user_id || "").trim()
       );
 
       const quota_per_user = asInt(quest.quota_per_user || 1, 1);
-      // Count submissions that are not rejected (allow resubmit after rejected/need_fix)
       const activeCount = existing.filter((r) => {
         const st = String(r[sStatusIdx] || "").toLowerCase().trim();
         return st !== "rejected" && st !== "need_fix";
@@ -242,11 +252,10 @@ exports.handler = async (event) => {
         return json(400, { ok: false, error: "quota_per_user reached" }, origin);
       }
 
-      // Quota total (best-effort): count non-rejected submissions for quest
       const quota_total = asInt(quest.quota_total || 0, 0);
       if (quota_total > 0) {
         const questCount = srows.filter((r) => {
-          if (String(r[sQuestIdx] || "").trim() !== quest_id) return false;
+          if (normalizeId(r[sQuestIdx]) !== wantId) return false;
           const st = String(r[sStatusIdx] || "").toLowerCase().trim();
           return st !== "rejected";
         }).length;
@@ -258,11 +267,10 @@ exports.handler = async (event) => {
       const submission_id = makeId("sub");
       const submitted_at = nowIso();
 
-      // Compose row using existing header order
       const obj = {};
       sh.forEach((h) => (obj[h] = ""));
       obj["submission_id"] = submission_id;
-      obj["quest_id"] = quest_id;
+      obj["quest_id"] = String(quest_id || "").trim();
       obj["user_id"] = String(user.user_id || "");
       obj["submitted_at"] = submitted_at;
       if (sh.includes("proof_url")) obj["proof_url"] = sanitizeForSheet(proof_url);
@@ -275,7 +283,7 @@ exports.handler = async (event) => {
         ok: true,
         submission: {
           submission_id,
-          quest_id,
+          quest_id: String(quest_id || "").trim(),
           user_id: String(user.user_id || ""),
           submitted_at,
           status: "submitted",
@@ -299,7 +307,6 @@ exports.handler = async (event) => {
 
     return json(400, { ok: false, error: "Unknown action" }, origin);
   } catch (e) {
-    // Don't leak internals
     return json(500, { ok: false, error: "Server error" }, origin);
   }
 };
