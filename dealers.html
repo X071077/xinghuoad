@@ -703,10 +703,10 @@
       });
     })();
 
-    async function fetchDealerSnapshot(token){
+    async function fetchDealerSnapshot(){
       const res = await fetch('/.netlify/functions/dealer-listings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({ action: 'snapshot' })
       });
       if(!res.ok){
