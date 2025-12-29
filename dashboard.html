@@ -1160,6 +1160,150 @@
         el.textContent = next.toLocaleString();
       }, 30000);
     });
-  </script>
+  
+
+    // =========================
+    // Quests integration (/.netlify/functions/quests)
+    // =========================
+    async function questsApi(action, payload){
+      const res = await fetch("/.netlify/functions/quests", {
+        method:"POST",
+        headers:{ "content-type":"application/json", ...getAuth() },
+        body: JSON.stringify({ action, ...payload })
+      });
+      return res.json();
+    }
+
+    function fmtMoney(v){
+      const n = Number(v||0);
+      if(!Number.isFinite(n)) return "-";
+      return "$ " + n.toLocaleString("zh-TW");
+    }
+
+    function loadLocalMyQuests(){
+      try{
+        return JSON.parse(localStorage.getItem("xinghuo_my_quests")||"[]") || [];
+      }catch(e){ return []; }
+    }
+    function saveLocalMyQuests(list){
+      localStorage.setItem("xinghuo_my_quests", JSON.stringify(list||[]));
+    }
+
+    function renderMyQuests(){
+      const box = document.getElementById("myQuestsList");
+      if(!box) return;
+      const mine = loadLocalMyQuests();
+      if(!mine.length){
+        box.innerHTML = `<div class="muted">尚未接受任務。你可以在上方「可接任務」點擊「接受任務」。</div>`;
+        return;
+      }
+      box.innerHTML = mine.map(q=>{
+        return `
+          <div class="questCard">
+            <div class="questTop">
+              <div class="questTitle">${escapeHtml(q.title||"-")}</div>
+              <div class="questBadge">${escapeHtml(q.status_label||"已接受")}</div>
+            </div>
+            <div class="questDesc">${escapeHtml(q.description||"")}</div>
+            <div class="questMeta">
+              <span>獎勵：${fmtMoney(q.reward_min)} ~ ${fmtMoney(q.reward_max)}</span>
+              <span>期限：${escapeHtml(q.end_at||"-")}</span>
+            </div>
+            <div class="questActions">
+              <button class="btnMini danger" data-act="remove" data-id="${escapeHtml(q.quest_id||"")}"><i class="fas fa-trash"></i> 移除</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      box.querySelectorAll("button[data-act='remove']").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          const id = btn.getAttribute("data-id");
+          const next = loadLocalMyQuests().filter(x=>x.quest_id!==id);
+          saveLocalMyQuests(next);
+          renderMyQuests();
+          // sync to cloud (existing syncAll)
+          try{ syncAll(); }catch(e){}
+        });
+      });
+    }
+
+    async function loadActiveQuests(){
+      const list = document.getElementById("questList");
+      if(!list) return;
+      list.innerHTML = `<div class="muted">載入中…</div>`;
+
+      const r = await questsApi("list_active", {});
+      if(!r?.ok){
+        list.innerHTML = `<div class="muted">載入失敗：${escapeHtml(r?.error||"unknown")}</div>`;
+        return;
+      }
+      const items = r.items || [];
+      if(!items.length){
+        list.innerHTML = `<div class="muted">目前沒有可接任務</div>`;
+        return;
+      }
+
+      list.innerHTML = items.map(q=>{
+        const quota = (q.quota_left!=null) ? `名額：${q.quota_left}/${q.quota_total}` : "";
+        const lvl = (q.require_level!=null && q.require_level!=="") ? `等級 ≥ ${q.require_level}` : "";
+        const req = [quota,lvl].filter(Boolean).join(" · ");
+        return `
+          <div class="questCard">
+            <div class="questTop">
+              <div class="questTitle">${escapeHtml(q.title||"-")}</div>
+              <div class="questBadge">${escapeHtml(q.status||"active")}</div>
+            </div>
+            <div class="questDesc">${escapeHtml(q.description||"")}</div>
+            <div class="questMeta">
+              <span>獎勵：${fmtMoney(q.reward_min)} ~ ${fmtMoney(q.reward_max)}</span>
+              <span>期限：${escapeHtml(q.end_at||"-")}</span>
+            </div>
+            <div class="muted" style="margin-top:8px;">${escapeHtml(req||"")}</div>
+            <div class="questActions">
+              <button class="btnMini" data-act="accept" data-id="${escapeHtml(q.quest_id||"")}"><i class="fas fa-handshake"></i> 接受任務</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      list.querySelectorAll("button[data-act='accept']").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          const id = btn.getAttribute("data-id");
+          const item = items.find(x=>x.quest_id===id);
+          if(!item){ return; }
+          const mine = loadLocalMyQuests();
+          if(mine.some(x=>x.quest_id===id)){
+            showToast("提示", "你已經接受過此任務");
+            return;
+          }
+          mine.unshift({
+            quest_id: item.quest_id,
+            title: item.title,
+            description: item.description,
+            reward_min: item.reward_min,
+            reward_max: item.reward_max,
+            end_at: item.end_at,
+            status_label: "進行中"
+          });
+          saveLocalMyQuests(mine);
+          renderMyQuests();
+          showToast("完成", "已加入「我的任務」");
+          // sync to cloud (existing dashboard save)
+          try{ syncAll(); }catch(e){}
+        });
+      });
+    }
+
+    // hook into existing init()
+    try{
+      const __oldInitDash = init;
+      init = async function(){
+        await __oldInitDash();
+        await loadActiveQuests();
+        renderMyQuests();
+      };
+    }catch(e){}
+</script>
 </body>
 </html>

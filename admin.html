@@ -502,6 +502,7 @@
           <div class="side-link" data-target="#users"><i class="fas fa-users"></i> 用戶管理</div>
           <div class="side-link" data-target="#dealers"><i class="fas fa-car"></i> Dealer 管理</div>
           <div class="side-link" data-target="#quests"><i class="fas fa-bullseye"></i> 任務管理</div>
+          <div class="side-link" data-target="#reviews"><i class="fas fa-clipboard-check"></i> 審核中心</div>
           <div class="side-link" data-target="#social-verify"><i class="fas fa-circle-check"></i> 社群驗證審核</div>
         </div>
       </aside>
@@ -632,7 +633,78 @@
         </section>
 
         <!-- Social Verify -->
-        <section class="section" id="social-verify">
+        
+        <!-- Reviews Center -->
+        <section class="section" id="reviews" style="display:none;">
+          <div class="section-head">
+            <h2 class="title"><i class="fas fa-clipboard-check"></i> 審核中心</h2>
+            <div class="muted">集中處理「刊登審核」與「任務提交審核」。</div>
+          </div>
+
+          <div class="grid2">
+            <div class="card">
+              <div class="card-head">
+                <div class="card-title">刊登審核（dealer_listings）</div>
+                <div class="card-actions">
+                  <button class="btn ghost" id="btnReloadListingPending"><i class="fas fa-rotate"></i> 重新載入</button>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>submitted_at</th>
+                      <th>listing_id</th>
+                      <th>dealer_id</th>
+                      <th>title</th>
+                      <th>budget</th>
+                      <th>reward</th>
+                      <th style="width:260px;">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="listingPendingTbody">
+                    <tr><td colspan="7" class="muted">尚未載入</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="muted" style="margin-top:10px; font-size:12px;">
+                * Approve 會將刊登狀態設為 active（第一次審核），Reject 會標記 need_fix 並保留原因。
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head">
+                <div class="card-title">任務提交審核（quest_submissions）</div>
+                <div class="card-actions">
+                  <button class="btn ghost" id="btnReloadSubmissionPending"><i class="fas fa-rotate"></i> 重新載入</button>
+                </div>
+              </div>
+
+              <div class="table-wrap">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>submitted_at</th>
+                      <th>submission_id</th>
+                      <th>quest_id</th>
+                      <th>user_id</th>
+                      <th>proof</th>
+                      <th style="width:320px;">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="submissionPendingTbody">
+                    <tr><td colspan="6" class="muted">尚未載入</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="muted" style="margin-top:10px; font-size:12px;">
+                * Approve 需輸入 payout_amount（TWD）。Reject 會標記 rejected 並保留原因。
+              </div>
+            </div>
+          </div>
+        </section>
+<section class="section" id="social-verify">
           <div class="container">
             <div class="section-head">
               <h2 class="section-title"><i class="fas fa-circle-check"></i> 社群驗證審核</h2>
@@ -1852,6 +1924,8 @@
 
     // init
     (function init(){
+      // Reviews center
+      
       const auth = requireLogin();
       if(!auth) return;
       guardAdmin(auth.user);
@@ -1859,6 +1933,184 @@
       wireSocialVerifyUIInit();
       syncAll();
     })();
-  </script>
+  
+
+    // =========================
+    // Reviews Center (listing-review / submission-review)
+    // =========================
+    async function listingReviewApi(action, payload){
+      return fetch("/.netlify/functions/listing-review", {
+        method:"POST",
+        headers:{ "content-type":"application/json", ...getAuth() },
+        body: JSON.stringify({ action, ...payload })
+      }).then(r=>r.json());
+    }
+
+    async function submissionReviewApi(action, payload){
+      return fetch("/.netlify/functions/submission-review", {
+        method:"POST",
+        headers:{ "content-type":"application/json", ...getAuth() },
+        body: JSON.stringify({ action, ...payload })
+      }).then(r=>r.json());
+    }
+
+    function money(v){
+      const n = Number(v||0);
+      if(!Number.isFinite(n)) return "-";
+      return "$ " + n.toLocaleString("zh-TW");
+    }
+
+    function renderListingPending(items){
+      const tb = $("#listingPendingTbody");
+      if(!items || !items.length){
+        tb.innerHTML = `<tr><td colspan="7" class="muted">目前沒有待審刊登</td></tr>`;
+        return;
+      }
+      tb.innerHTML = items.map(x=>{
+        const title = escapeHtml(x.title||"-");
+        const budget = money(x.budget_total);
+        const reward = `${money(x.reward_min)} ~ ${money(x.reward_max)}`;
+        return `
+          <tr>
+            <td>${escapeHtml(x.submitted_at||"-")}</td>
+            <td><code>${escapeHtml(x.listing_id||"-")}</code></td>
+            <td><code>${escapeHtml(x.dealer_id||"-")}</code></td>
+            <td>${title}</td>
+            <td>${budget}</td>
+            <td>${reward}</td>
+            <td>
+              <button class="btnMini" data-act="approve" data-id="${escapeHtml(x.listing_id||"")}"><i class="fas fa-check"></i> Approve</button>
+              <button class="btnMini danger" data-act="reject" data-id="${escapeHtml(x.listing_id||"")}"><i class="fas fa-xmark"></i> Reject</button>
+              <button class="btnMini ghost" data-act="open" data-id="${escapeHtml(x.listing_id||"")}"><i class="fas fa-eye"></i> 詳細</button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function renderSubmissionPending(items){
+      const tb = $("#submissionPendingTbody");
+      if(!items || !items.length){
+        tb.innerHTML = `<tr><td colspan="6" class="muted">目前沒有待審提交</td></tr>`;
+        return;
+      }
+      tb.innerHTML = items.map(x=>{
+        const proof = x.proof_url ? `<a href="${escapeHtml(x.proof_url)}" target="_blank" rel="noopener">開啟</a>` : "-";
+        return `
+          <tr>
+            <td>${escapeHtml(x.submitted_at||"-")}</td>
+            <td><code>${escapeHtml(x.submission_id||"-")}</code></td>
+            <td><code>${escapeHtml(x.quest_id||"-")}</code></td>
+            <td><code>${escapeHtml(x.user_id||"-")}</code></td>
+            <td>${proof}</td>
+            <td>
+              <button class="btnMini" data-act="approve" data-id="${escapeHtml(x.submission_id||"")}"><i class="fas fa-check"></i> Approve</button>
+              <button class="btnMini danger" data-act="reject" data-id="${escapeHtml(x.submission_id||"")}"><i class="fas fa-xmark"></i> Reject</button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    async function loadListingPending(){
+      const tb = $("#listingPendingTbody");
+      tb.innerHTML = `<tr><td colspan="7" class="muted">載入中…</td></tr>`;
+      const res = await listingReviewApi("list_pending", {});
+      if(!res || !res.ok){
+        tb.innerHTML = `<tr><td colspan="7" class="muted">載入失敗：${escapeHtml(res?.error||"unknown")}</td></tr>`;
+        return;
+      }
+      renderListingPending(res.items || []);
+    }
+
+    async function loadSubmissionPending(){
+      const tb = $("#submissionPendingTbody");
+      tb.innerHTML = `<tr><td colspan="6" class="muted">載入中…</td></tr>`;
+      const res = await submissionReviewApi("list_pending", {});
+      if(!res || !res.ok){
+        tb.innerHTML = `<tr><td colspan="6" class="muted">載入失敗：${escapeHtml(res?.error||"unknown")}</td></tr>`;
+        return;
+      }
+      renderSubmissionPending(res.items || []);
+    }
+
+    function wireReviewsCenter(){
+      const btn1 = $("#btnReloadListingPending");
+      const btn2 = $("#btnReloadSubmissionPending");
+      btn1 && btn1.addEventListener("click", loadListingPending);
+      btn2 && btn2.addEventListener("click", loadSubmissionPending);
+
+      $("#listingPendingTbody")?.addEventListener("click", async (e)=>{
+        const b = e.target.closest("button");
+        if(!b) return;
+        const act = b.dataset.act;
+        const listing_id = b.dataset.id;
+        if(!listing_id) return;
+
+        if(act==="open"){
+          showToast("提示", "目前後台僅提供快速審核；如需查看完整 car_info_json，請到 Google Sheets 的 dealer_listings 內查看。");
+          return;
+        }
+
+        if(act==="approve"){
+          b.disabled = true;
+          const res = await listingReviewApi("approve_first", { listing_id });
+          b.disabled = false;
+          if(!res?.ok){ showToast("失敗", res?.error||"approve_failed"); return; }
+          showToast("完成", `已 Approve：${listing_id}`);
+          loadListingPending();
+          return;
+        }
+
+        if(act==="reject"){
+          const reason = prompt("請輸入 Reject 原因（會寫入 review_note / need_fix_reason）：", "");
+          if(reason===null) return;
+          b.disabled = true;
+          const res = await listingReviewApi("reject", { listing_id, reason });
+          b.disabled = false;
+          if(!res?.ok){ showToast("失敗", res?.error||"reject_failed"); return; }
+          showToast("完成", `已 Reject：${listing_id}`);
+          loadListingPending();
+          return;
+        }
+      });
+
+      $("#submissionPendingTbody")?.addEventListener("click", async (e)=>{
+        const b = e.target.closest("button");
+        if(!b) return;
+        const act = b.dataset.act;
+        const submission_id = b.dataset.id;
+        if(!submission_id) return;
+
+        if(act==="approve"){
+          const payout_amount = Number(prompt("請輸入 payout_amount（TWD 數字）：", "5000"));
+          if(!Number.isFinite(payout_amount) || payout_amount<=0){
+            showToast("取消", "payout_amount 不正確");
+            return;
+          }
+          b.disabled = true;
+          const res = await submissionReviewApi("approve", { submission_id, payout_amount });
+          b.disabled = false;
+          if(!res?.ok){ showToast("失敗", res?.error||"approve_failed"); return; }
+          showToast("完成", `已 Approve：${submission_id}`);
+          loadSubmissionPending();
+          return;
+        }
+
+        if(act==="reject"){
+          const reason = prompt("請輸入 Reject 原因（會寫入 review_reason）：", "");
+          if(reason===null) return;
+          b.disabled = true;
+          const res = await submissionReviewApi("reject", { submission_id, reason });
+          b.disabled = false;
+          if(!res?.ok){ showToast("失敗", res?.error||"reject_failed"); return; }
+          showToast("完成", `已 Reject：${submission_id}`);
+          loadSubmissionPending();
+          return;
+        }
+      });
+    }
+
+</script>
 </body>
 </html>

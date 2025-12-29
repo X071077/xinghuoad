@@ -321,7 +321,25 @@
       .stats-row{grid-template-columns:1fr}
       table{min-width:760px}
     }
-  </style>
+  
+    /* Modal (lightweight) */
+    .modal{position:fixed; inset:0; z-index:60;}
+    .modal-backdrop{position:absolute; inset:0; background:rgba(0,0,0,.55); backdrop-filter: blur(2px);}
+    .modal-card{position:relative; width:min(860px, calc(100vw - 24px)); margin:64px auto; background:rgba(17,23,40,.92); border:1px solid rgba(255,255,255,.12); border-radius:16px; box-shadow:0 18px 60px rgba(0,0,0,.45); overflow:hidden;}
+    .modal-head{display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.10);}
+    .modal-title{font-weight:800;}
+    .modal-body{padding:16px;}
+    .modal-foot{display:flex; gap:10px; justify-content:flex-end; padding:14px 16px; border-top:1px solid rgba(255,255,255,.10);}
+    .iconBtn{width:36px; height:36px; border-radius:10px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); color:rgba(255,255,255,.92); cursor:pointer;}
+    .iconBtn:hover{background:rgba(255,255,255,.10);}
+    .formGrid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+    .field{display:flex; flex-direction:column; gap:6px;}
+    .label{font-size:12px; color:rgba(255,255,255,.72);}
+    .input,.textarea{width:100%; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); color:rgba(255,255,255,.92);}
+    .textarea{resize:vertical;}
+    .hint{font-size:12px; color:rgba(255,255,255,.65);}
+    @media (max-width:720px){ .formGrid{grid-template-columns:1fr;} .modal-card{margin:18px auto;} }
+</style>
 </head>
 
 <body>
@@ -686,7 +704,7 @@
     })();
 
     async function fetchDealerSnapshot(token){
-      const res = await fetch('/.netlify/functions/dealer', {
+      const res = await fetch('/.netlify/functions/dealer-listings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
         body: JSON.stringify({ action: 'snapshot' })
@@ -793,6 +811,234 @@
       wireFilters();
       syncAll();
     })();
-  </script>
-</body>
+  
+
+  // =========================
+  // dealer_listings integration
+  // =========================
+  function escapeHtml(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#39;");
+  }
+
+  function authHeaders(){
+    const token = localStorage.getItem("xinghuo_token") || "";
+    return token ? { "Authorization": "Bearer " + token } : {};
+  }
+
+  async function dealerListingsApi(action, payload){
+    const res = await fetch("/.netlify/functions/dealer-listings", {
+      method:"POST",
+      headers:{ "content-type":"application/json", ...authHeaders() },
+      body: JSON.stringify({ action, ...payload })
+    });
+    return res.json();
+  }
+
+  function fmtMoney(v){
+    const n = Number(v||0);
+    if(!Number.isFinite(n)) return "-";
+    return "$ " + n.toLocaleString("zh-TW");
+  }
+
+  function statusChip(s){
+    const t = String(s||"").toLowerCase();
+    if(t==="active") return `<span class="chip ok">active</span>`;
+    if(t==="need_fix") return `<span class="chip warn">need_fix</span>`;
+    if(t==="rejected") return `<span class="chip bad">rejected</span>`;
+    return `<span class="chip">${escapeHtml(s||"submitted")}</span>`;
+  }
+
+  async function loadMyListings(){
+    const tb = document.getElementById("listingsTbody");
+    if(!tb) return;
+    tb.innerHTML = `<tr><td colspan="7" class="muted">載入中…</td></tr>`;
+    const r = await dealerListingsApi("list_my", {});
+    if(!r?.ok){
+      tb.innerHTML = `<tr><td colspan="7" class="muted">載入失敗：${escapeHtml(r?.error||"unknown")}</td></tr>`;
+      return;
+    }
+    const items = r.items || [];
+    if(!items.length){
+      tb.innerHTML = `<tr><td colspan="7" class="muted">目前沒有刊登紀錄</td></tr>`;
+      return;
+    }
+    tb.innerHTML = items.map(x=>{
+      return `
+        <tr>
+          <td>${escapeHtml(x.submitted_at||"-")}</td>
+          <td><code>${escapeHtml(x.listing_id||"-")}</code></td>
+          <td>${escapeHtml(x.title||"-")}</td>
+          <td>${fmtMoney(x.budget_total)}</td>
+          <td>${fmtMoney(x.reward_min)} ~ ${fmtMoney(x.reward_max)}</td>
+          <td>${statusChip(x.status)}</td>
+          <td class="muted">${escapeHtml(x.review_note||"-")}</td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  function openListingModal(){
+    const m = document.getElementById("listingModal");
+    if(!m) return;
+    m.style.display="block";
+    document.body.style.overflow="hidden";
+  }
+  function closeListingModal(){
+    const m = document.getElementById("listingModal");
+    if(!m) return;
+    m.style.display="none";
+    document.body.style.overflow="";
+  }
+
+  function wireListingModal(){
+    const m = document.getElementById("listingModal");
+    if(!m) return;
+
+    m.addEventListener("click", (e)=>{
+      const el = e.target.closest("[data-close]");
+      if(el) closeListingModal();
+    });
+
+    document.getElementById("btnCreateListing")?.addEventListener("click", ()=>{
+      openListingModal();
+    });
+
+    document.getElementById("btnSubmitListing")?.addEventListener("click", async ()=>{
+      const title = (document.getElementById("mTitle")?.value||"").trim();
+      const budget_total = Number(document.getElementById("mBudget")?.value||0);
+      const reward_min = Number(document.getElementById("mRewardMin")?.value||0);
+      const reward_max = Number(document.getElementById("mRewardMax")?.value||0);
+      const quest_id = (document.getElementById("mQuestId")?.value||"").trim();
+
+      let car_info_json = (document.getElementById("mCarJson")?.value||"").trim();
+
+      if(!title){
+        showToast("缺少資料", "請輸入 title");
+        return;
+      }
+      if(car_info_json){
+        try{ JSON.parse(car_info_json); }catch(e){
+          showToast("JSON 錯誤", "car_info_json 不是合法 JSON");
+          return;
+        }
+      }else{
+        car_info_json = "{}";
+      }
+
+      const btn = document.getElementById("btnSubmitListing");
+      btn && (btn.disabled=true);
+
+      const r = await dealerListingsApi("create", {
+        title,
+        car_info_json,
+        budget_total: Number.isFinite(budget_total)?budget_total:0,
+        reward_min: Number.isFinite(reward_min)?reward_min:0,
+        reward_max: Number.isFinite(reward_max)?reward_max:0,
+        quest_id: quest_id || ""
+      });
+
+      btn && (btn.disabled=false);
+
+      if(!r?.ok){
+        showToast("失敗", r?.error||"create_failed");
+        return;
+      }
+      showToast("完成", "已提交刊登審核");
+      closeListingModal();
+      ["mTitle","mBudget","mRewardMin","mRewardMax","mCarJson","mQuestId"].forEach(id=>{
+        const el=document.getElementById(id); if(el) el.value="";
+      });
+      loadMyListings();
+    });
+  }
+
+  // Override old snapshot (dealer.cjs) -> minimal UI from local user
+  async function fetchDealerSnapshot(){
+    const user = JSON.parse(localStorage.getItem("xinghuo_user")||"{}");
+    const navUsername = document.getElementById("navUsername");
+    if(navUsername) navUsername.textContent = user.username || user.name || "Dealer";
+
+    const dn = document.getElementById("dealerName");
+    if(dn) dn.textContent = user.name || "-";
+    const de = document.getElementById("dealerEmail");
+    if(de) de.textContent = user.email || "-";
+
+    const s = String(user.social_status||"").toLowerCase();
+    const chip = document.getElementById("verifyChip");
+    const txt = document.getElementById("verifyText");
+    if(chip && txt){
+      if(s==="approved"){ chip.className="chip ok"; txt.textContent="已驗證"; }
+      else if(s==="submitted"){ chip.className="chip warn"; txt.textContent="審核中"; }
+      else { chip.className="chip"; txt.textContent="未送審"; }
+    }
+
+    await loadMyListings();
+  }
+
+  // Extend init
+  try{
+    const __oldInit = init;
+    init = async function(){
+      await __oldInit();
+      wireListingModal();
+      await loadMyListings();
+    };
+  }catch(e){}
+</script>
+
+  <!-- Create Listing Modal -->
+  <div class="modal" id="listingModal" style="display:none;">
+    <div class="modal-backdrop" data-close="1"></div>
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title"><i class="fas fa-rectangle-list"></i> 新增刊登（提交審核）</div>
+        <button class="iconBtn" data-close="1" aria-label="close"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="formGrid">
+          <label class="field">
+            <span class="label">標題（title）</span>
+            <input id="mTitle" class="input" placeholder="例：2020 Toyota Corolla / 里程 6 萬" />
+          </label>
+
+          <label class="field">
+            <span class="label">預算（budget_total）</span>
+            <input id="mBudget" class="input" type="number" min="0" step="1" placeholder="例：50000" />
+          </label>
+
+          <label class="field">
+            <span class="label">獎勵下限（reward_min）</span>
+            <input id="mRewardMin" class="input" type="number" min="0" step="1" placeholder="例：5000" />
+          </label>
+
+          <label class="field">
+            <span class="label">獎勵上限（reward_max）</span>
+            <input id="mRewardMax" class="input" type="number" min="0" step="1" placeholder="例：20000" />
+          </label>
+
+          <label class="field" style="grid-column:1 / -1;">
+            <span class="label">車輛資訊（car_info_json，JSON）</span>
+            <textarea id="mCarJson" class="textarea" rows="8" placeholder='{"brand":"Toyota","model":"Corolla","year":2020,"mileage":60000,"notes":"..."}'></textarea>
+            <span class="hint">可先用最簡 JSON；需要更完整資料再逐步補齊。</span>
+          </label>
+
+          <label class="field" style="grid-column:1 / -1;">
+            <span class="label">綁定任務（quest_id，可留空）</span>
+            <input id="mQuestId" class="input" placeholder="例：q_xxxxx（如有）" />
+          </label>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn ghost" data-close="1">取消</button>
+        <button class="btn" id="btnSubmitListing"><i class="fas fa-paper-plane"></i> 提交審核</button>
+      </div>
+    </div>
+  </div>
+
+</body></body>
 </html>
