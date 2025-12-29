@@ -967,11 +967,11 @@
       return { token, user };
     }
 
+
     function authHeaders(){
       const token = localStorage.getItem('xinghuo_token') || '';
       return token ? { 'Authorization': 'Bearer ' + token } : {};
     }
-
 
     function requireLogin(){
       const a = getAuth();

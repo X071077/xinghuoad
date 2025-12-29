@@ -799,6 +799,11 @@
         location.href = './login.html';
         return null;
       }
+
+    function authHeaders(){
+      const token = localStorage.getItem('xinghuo_token') || '';
+      return token ? { 'Authorization': 'Bearer ' + token } : {};
+    }
       return { token, user };
     }
 
