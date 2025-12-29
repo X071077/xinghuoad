@@ -1168,7 +1168,7 @@
     async function questsApi(action, payload){
       const res = await fetch("/.netlify/functions/quests", {
         method:"POST",
-        headers:{ "content-type":"application/json", ...getAuth() },
+        headers:{ "content-type":"application/json", ...authHeaders() },
         body: JSON.stringify({ action, ...payload })
       });
       return res.json();

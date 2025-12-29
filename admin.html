@@ -967,6 +967,12 @@
       return { token, user };
     }
 
+    function authHeaders(){
+      const token = localStorage.getItem('xinghuo_token') || '';
+      return token ? { 'Authorization': 'Bearer ' + token } : {};
+    }
+
+
     function requireLogin(){
       const a = getAuth();
       if(!a.token || !a.user){
@@ -1941,7 +1947,7 @@
     async function listingReviewApi(action, payload){
       return fetch("/.netlify/functions/listing-review", {
         method:"POST",
-        headers:{ "content-type":"application/json", ...getAuth() },
+        headers:{ "content-type":"application/json", ...authHeaders() },
         body: JSON.stringify({ action, ...payload })
       }).then(r=>r.json());
     }
@@ -1949,7 +1955,7 @@
     async function submissionReviewApi(action, payload){
       return fetch("/.netlify/functions/submission-review", {
         method:"POST",
-        headers:{ "content-type":"application/json", ...getAuth() },
+        headers:{ "content-type":"application/json", ...authHeaders() },
         body: JSON.stringify({ action, ...payload })
       }).then(r=>r.json());
     }
