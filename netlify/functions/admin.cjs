@@ -22,6 +22,17 @@
 const { google } = require("googleapis");
 const jwt = require("jsonwebtoken");
 
+// ---- CORS allowlist helper (兼容 ALLOWED_ORIGINS / CORS_ALLOWED_ORIGINS + Netlify URL) ----
+function __getAllowedOrigins() {
+  const fromEnv = (process.env.ALLOWED_ORIGINS || (process.env.ALLOWED_ORIGINS || process.env.CORS_ALLOWED_ORIGINS) || "").trim();
+  const list = fromEnv ? fromEnv.split(",").map(s => s.trim()).filter(Boolean) : [];
+  const netlifyUrls = [process.env.URL, process.env.DEPLOY_PRIME_URL, process.env.DEPLOY_URL]
+    .filter(Boolean)
+    .map(s => String(s).trim());
+  return Array.from(new Set([...list, ...netlifyUrls]));
+}
+
+
 const DEFAULT_ALLOWED_ORIGINS = [
   "https://xinghuoad.xyz",
   "https://www.xinghuoad.xyz",
@@ -33,7 +44,7 @@ function getRequestOrigin(headers) {
 }
 
 function getAllowedOrigins() {
-  const raw = process.env.CORS_ALLOWED_ORIGINS || "";
+  const raw = (process.env.ALLOWED_ORIGINS || process.env.CORS_ALLOWED_ORIGINS) || "";
   if (!raw.trim()) return DEFAULT_ALLOWED_ORIGINS;
   return raw
     .split(",")

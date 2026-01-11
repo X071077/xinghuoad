@@ -789,6 +789,13 @@
     function safeParse(json, fallback){
       try { return JSON.parse(json); } catch(e){ return fallback; }
     }
+    function authHeaders(){
+      const token = localStorage.getItem('xinghuo_token') || '';
+      return token ? { 'Authorization': 'Bearer ' + token } : {};
+    }
+      
+
+
 
     function requireLogin(){
       const token = localStorage.getItem('xinghuo_token');
@@ -799,12 +806,7 @@
         location.href = './login.html';
         return null;
       }
-
-    function authHeaders(){
-      const token = localStorage.getItem('xinghuo_token') || '';
-      return token ? { 'Authorization': 'Bearer ' + token } : {};
-    }
-      return { token, user };
+return { token, user };
     }
 
     function setText(id, text){
