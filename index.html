@@ -1,858 +1,246 @@
-<!-- =========================
-     index.html (updated)
-     ✅ Header「選擇身分」→ 改為「會員中心」並導向 dashboard.html
-     ✅ Footer「選擇身分」→ 改為「會員中心」並導向 dashboard.html
-     ✅ 「推廣夥伴區」按鈕 → 導向 dashboard.html
-     ✅ 首頁右上角：未登入顯示「註冊/登入」；已登入顯示「使用者名稱/登出」
-     ✅ 登出行為與 dashboard 同步：清除 xinghuo_token / xinghuo_user / xinghuo_my_quests
-     ✅ 其餘風格/圖片路徑/功能不動
-     ========================= -->
 <!doctype html>
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>星火廣告｜首頁</title>
-  <meta name="description" content="星火廣告 首頁：Header + 選擇身分 + 關於我們 + 分享區 + Footer" />
+  <title>平台首頁 v2</title>
+  <meta name="description" content="平台首頁：用途說明與角色入口" />
   <style>
-    :root{
-      --bg: #0b0f19;
-      --text: rgba(255,255,255,.92);
-      --muted: rgba(255,255,255,.74);
-      --shadow: 0 18px 60px rgba(0,0,0,.28);
-      --radius: 16px;
+    :root {
+      --bg: #0f1218;
+      --surface: #161b24;
+      --border: #2a3140;
+      --text: #f5f7fb;
+      --muted: #b9c0d0;
+      --accent: #6aa8ff;
+      --radius: 14px;
       --max: 1100px;
     }
 
-    *{ box-sizing:border-box; }
-    html{ scroll-behavior:smooth; }
+    * {
+      box-sizing: border-box;
+    }
 
-    body{
-      margin:0;
-      font-family: "DFKai-SB","BiauKai","KaiTi","STKaiti","Noto Serif TC",serif;
-      font-size: 20px;
-      font-weight: 700;
-      text-align: center;
-      color: var(--text);
-      line-height: 1.75;
+    body {
+      margin: 0;
+      font-family: "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
       background: var(--bg);
-      position: relative;
-      overflow-x: hidden;
+      color: var(--text);
+      line-height: 1.7;
     }
 
-    body::before{
-      content:"";
-      position: fixed;
-      inset: 0;
-      background-image: url("picture/p1.png");
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      transform: scale(1.02);
-      z-index: -3;
+    a {
+      color: inherit;
+      text-decoration: none;
     }
 
-    body::after{
-      content:"";
-      position: fixed;
-      inset: 0;
-      background:
-        radial-gradient(900px 600px at 20% 0%, rgba(255,255,255,.08), transparent 60%),
-        radial-gradient(800px 520px at 80% 15%, rgba(255,255,255,.06), transparent 55%),
-        linear-gradient(180deg, rgba(0,0,0,.52) 0%, rgba(0,0,0,.60) 45%, rgba(0,0,0,.70) 100%);
-      z-index: -2;
-      pointer-events: none;
+    .container {
+      width: min(var(--max), calc(100% - 48px));
+      margin: 0 auto;
     }
 
-    a{ color:inherit; text-decoration:none; }
-    .container{ width:min(var(--max), calc(100% - 40px)); margin:0 auto; }
-
-    header{
+    header {
       position: sticky;
       top: 0;
-      z-index: 50;
-      background: rgba(11,15,25,.78);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(255,255,255,.14);
-    }
-    .header-inner{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:16px;
-      padding: 14px 0;
-      position: relative; /* ✅ 給手機下拉面板定位 */
-    }
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      min-width: 160px;
-    }
-    .logo{
-      width: 36px; height: 36px;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,.16);
-      box-shadow: var(--shadow);
-      background-image: url("picture/logo.png");
-      background-repeat: no-repeat;
-      background-position: center;
-      background-size: contain;
-      background-color: rgba(255,255,255,.08);
-      flex: 0 0 auto;
-    }
-    .brand b{
-      font-weight: 800;
-      letter-spacing:.2px;
-      font-size: 22px;
-      line-height: 1;
-    }
-
-    /* ✅ 導覽面板：桌機橫排（nav + actions） */
-    .navPanel{
-      display:flex;
-      align-items:center;
-      gap: 18px;
-      flex: 1;
-      justify-content:space-between;
-    }
-
-    nav{
-      display:flex;
-      align-items:center;
-      gap: 18px;
-      flex-wrap: wrap;
-      justify-content:center;
-      flex: 1;
-    }
-    nav a{
-      padding: 10px 12px;
-      border-radius: 12px;
-      color: var(--muted);
-      border: 1px solid transparent;
-      font-size: 20px;
-      font-weight: 800;
-      line-height: 1;
-    }
-    nav a:hover{
-      color: var(--text);
-      border-color: rgba(255,255,255,.16);
-      background: rgba(255,255,255,.04);
-    }
-
-    .actions{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      min-width: 160px;
-      justify-content:flex-end;
-    }
-    .btn{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-      padding: 12px 16px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.16);
-      background: rgba(255,255,255,.06);
-      color: var(--text);
-      cursor:pointer;
-      user-select:none;
-      font-size: 20px;
-      font-weight: 800;
-      line-height: 1;
-      white-space: nowrap;
-    }
-    .btn:hover{ background: rgba(255,255,255,.10); }
-    .btn.primary{
-      background: rgba(255,255,255,.14);
-      border-color: rgba(255,255,255,.18);
-    }
-
-    /* ✅ tiny style for username badge (uses same btn look) */
-    .btn.user{
-      background: rgba(255,255,255,.08);
-      border-color: rgba(255,255,255,.16);
-      cursor: default;
-    }
-    .btn.logout{
-      background: rgba(255,92,122,.10);
-      border-color: rgba(255,92,122,.28);
-    }
-    .btn.logout:hover{
-      background: rgba(255,92,122,.18);
-      border-color: rgba(255,92,122,.40);
-    }
-
-    section{ padding: 74px 0; }
-    .section-title{
-      margin: 0 0 18px 0;
-      font-size: 32px;
-      letter-spacing:.3px;
-      font-weight: 900;
-    }
-
-    .hero{
-      position: relative;
-      padding: 96px 0 74px;
-      overflow: hidden;
-    }
-    .hero::before{
-      content:"";
-      position:absolute;
-      inset:-40px;
-      background:
-        radial-gradient(circle at 20% 30%, rgba(255,255,255,.10) 0 2px, transparent 3px),
-        radial-gradient(circle at 60% 40%, rgba(255,255,255,.08) 0 2px, transparent 3px),
-        radial-gradient(circle at 80% 70%, rgba(255,255,255,.07) 0 2px, transparent 3px),
-        radial-gradient(circle at 35% 80%, rgba(255,255,255,.06) 0 2px, transparent 3px),
-        radial-gradient(circle at 10% 65%, rgba(255,255,255,.05) 0 2px, transparent 3px),
-        radial-gradient(circle at 50% 15%, rgba(255,255,255,.06) 0 2px, transparent 3px);
-      opacity: .55;
-      z-index: 0;
-      animation: heroFloat 10s ease-in-out infinite;
-      pointer-events: none;
-    }
-    .hero::after{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:
-        linear-gradient(90deg, rgba(11,15,25,.55) 0%, rgba(11,15,25,.35) 50%, rgba(11,15,25,.55) 100%),
-        linear-gradient(180deg, rgba(0,0,0,.25) 0%, rgba(0,0,0,.10) 55%, rgba(0,0,0,.25) 100%);
-      z-index: 1;
-      pointer-events: none;
-    }
-    @keyframes heroFloat{
-      0%{ transform: translateY(0px); }
-      50%{ transform: translateY(-10px); }
-      100%{ transform: translateY(0px); }
-    }
-
-    .hero-wrap{
-      position: relative;
-      z-index: 2;
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
-      align-items: stretch;
-    }
-
-    .hero-block{
-      background: rgba(255,255,255,.07);
-      border: 1px solid rgba(255,255,255,.16);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
+      z-index: 10;
+      background: rgba(15, 18, 24, 0.92);
+      border-bottom: 1px solid var(--border);
       backdrop-filter: blur(8px);
-      overflow: hidden;
-      min-height: 320px;
-      position: relative;
-      display:flex;
-      flex-direction: column;
+    }
+
+    .header-inner {
+      display: flex;
       align-items: center;
-      justify-content: flex-start;
+      justify-content: space-between;
+      padding: 20px 0;
+      gap: 16px;
     }
 
-    .hero-block::before{
-      content:"";
-      position:absolute;
-      inset:-60px;
-      background:
-        linear-gradient(135deg, rgba(255,255,255,.10) 0%, transparent 35%, transparent 100%),
-        linear-gradient(315deg, rgba(255,255,255,.06) 0%, transparent 40%, transparent 100%);
-      opacity: .55;
-      z-index: 0;
-      pointer-events:none;
+    .brand {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
     }
 
-    .hero-media{
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      background: rgba(0,0,0,.18);
-      border-bottom: 1px solid rgba(255,255,255,.12);
-      position: relative;
-      z-index: 1;
-      overflow: hidden;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-    .hero-media img{
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display:block;
-    }
-    .hero-media .fallback{
-      display:none;
-      position:absolute;
-      inset:0;
-      align-items:center;
-      justify-content:center;
-      color: rgba(255,255,255,.75);
-      font-size: 18px;
-      font-weight: 900;
-      background: rgba(0,0,0,.25);
-    }
-    .hero-media.is-missing .fallback{ display:flex; }
-
-    .hero-body{
-      width: 100%;
-      padding: 22px 18px 24px;
-      position: relative;
-      z-index: 1;
-      display:flex;
-      flex-direction: column;
+    .btn {
+      display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 16px;
-      flex: 1;
+      padding: 10px 18px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 15px;
+      font-weight: 600;
     }
 
-    .hero-card-title{
-      margin: 0;
+    .btn.primary {
+      background: var(--accent);
+      border-color: transparent;
+      color: #0b0f16;
+    }
+
+    main {
+      padding: 64px 0 80px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 32px;
+      align-items: center;
+      margin-bottom: 64px;
+    }
+
+    .hero h1 {
       font-size: 36px;
-      font-weight: 900;
-      letter-spacing: .4px;
-      line-height: 1.25;
-    }
-    .hero-cta-row{
-      display:flex;
-      justify-content:center;
-      gap:10px;
-      flex-wrap: wrap;
-      width: 100%;
+      margin: 0 0 16px;
     }
 
-    .flow-card{
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.16);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      margin-top: 10px;
-    }
-    .flow-media{
-      position: relative;
-      width: min(100%, 1920px);
-      aspect-ratio: 16 / 9;
-      margin: 0 auto;
-      background: rgba(0,0,0,.22);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      overflow: hidden;
-    }
-    .flow-media img{
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-    .flow-caption{
-      padding: 16px;
+    .hero p {
       color: var(--muted);
-      font-size: 18px;
-      border-top: 1px solid rgba(255,255,255,.12);
-      font-weight: 800;
+      margin: 0;
     }
 
-    .features-grid{
-      display:grid;
+    .roles {
+      display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 14px;
-      margin-top: 18px;
+      gap: 16px;
+      margin-top: 32px;
     }
-    .feature-card{
-      background: rgba(255,255,255,.07);
-      border: 1px solid rgba(255,255,255,.16);
+
+    .role-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 20px 18px;
-      box-shadow: var(--shadow);
-      display:flex;
+      padding: 20px;
+      display: flex;
       flex-direction: column;
       gap: 12px;
-      min-height: 220px;
-      align-items:center;
-      justify-content:center;
-      text-align:center;
+      min-height: 180px;
     }
-    .feature-icon{
-      font-size: 38px;
-      line-height: 1;
-      height: 48px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-    .feature-title{
-      margin: 0;
-      font-size: 24px;
-      letter-spacing: .2px;
-      font-weight: 900;
-    }
-    .feature-desc{
-      margin: 0;
-      color: var(--muted);
-      font-size: 20px;
-      font-weight: 800;
-      line-height: 1.65;
-    }
-    .feature-desc .line{ display:block; }
 
-    .grid{ display:grid; gap: 14px; }
-    .grid.quotes{
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      margin-top: 10px;
-    }
-    .quote{
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.14);
-      border-radius: var(--radius);
-      padding: 20px 18px;
-      box-shadow: var(--shadow);
-    }
-    .quote p{
-      margin: 0 0 14px 0;
-      font-size: 20px;
-      font-weight: 800;
-      line-height: 1.8;
-    }
-    .quote span{
-      color: var(--muted);
+    .role-title {
       font-size: 18px;
-      font-weight: 800;
+      font-weight: 700;
+      margin: 0;
     }
 
-    footer{
-      padding: 64px 0 30px;
-      border-top: 1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.18);
-    }
-    .footer-grid{
-      display:grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 18px;
-      margin-bottom: 22px;
-    }
-    .footer-card{
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.14);
-      border-radius: var(--radius);
-      padding: 18px;
-      box-shadow: var(--shadow);
-    }
-    .footer-title{
-      margin: 0 0 12px 0;
-      font-size: 24px;
-      letter-spacing: .2px;
-      font-weight: 900;
+    .role-desc {
+      color: var(--muted);
+      margin: 0;
     }
 
-    .footer-links{
-      display:flex;
-      flex-direction: column;
-      gap: 10px;
+    .role-entry {
+      margin-top: auto;
+      display: inline-flex;
       align-items: center;
-      justify-content: center;
-    }
-    .footer-links a{
-      color: var(--muted);
-      padding: 10px 12px;
-      border-radius: 12px;
-      border: 1px solid transparent;
-      width: fit-content;
-      font-size: 20px;
-      font-weight: 900;
-      line-height: 1;
-    }
-    .footer-links a:hover{
-      color: var(--text);
-      border-color: rgba(255,255,255,.14);
-      background: rgba(255,255,255,.04);
+      gap: 6px;
+      font-weight: 600;
+      color: var(--accent);
     }
 
-    .footer-contact{
-      display:flex;
-      flex-direction: column;
-      align-items:center;
-      justify-content:center;
+    .flow {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      display: grid;
       gap: 16px;
-      margin-top: 6px;
     }
-    .footer-contact p{
+
+    .flow h2 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .flow p {
       margin: 0;
       color: var(--muted);
-      line-height: 1.8;
-      font-size: 20px;
-      font-weight: 800;
     }
 
-    .footer-bottom{
-      margin-top: 18px;
-      padding-top: 18px;
-      border-top: 1px solid rgba(255,255,255,.10);
-      color: rgba(255,255,255,.68);
-      font-size: 18px;
-      line-height: 1.8;
-      font-weight: 800;
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 28px 0 40px;
+      color: var(--muted);
+      font-size: 14px;
     }
 
-    @media (max-width: 900px){
-      .hero-wrap{ grid-template-columns: 1fr; }
-      nav{ justify-content:center; }
-      .brand, .actions{ min-width:auto; }
-      .hero{ padding: 80px 0 60px; }
-
-      .features-grid{ grid-template-columns: 1fr; }
-      .grid.quotes{ grid-template-columns: 1fr; }
-      .footer-grid{ grid-template-columns: 1fr; }
+    .footer-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
     }
 
-    /* =========================
-       ✅ Mobile Menu (NEW)
-       ========================= */
-    .menuBtn{
-      display:none;
-      width:44px; height:44px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.16);
-      background: rgba(255,255,255,.06);
-      cursor:pointer;
-      align-items:center;
-      justify-content:center;
-      gap:6px;
-      padding:10px;
-      flex: 0 0 auto;
+    .footer-link {
+      color: var(--accent);
+      font-weight: 600;
     }
-    .menuBtn span{
-      display:block;
-      width:22px;
-      height:2px;
-      background: rgba(255,255,255,.86);
-      border-radius:999px;
-    }
-    .menuBtn:hover{ background: rgba(255,255,255,.10); }
 
-    /* ✅ 手機：header 變緊湊 + 收起 nav/actions（點漢堡才展開） */
-    @media (max-width: 900px){
-      .header-inner{ padding: 10px 0; }
-      .logo{ width:32px; height:32px; border-radius:10px; }
-      .brand b{ font-size:20px; }
-
-      .menuBtn{ display:inline-flex; }
-
-      .navPanel{
-        display:none;
-        position:absolute;
-        left:0; right:0;
-        top:100%;
-        padding: 14px 20px 18px;
-        background: rgba(11,15,25,.92);
-        backdrop-filter: blur(12px);
-        border-bottom: 1px solid rgba(255,255,255,.14);
-        box-shadow: 0 18px 60px rgba(0,0,0,.28);
+    @media (max-width: 900px) {
+      .hero {
+        grid-template-columns: 1fr;
       }
 
-      .navPanel nav{
-        width:100%;
-        display:grid;
-        grid-template-columns: 1fr 1fr;
-        gap:10px;
-        justify-content:stretch;
+      .roles {
+        grid-template-columns: 1fr;
       }
-      .navPanel nav a{
-        font-size:18px;
-        padding: 12px 12px;
-        text-align:center;
-        background: rgba(255,255,255,.04);
-        border-color: rgba(255,255,255,.12);
-      }
-
-      .navPanel .actions{
-        width:100%;
-        margin-top:12px;
-        display:grid;
-        grid-template-columns: 1fr 1fr;
-        gap:10px;
-        justify-content:stretch;
-      }
-      .navPanel .btn{
-        width:100%;
-        font-size:18px;
-        padding: 12px 12px;
-      }
-
-      body.menu-open .navPanel{ display:block; }
-    }
-
-    @media (max-width: 520px){
-      .navPanel nav{ grid-template-columns: 1fr; }
-      .navPanel .actions{ grid-template-columns: 1fr; }
     }
   </style>
 </head>
-
 <body>
   <header>
-    <div class="container">
-      <div class="header-inner">
-        <a class="brand" href="#top" aria-label="回到頁首">
-          <div class="logo" aria-hidden="true"></div>
-          <b>星火廣告</b>
-        </a>
-
-        <!-- ✅ 手機漢堡按鈕（桌機隱藏） -->
-        <button class="menuBtn" id="menuBtn" type="button" aria-label="開啟選單" aria-expanded="false">
-          <span></span><span></span><span></span>
-        </button>
-
-        <!-- ✅ 桌機橫排 / 手機下拉面板 -->
-        <div class="navPanel" id="navPanel">
-          <nav aria-label="站內導覽">
-            <!-- ✅ 改：會員中心 → dashboard -->
-            <a href="dashboard.html">會員中心</a>
-            <a href="#intro">關於我們</a>
-            <a href="#testimonials">分享區</a>
-            <a href="pact.html">使用協議</a>
-            <a href="#footer">聯絡資訊</a>
-          </nav>
-
-          <div class="actions">
-            <!-- ✅ 未登入顯示 -->
-            <div id="guestActions" style="display:flex; gap:10px; align-items:center;">
-              <a class="btn" href="signup.html">註冊</a>
-              <a class="btn primary" href="login.html">登入</a>
-            </div>
-
-            <!-- ✅ 已登入顯示 -->
-            <div id="userActions" style="display:none; gap:10px; align-items:center;">
-              <span class="btn user" id="navUsername" aria-label="目前登入使用者">使用者</span>
-              <button class="btn logout" id="logoutBtn" type="button">登出</button>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div class="container header-inner">
+      <div class="brand">平台站名（Placeholder）</div>
+      <a class="btn primary" href="#">登入</a>
     </div>
   </header>
 
-  <main id="top">
-    <section id="hero" class="hero">
-      <div class="container">
-        <div class="hero-wrap">
-          <div class="hero-block">
-            <div class="hero-media">
-              <img src="picture/hero_partner.png" alt="推廣夥伴圖片" />
-              <div class="fallback">找不到 hero_partner.png</div>
+  <main>
+    <section class="container">
+      <div class="hero">
+        <div>
+          <h1>一句話平台說明（Placeholder）</h1>
+          <p>這裡放置簡短描述，說明平台用途與價值定位（Placeholder）。</p>
+        </div>
+        <div>
+          <div class="roles" aria-label="角色入口">
+            <div class="role-card">
+              <h3 class="role-title">角色 A（Placeholder）</h3>
+              <p class="role-desc">角色說明文字（Placeholder）。</p>
+              <span class="role-entry">進入角色入口 →</span>
             </div>
-            <div class="hero-body">
-              <h1 class="hero-card-title">讓分享有價值</h1>
-              <div class="hero-cta-row">
-                <!-- ✅ 改：推廣夥伴區 → dashboard -->
-                <a class="btn primary" href="dashboard.html">推廣夥伴區</a>
-              </div>
+            <div class="role-card">
+              <h3 class="role-title">角色 B（Placeholder）</h3>
+              <p class="role-desc">角色說明文字（Placeholder）。</p>
+              <span class="role-entry">進入角色入口 →</span>
             </div>
-          </div>
-
-          <div class="hero-block">
-            <div class="hero-media">
-              <img src="picture/hero_dealer.png" alt="車行業務圖片" />
-              <div class="fallback">找不到 hero_dealer.png</div>
-            </div>
-            <div class="hero-body">
-              <h1 class="hero-card-title">讓好車被看見</h1>
-              <div class="hero-cta-row">
-                <!-- ✅ 不改（依你要求只改推廣夥伴） -->
-                <a class="btn primary" href="dealers.html">車行業務區</a>
-              </div>
+            <div class="role-card">
+              <h3 class="role-title">角色 C（Placeholder）</h3>
+              <p class="role-desc">角色說明文字（Placeholder）。</p>
+              <span class="role-entry">進入角色入口 →</span>
             </div>
           </div>
         </div>
       </div>
-    </section>
 
-    <section id="intro">
-      <div class="container">
-        <h2 class="section-title">關於我們</h2>
-
-        <div class="flow-card" aria-label="平台運作原理圖">
-          <div class="flow-media">
-            <img src="picture/P2.png" alt="平台運作原理圖" />
-          </div>
-          <div class="flow-caption">平台運作原理圖</div>
-        </div>
-
-        <div class="features-grid" aria-label="平台特色">
-          <div class="feature-card">
-            <div class="feature-icon">💰</div>
-            <h3 class="feature-title">車行 → 平台</h3>
-            <p class="feature-desc">
-              <span class="line">支付廣告費，</span>
-              <span class="line">換取真實社群曝光與高質量詢價。</span>
-            </p>
-          </div>
-
-          <div class="feature-card">
-            <div class="feature-icon">🤝</div>
-            <h3 class="feature-title">平台 → 夥伴</h3>
-            <p class="feature-desc">
-              <span class="line">支付任務獎金，</span>
-              <span class="line">換取有效推廣行動與社群擴散。</span>
-            </p>
-          </div>
-
-          <div class="feature-card">
-            <div class="feature-icon">🚀</div>
-            <h3 class="feature-title">夥伴 → 車行</h3>
-            <p class="feature-desc">
-              <span class="line">進行真實分享，</span>
-              <span class="line">帶來精準客群與品牌信任度。</span>
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="testimonials">
-      <div class="container">
-        <h2 class="section-title">分享區</h2>
-
-        <div class="grid quotes">
-          <div class="quote">
-            <p>「心得 1：一句話回饋。」</p>
-            <span>— 使用者 A（身份/暱稱）</span>
-          </div>
-          <div class="quote">
-            <p>「心得 2：一句話回饋。」</p>
-            <span>— 使用者 B（身份/暱稱）</span>
-          </div>
-          <div class="quote">
-            <p>「心得 3：一句話回饋。」</p>
-            <span>— 使用者 C（身份/暱稱）</span>
-          </div>
-        </div>
+      <div class="flow" aria-label="平台運作流程說明">
+        <h2>平台運作流程（Placeholder）</h2>
+        <p>步驟一：流程描述文字（Placeholder）。</p>
+        <p>步驟二：流程描述文字（Placeholder）。</p>
+        <p>步驟三：流程描述文字（Placeholder）。</p>
       </div>
     </section>
   </main>
 
-  <footer id="footer">
-    <div class="container">
-      <div class="footer-grid">
-        <div class="footer-card">
-          <h3 class="footer-title">快速連結</h3>
-          <div class="footer-links">
-            <!-- ✅ 改：會員中心 → dashboard -->
-            <a href="dashboard.html">會員中心</a>
-            <a href="#intro">關於我們</a>
-            <a href="#testimonials">分享區</a>
-            <a href="pact.html">使用協議</a>
-            <a href="login.html">登入</a>
-          </div>
-        </div>
-
-        <div class="footer-card">
-          <h3 class="footer-title">聯絡資訊</h3>
-          <div class="footer-contact">
-            <p>Email：hello@example.com</p>
-            <p>電話：(02) 1234-5678</p>
-            <p>地址：台北市＿＿＿＿＿＿＿＿</p>
-            <p>官方Line：@206zsrzq</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="footer-bottom">
-        <div>© <span id="year"></span> 星火廣告. 版權所有。</div>
-        <div>本平台活動依官方公告為準，主辦單位保留修改、終止及最終解釋權。</div>
-      </div>
+  <footer>
+    <div class="container footer-inner">
+      <span>© 20XX 平台名稱（Placeholder）</span>
+      <a class="footer-link" href="#">使用條款</a>
     </div>
   </footer>
-
-  <script>
-    document.getElementById("year").textContent = new Date().getFullYear();
-
-    document.querySelectorAll(".hero-media img").forEach(img => {
-      img.addEventListener("error", () => {
-        const wrap = img.closest(".hero-media");
-        if (wrap) wrap.classList.add("is-missing");
-      });
-    });
-
-    // ===== Mobile header menu toggle =====
-    const menuBtn = document.getElementById("menuBtn");
-    const navPanel = document.getElementById("navPanel");
-
-    menuBtn?.addEventListener("click", () => {
-      const open = document.body.classList.toggle("menu-open");
-      menuBtn.setAttribute("aria-expanded", open ? "true" : "false");
-    });
-
-    // 點選單連結後自動收起（手機更順）
-    navPanel?.querySelectorAll("a").forEach(a => {
-      a.addEventListener("click", () => {
-        document.body.classList.remove("menu-open");
-        menuBtn?.setAttribute("aria-expanded", "false");
-      });
-    });
-
-    // =========================
-    // ✅ Login state on index (match dashboard)
-    // =========================
-    function safeParse(json, fallback){
-      try { return JSON.parse(json); } catch(e){ return fallback; }
-    }
-
-    function isLoggedIn(){
-      const token = localStorage.getItem('xinghuo_token');
-      const userRaw = localStorage.getItem('xinghuo_user');
-      const user = safeParse(userRaw, null);
-      if(!token || !user) return null;
-      return { token, user };
-    }
-
-    function setHeaderAuthUI(){
-      const guest = document.getElementById('guestActions');
-      const authed = document.getElementById('userActions');
-      const nameEl = document.getElementById('navUsername');
-
-      const session = isLoggedIn();
-      if(!session){
-        if(guest) guest.style.display = 'flex';
-        if(authed) authed.style.display = 'none';
-        return;
-      }
-
-      const username = session.user?.username || session.user?.name || '使用者';
-      if(nameEl) nameEl.textContent = username;
-
-      if(guest) guest.style.display = 'none';
-      if(authed) authed.style.display = 'flex';
-    }
-
-    function logout(){
-      const ok = confirm('確定要登出嗎？');
-      if(!ok) return;
-
-      localStorage.removeItem('xinghuo_token');
-      localStorage.removeItem('xinghuo_user');
-      localStorage.removeItem('xinghuo_my_quests'); // ✅ 與 dashboard 同步
-
-      // 關掉手機選單 + 更新 UI
-      document.body.classList.remove("menu-open");
-      menuBtn?.setAttribute("aria-expanded", "false");
-      setHeaderAuthUI();
-
-      // 保持一致：回首頁（你已在首頁，這行會刷新狀態）
-      location.href = './index.html';
-    }
-
-    document.getElementById('logoutBtn')?.addEventListener('click', logout);
-
-    // init
-    document.addEventListener('DOMContentLoaded', () => {
-      setHeaderAuthUI();
-    });
-  </script>
 </body>
 </html>
