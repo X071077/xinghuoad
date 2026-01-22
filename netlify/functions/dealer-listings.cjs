@@ -261,7 +261,70 @@ exports.handler = async (event) => {
       return reply(200, { ok: true, listings: out.slice(0, 50) }, origin);
     }
 
-    // --- Admin list all (for later review UI) ---
+    
+    // --- Dealer list submissions for my linked quests (read-only tracking) ---
+    if (action === 'list_submissions_my') {
+      if (!(role === 'dealer' || role === 'admin')) {
+        return reply(403, { ok: false, error: 'forbidden' }, origin);
+      }
+
+      const targetUserId = safeStr(body.user_id || authPayload.user_id || '');
+      if (!targetUserId) return reply(400, { ok: false, error: 'missing_user_id' }, origin);
+
+      if (role === 'dealer' && targetUserId !== authPayload.user_id) {
+        return reply(403, { ok: false, error: 'forbidden_user_mismatch' }, origin);
+      }
+
+      // Collect quest_ids belonging to this dealer's listings
+      const questIds = new Set();
+      for (const r of rows) {
+        const ru = safeStr(r[idx['user_id']]);
+        if (ru && ru === targetUserId) {
+          const qid = safeStr(r[idx['quest_id']]);
+          if (qid) questIds.add(qid);
+        }
+      }
+
+      if (!questIds.size) {
+        return reply(200, { ok: true, submissions: [] }, origin);
+      }
+
+      const submissionsTab = process.env.QUEST_SUBMISSIONS_TAB || 'quest_submissions';
+      const { headers: sh, rows: srows } = await readAllRows(sheets, sheetId, submissionsTab);
+      if (!sh.length) return reply(500, { ok: false, error: 'quest_submissions_sheet_empty' }, origin);
+
+      const normalizeHeader = (s) => String(s || '').replace(/[\u200B-\u200D\uFEFF]/g, '').trim().toLowerCase();
+      const subIdx = {};
+      sh.forEach((h,i)=>{ subIdx[normalizeHeader(h)] = i; });
+      if (typeof subIdx['quest_id'] !== 'number') return reply(500, { ok:false, error:'quest_submissions_missing_quest_id' }, origin);
+
+      const wantKeys = [
+        'submission_id','quest_id','user_id','submitted_at','proof_url','note','status',
+        'review_reason','reviewed_at','reviewed_by','approved_at','approved_by','payout_amount','payout_at','payout_by',
+      ];
+
+      const pickFlex = (row) => {
+        const obj = {};
+        for (const k of wantKeys) {
+          const i = subIdx[k];
+          if (typeof i === 'number' && i >= 0) obj[k] = safeStr(row[i]);
+        }
+        return obj;
+      };
+
+      const out = [];
+      for (const r of srows) {
+        const qid = safeStr(r[subIdx['quest_id']]);
+        if (qid && questIds.has(qid)) {
+          out.push(pickFlex(r));
+        }
+      }
+
+      out.sort((a,b)=> String(b.submitted_at || '').localeCompare(String(a.submitted_at || '')));
+      return reply(200, { ok: true, submissions: out.slice(0, 200) }, origin);
+    }
+
+// --- Admin list all (for later review UI) ---
     if (action === 'list_all') {
       if (role !== 'admin') return reply(403, { ok: false, error: 'forbidden' }, origin);
       const out = rows.map(r => pickRow(r, idx, [

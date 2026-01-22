@@ -339,6 +339,32 @@
     .textarea{resize:vertical;}
     .hint{font-size:12px; color:rgba(255,255,255,.65);}
     @media (max-width:720px){ .formGrid{grid-template-columns:1fr;} .modal-card{margin:18px auto;} }
+
+/* ===== Dealer Tabs ===== */
+.tabs-wrap{ margin-top: 14px; }
+.tabs{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.tabBtn{
+  border:1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.85);
+  padding:10px 14px;
+  border-radius: 12px;
+  cursor:pointer;
+  transition: .15s ease;
+}
+.tabBtn:hover{ background: rgba(255,255,255,.10); }
+.tabBtn.active{
+  background: rgba(108,160,255,.18);
+  border-color: rgba(108,160,255,.35);
+  color:#fff;
+}
+.tabPanel{ display:none; }
+.tabPanel.active{ display:block; }
+
 </style>
 </head>
 
@@ -377,7 +403,7 @@
     </div>
   </nav>
 
-  <section class="dashboard-header" id="top">
+  <section class="dashboard-header tabPanel" data-tab="overview" id="top">
     <div class="container">
       <div class="hero-card">
         <div class="hero-left">
@@ -431,7 +457,16 @@
     </div>
   </section>
 
-  <section class="section" id="listings">
+  <div class="container tabs-wrap">
+    <div class="tabs" role="tablist" aria-label="Dealer 導覽">
+      <button class="tabBtn active" data-tab="overview" type="button">概覽</button>
+      <button class="tabBtn" data-tab="listings" type="button">刊登管理</button>
+      <button class="tabBtn" data-tab="submissions" type="button">任務提交</button>
+      <button class="tabBtn" data-tab="billing" type="button">帳務方案</button>
+    </div>
+  </div>
+
+  <section class="section tabPanel" data-tab="listings" id="listings">
     <div class="container">
       <div class="section-head">
         <h2 class="section-title"><i class="fas fa-bullhorn"></i> 車源刊登管理</h2>
@@ -528,63 +563,53 @@
     </div>
   </section>
 
-  <section class="section" id="transactions">
+  <section class="section tabPanel" data-tab="submissions" id="transactions">
     <div class="container">
       <div class="section-head">
-        <h2 class="section-title"><i class="fas fa-receipt"></i> 成交/交易管理</h2>
-        <p class="section-sub">成交回報、媒合來源（推廣夥伴/平台）、費用與分潤記錄。</p>
+        <h2 class="section-title"><i class="fas fa-clipboard-check"></i> 任務提交追蹤</h2>
+        <div class="section-actions">
+          <div class="searchWrap">
+            <i class="fas fa-magnifying-glass"></i>
+            <input class="input" id="subSearch" placeholder="搜尋 quest_id / user_id / 狀態..." />
+          </div>
+          <select class="input" id="subStatusFilter" style="max-width:180px;">
+            <option value="">全部狀態</option>
+            <option value="submitted">submitted（待審）</option>
+            <option value="approved">approved（已核准）</option>
+            <option value="rejected">rejected（已退回）</option>
+            <option value="paid">paid（已支付）</option>
+          </select>
+          <button class="btn btn-ghost" id="btnRefreshSubs" type="button"><i class="fas fa-rotate"></i> 重新載入</button>
+        </div>
       </div>
 
-      <div class="card">
-        <div class="toolbar">
-          <div class="left">
-            <input class="input" id="dealSearch" placeholder="搜尋 車輛 / buyer / deal_id" />
-            <select class="select" id="dealStatusFilter">
-              <option value="">全部狀態</option>
-              <option value="pending">待確認</option>
-              <option value="confirmed">已確認</option>
-              <option value="rejected">已退回</option>
-            </select>
-          </div>
-          <div class="right">
-            <button class="btn btn-primary" id="btnReportDeal" type="button">
-              <i class="fas fa-flag-checkered"></i> 回報成交（規劃）
-            </button>
-          </div>
-        </div>
+      <div class="tableWrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>提交時間</th>
+              <th>submission_id</th>
+              <th>quest_id</th>
+              <th>user_id</th>
+              <th>狀態</th>
+              <th>證明</th>
+              <th class="muted">備註</th>
+            </tr>
+          </thead>
+          <tbody id="submissionsTbody">
+            <tr><td colspan="7" class="muted">載入中…</td></tr>
+          </tbody>
+        </table>
+      </div>
 
-        <div style="height:12px"></div>
-
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th style="width:160px">deal_id</th>
-                <th style="width:240px">車輛</th>
-                <th style="width:160px">媒合來源</th>
-                <th style="width:140px">狀態</th>
-                <th style="width:160px">費用</th>
-                <th style="width:220px">操作</th>
-              </tr>
-            </thead>
-            <tbody id="dealsTbody">
-              <tr>
-                <td colspan="6">
-                  <div class="empty">
-                    <div><b>尚未載入成交資料</b></div>
-                    <div class="muted">後端串接後可顯示：成交時間、金額、分潤、付款狀態。</div>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
+      <div class="hint muted" style="margin-top:10px;">
+        這裡會顯示屬於你刊登（quests）的任務提交紀錄。若你想讓車行也能「初審」，下一版可加上審核按鈕與流程。
       </div>
     </div>
   </section>
 
-  <section class="section" id="billing">
+
+  <section class="section tabPanel" data-tab="billing" id="billing">
     <div class="container">
       <div class="section-head">
         <h2 class="section-title"><i class="fas fa-wallet"></i> 方案/帳務</h2>
@@ -636,21 +661,40 @@
   <div class="toast-wrap" id="toastWrap" aria-live="polite" aria-atomic="true"></div>
 
   <script>
+    const $ = (sel, root=document) => root.querySelector(sel);
+
+    function escapeHtml(s){
+      return String(s ?? "")
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#39;");
+    }
+
     function requireLogin(){
       const token = localStorage.getItem('xinghuo_token');
       const u = JSON.parse(localStorage.getItem('xinghuo_user') || 'null');
       if (!token || !u) { location.href = './login.html'; return null; }
       return { token, user: u };
     }
+
     function guardDealerOrAdmin(user){
       const role = (user && user.role) ? String(user.role).toLowerCase() : '';
-      if (role !== 'dealer' && role !== 'admin') location.href = './dashboard.html';
+      if (role !== 'dealer' && role !== 'admin') {
+        showToast('此頁僅提供車行（dealer）使用', 'warn');
+        location.href = './dashboard.html';
+        return false;
+      }
+      return true;
     }
 
-    const $ = (sel) => document.querySelector(sel);
-    const escapeHtml = (s) => String(s ?? '')
-      .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+    function logout(){
+      localStorage.removeItem('xinghuo_token');
+      localStorage.removeItem('xinghuo_user');
+      localStorage.removeItem('xinghuo_my_quests');
+      location.href = './index.html';
+    }
 
     function showToast(message, type='info'){
       const wrap = $('#toastWrap'); if(!wrap) return;
@@ -668,328 +712,363 @@
       setTimeout(close, 4200);
     }
 
+    function fmtMoney(n){
+      const v = Number(n||0);
+      if(!Number.isFinite(v)) return '-';
+      return v.toLocaleString('zh-TW');
+    }
+
+    function statusChip(s){
+      const t = String(s||'').toLowerCase();
+      if(t==='approved' || t==='published' || t==='active') return `<span class="chip ok">${escapeHtml(t)}</span>`;
+      if(t==='need_fix') return `<span class="chip warn">need_fix</span>`;
+      if(t==='rejected') return `<span class="chip bad">rejected</span>`;
+      if(t==='draft') return `<span class="chip">draft</span>`;
+      if(t==='submitted') return `<span class="chip warn">submitted</span>`;
+      if(t==='paused' || t==='ended') return `<span class="chip">${escapeHtml(t)}</span>`;
+      return `<span class="chip">${escapeHtml(t||'submitted')}</span>`;
+    }
+
     function setSyncBadge(state){
-      const badge = $('#syncBadge'); const text = $('#syncText');
+      const badge = $('#syncBadge');
+      const text = $('#syncText');
       if(!badge || !text) return;
-      badge.classList.remove('chip-success','chip-warn','chip-danger');
-      if(state === 'syncing'){ text.textContent = '同步中'; badge.classList.add('chip-warn'); }
-      else if(state === 'ok'){ text.textContent = '已同步'; badge.classList.add('chip-success'); }
-      else if(state === 'fail'){ text.textContent = '失敗'; badge.classList.add('chip-danger'); }
-      else { text.textContent = '尚未同步'; }
+      if(state==='syncing'){
+        badge.className = 'chip warn';
+        text.textContent = '同步中';
+      }else if(state==='ok'){
+        badge.className = 'chip ok';
+        text.textContent = '已同步';
+      }else if(state==='fail'){
+        badge.className = 'chip bad';
+        text.textContent = '同步失敗';
+      }else{
+        badge.className = 'chip';
+        text.textContent = '尚未同步';
+      }
     }
 
     function setSkeleton(on){
-      ['#dealerName','#dealerEmail','#statLive','#statReview','#statDeals','#statSpend','#todayViews','#todayLeads','#needFix','#monthDeals']
-        .forEach(id => { const el = $(id); if(!el) return; on ? el.classList.add('skeleton') : el.classList.remove('skeleton'); });
+      const els = document.querySelectorAll('.skeleton');
+      els.forEach(el=>{
+        if(on){
+          el.classList.add('skeleton');
+        }else{
+          // keep sizing classes (mid/sm) but remove shimmer class if any
+          // In this template, shimmer is driven by .skeleton itself, so we remove it:
+          el.classList.remove('skeleton');
+        }
+      });
     }
 
-    function logout(){
-      localStorage.removeItem('xinghuo_token');
-      localStorage.removeItem('xinghuo_user');
-      localStorage.removeItem('xinghuo_my_quests');
-      location.href = './index.html';
-    }
-    $('#logoutBtn')?.addEventListener('click', (e)=>{ e.preventDefault(); logout(); });
-
-    (function initMenu(){
-      const btn = $('#menuBtn'); const links = $('#navLinks');
-      if(!btn || !links) return;
-      btn.addEventListener('click', () => {
-        const open = links.classList.toggle('open');
-        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-      });
-      links.querySelectorAll('a.nav-link').forEach(a => {
-        a.addEventListener('click', () => { links.classList.remove('open'); btn.setAttribute('aria-expanded','false'); });
-      });
-    })();
-
-    async function fetchDealerSnapshot(token){
+    async function dealerListingsApi(action, payload={}){
+      const token = localStorage.getItem('xinghuo_token');
       const res = await fetch('/.netlify/functions/dealer-listings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify({ action: 'snapshot' })
+        method:'POST',
+        headers:{
+          'content-type':'application/json',
+          'authorization':'Bearer ' + token
+        },
+        body: JSON.stringify({ action, ...payload })
       });
-      if(!res.ok){
-        const t = await res.text().catch(()=> '');
-        throw new Error('dealer api ' + res.status + ': ' + (t || res.statusText));
-      }
-      return await res.json();
+      const data = await res.json().catch(()=>null);
+      if(!res.ok) return { ok:false, error: data?.error || ('http_' + res.status) };
+      return data;
     }
 
-    function applySnapshotUI(snapshot){
-      const s = snapshot?.stats || {};
-      const set = (id, val) => { const el = $(id); if(el) el.textContent = String(val ?? 0); };
-      set('#statLive', s.live); set('#statReview', s.review); set('#statDeals', s.deals); set('#statSpend', s.spend);
-      set('#todayViews', s.todayViews); set('#todayLeads', s.todayLeads); set('#needFix', s.needFix); set('#monthDeals', s.monthDeals);
+    function openListingModal(){
+      const m = $('#listingModal');
+      if(!m) return;
+      m.style.display='block';
+      document.body.style.overflow='hidden';
+    }
+    function closeListingModal(){
+      const m = $('#listingModal');
+      if(!m) return;
+      m.style.display='none';
+      document.body.style.overflow='';
+    }
 
-      const verify = (snapshot?.dealer?.verify_status || '').toLowerCase();
-      const chip = $('#verifyChip'); const vText = $('#verifyText');
-      if(chip && vText && verify){
-        chip.style.display = '';
-        chip.classList.remove('chip-success','chip-warn','chip-danger');
-        if(verify === 'verified'){ chip.classList.add('chip-success'); vText.textContent = '已通過'; }
-        else if(verify === 'need_fix'){ chip.classList.add('chip-warn'); vText.textContent = '補件中'; }
-        else if(verify === 'rejected'){ chip.classList.add('chip-danger'); vText.textContent = '已拒絕'; }
-        else { chip.classList.add('chip-warn'); vText.textContent = '未審核'; }
+    function wireListingModal(){
+      const m = $('#listingModal');
+      if(!m) return;
+
+      m.addEventListener('click', (e)=>{
+        if(e.target.closest('[data-close]')) closeListingModal();
+      });
+
+      $('#btnCreateListing')?.addEventListener('click', ()=>{
+        openListingModal();
+      });
+
+      $('#btnSubmitListing')?.addEventListener('click', async ()=>{
+        const title = ($('#mTitle')?.value||'').trim();
+        const budget_total = Number($('#mBudget')?.value||0);
+        const reward_min = Number($('#mRewardMin')?.value||0);
+        const reward_max = Number($('#mRewardMax')?.value||0);
+        const quest_id = ($('#mQuestId')?.value||'').trim();
+        let car_info_json = ($('#mCarJson')?.value||'').trim();
+
+        if(!title){
+          showToast('請輸入標題（title）', 'warn');
+          return;
+        }
+        if(car_info_json){
+          try{ JSON.parse(car_info_json); }catch(_){
+            showToast('car_info_json 不是合法 JSON', 'error');
+            return;
+          }
+        }else{
+          car_info_json = '{}';
+        }
+
+        const btn = $('#btnSubmitListing');
+        if(btn) btn.disabled = true;
+
+        const r = await dealerListingsApi('create', {
+          title,
+          car_info_json,
+          budget_total: Number.isFinite(budget_total)?budget_total:0,
+          reward_min: Number.isFinite(reward_min)?reward_min:0,
+          reward_max: Number.isFinite(reward_max)?reward_max:0,
+          quest_id: quest_id || ''
+        });
+
+        if(btn) btn.disabled = false;
+
+        if(!r?.ok){
+          showToast(r?.error || 'create_failed', 'error');
+          return;
+        }
+        showToast('已提交刊登審核', 'success');
+        closeListingModal();
+        ['mTitle','mBudget','mRewardMin','mRewardMax','mCarJson','mQuestId'].forEach(id=>{
+          const el = document.getElementById(id); if(el) el.value='';
+        });
+        await loadMyListings();
+      });
+    }
+
+    async function loadMyListings(){
+      const tb = $('#listingsTbody');
+      if(!tb) return { ok:false, items:[] };
+      tb.innerHTML = `<tr><td colspan="7" class="muted">載入中…</td></tr>`;
+      const r = await dealerListingsApi('list_my', {});
+      if(!r?.ok){
+        tb.innerHTML = `<tr><td colspan="7" class="muted">載入失敗：${escapeHtml(r?.error||'unknown')}</td></tr>`;
+        return { ok:false, items:[] };
       }
+      const items = r.listings || [];
+      if(!items.length){
+        tb.innerHTML = `<tr><td colspan="7" class="muted">目前沒有刊登紀錄</td></tr>`;
+        return { ok:true, items:[] };
+      }
+      tb.innerHTML = items.map(x=>`
+        <tr>
+          <td>${escapeHtml(x.submitted_at||'-')}</td>
+          <td><code>${escapeHtml(x.listing_id||'-')}</code></td>
+          <td>${escapeHtml(x.title||'-')}</td>
+          <td>${fmtMoney(x.budget_total)}</td>
+          <td>${fmtMoney(x.reward_min)} ~ ${fmtMoney(x.reward_max)}</td>
+          <td>${statusChip(x.status)}</td>
+          <td class="muted">${escapeHtml(x.review_note||'-')}</td>
+        </tr>
+      `).join('');
+      return { ok:true, items };
+    }
+
+    async function loadMySubmissions(){
+      const tb = $('#submissionsTbody');
+      if(!tb) return { ok:false, items:[] };
+      tb.innerHTML = `<tr><td colspan="7" class="muted">載入中…</td></tr>`;
+      const r = await dealerListingsApi('list_submissions_my', {});
+      if(!r?.ok){
+        tb.innerHTML = `<tr><td colspan="7" class="muted">載入失敗：${escapeHtml(r?.error||'unknown')}</td></tr>`;
+        return { ok:false, items:[] };
+      }
+      const items = r.submissions || [];
+      if(!items.length){
+        tb.innerHTML = `<tr><td colspan="7" class="muted">目前沒有任務提交</td></tr>`;
+        return { ok:true, items:[] };
+      }
+
+      const proofCell = (x)=>{
+        const url = x.proof_url || x.proof || '';
+        if(!url) return `<span class="muted">-</span>`;
+        const safe = escapeHtml(url);
+        return `<a class="link" href="${safe}" target="_blank" rel="noopener">查看</a>`;
+      };
+
+      tb.innerHTML = items.map(x=>`
+        <tr>
+          <td>${escapeHtml(x.submitted_at||'-')}</td>
+          <td><code>${escapeHtml(x.submission_id||'-')}</code></td>
+          <td><code>${escapeHtml(x.quest_id||'-')}</code></td>
+          <td><code>${escapeHtml(x.user_id||'-')}</code></td>
+          <td>${statusChip(x.status)}</td>
+          <td>${proofCell(x)}</td>
+          <td class="muted">${escapeHtml(x.note || x.review_reason || x.review_note || '-')}</td>
+        </tr>
+      `).join('');
+      return { ok:true, items };
+    }
+
+    function applyVerifyUI(user){
+      const chip = $('#verifyChip');
+      const txt = $('#verifyText');
+      if(!chip || !txt) return;
+      chip.style.display = '';
+      const s = String(user?.social_status || user?.verify_status || '').toLowerCase();
+      if(s==='approved'){
+        chip.className = 'chip ok';
+        txt.textContent = '已驗證';
+      }else if(s==='submitted'){
+        chip.className = 'chip warn';
+        txt.textContent = '審核中';
+      }else if(s==='rejected'){
+        chip.className = 'chip bad';
+        txt.textContent = '未通過';
+      }else{
+        chip.className = 'chip';
+        txt.textContent = '未送審';
+      }
+    }
+
+    function setupTabs(){
+      const btns = Array.from(document.querySelectorAll('.tabBtn'));
+      const panels = Array.from(document.querySelectorAll('.tabPanel'));
+
+      const setActive = (tab)=>{
+        btns.forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+        panels.forEach(p=>p.classList.toggle('active', p.dataset.tab===tab));
+      };
+
+      btns.forEach(b=>{
+        b.addEventListener('click', ()=>{
+          const tab = b.dataset.tab;
+          setActive(tab);
+          // Update hash for deep-linking
+          const map = { overview:'#top', listings:'#listings', submissions:'#transactions', billing:'#billing' };
+          history.replaceState(null, '', map[tab] || '#top');
+          window.scrollTo({ top: 0, behavior:'smooth' });
+        });
+      });
+
+      // Convert nav hash links into tab switch
+      document.querySelectorAll('a[href^="#"]').forEach(a=>{
+        a.addEventListener('click', (e)=>{
+          const href = a.getAttribute('href');
+          if(!href) return;
+          const map = { '#top':'overview', '#listings':'listings', '#transactions':'submissions', '#billing':'billing' };
+          if(map[href]){
+            e.preventDefault();
+            setActive(map[href]);
+            history.replaceState(null, '', href);
+            window.scrollTo({ top: 0, behavior:'smooth' });
+          }
+        });
+      });
+
+      // initial
+      const h = (location.hash || '#top').toLowerCase();
+      const map = { '#top':'overview', '#listings':'listings', '#transactions':'submissions', '#billing':'billing' };
+      setActive(map[h] || 'overview');
+    }
+
+    function wireFilters(){
+      const filterRows = (tbodySel, q, statusVal)=>{
+        const tbody = $(tbodySel); if(!tbody) return;
+        const rows = Array.from(tbody.querySelectorAll('tr') || []);
+        rows.forEach(r=>{
+          const text = (r.textContent || '').toLowerCase();
+          let ok = !q || text.includes(q);
+          if(ok && statusVal){
+            ok = text.includes(statusVal);
+          }
+          r.style.display = ok ? '' : 'none';
+        });
+      };
+
+      $('#listingSearch')?.addEventListener('input', ()=>{
+        const q = ($('#listingSearch')?.value||'').trim().toLowerCase();
+        const st = ($('#listingFilter')?.value||'').trim().toLowerCase();
+        filterRows('#listingsTbody', q, st);
+      });
+      $('#listingFilter')?.addEventListener('change', ()=>{
+        const q = ($('#listingSearch')?.value||'').trim().toLowerCase();
+        const st = ($('#listingFilter')?.value||'').trim().toLowerCase();
+        filterRows('#listingsTbody', q, st);
+      });
+
+      $('#subSearch')?.addEventListener('input', ()=>{
+        const q = ($('#subSearch')?.value||'').trim().toLowerCase();
+        const st = ($('#subStatusFilter')?.value||'').trim().toLowerCase();
+        filterRows('#submissionsTbody', q, st);
+      });
+      $('#subStatusFilter')?.addEventListener('change', ()=>{
+        const q = ($('#subSearch')?.value||'').trim().toLowerCase();
+        const st = ($('#subStatusFilter')?.value||'').trim().toLowerCase();
+        filterRows('#submissionsTbody', q, st);
+      });
     }
 
     async function syncAll(){
       const auth = requireLogin(); if(!auth) return;
-      guardDealerOrAdmin(auth.user);
+      setSyncBadge('syncing');
+      setSkeleton(true);
 
-      $('#navUsername').textContent = auth.user.username || auth.user.name || 'dealer';
+      // basic profile from local storage
+      $('#navUsername') && ($('#navUsername').textContent = auth.user.username || auth.user.name || 'dealer');
       const role = String(auth.user.role || '').toLowerCase();
       const adminLink = $('#adminLink');
       if(adminLink) adminLink.style.display = (role === 'admin') ? '' : 'none';
 
-      $('#dealerName').textContent = auth.user.name || auth.user.username || '車行';
-      $('#dealerEmail').textContent = auth.user.email || '-';
-
-      setSkeleton(true);
-      setSyncBadge('syncing');
+      $('#dealerName') && ($('#dealerName').textContent = auth.user.name || auth.user.username || '車行');
+      $('#dealerEmail') && ($('#dealerEmail').textContent = auth.user.email || '-');
+      applyVerifyUI(auth.user);
 
       try{
-        const snap = await fetchDealerSnapshot(auth.token);
-        if(snap?.dealer?.name) $('#dealerName').textContent = snap.dealer.name;
-        if(snap?.dealer?.email) $('#dealerEmail').textContent = snap.dealer.email;
-        applySnapshotUI(snap);
+        const [lres, sres] = await Promise.all([ loadMyListings(), loadMySubmissions() ]);
+
+        // Overview stats: use listing status counts
+        const listings = lres.items || [];
+        const needFix = listings.filter(x => String(x.status||'').toLowerCase()==='need_fix').length;
+        const approved = listings.filter(x => ['approved','published','active'].includes(String(x.status||'').toLowerCase())).length;
+
+        // Fill cards (existing ids)
+        const elNeedFix = $('#needFix'); if(elNeedFix) elNeedFix.textContent = String(needFix);
+        const elMonthDeals = $('#monthDeals'); if(elMonthDeals) elMonthDeals.textContent = String(approved);
+
+        // keep todayViews/todayLeads as 0 for now
+        const elViews = $('#todayViews'); if(elViews && elViews.textContent==='0') {}
+        const elLeads = $('#todayLeads'); if(elLeads && elLeads.textContent==='0') {}
+
         setSyncBadge('ok');
-        showToast('同步完成', 'success');
-      } catch (err){
+      }catch(err){
         setSyncBadge('fail');
-        applySnapshotUI({ stats: { live:0, review:0, deals:0, spend:0, todayViews:0, todayLeads:0, needFix:0, monthDeals:0 }, dealer: { verify_status: '' } });
-        showToast('尚未串接後端資料（可先使用介面）', 'warn');
-      } finally{
+        showToast('同步失敗：' + (err?.message || 'unknown'), 'error');
+      }finally{
         setSkeleton(false);
       }
     }
 
-    $('#refreshBtn')?.addEventListener('click', syncAll);
-    $('#btnCreateListing')?.addEventListener('click', ()=>showToast('此功能為 UI 預留，後端串接後即可使用。','info'));
-    $('#btnReportDeal')?.addEventListener('click', ()=>showToast('此功能為 UI 預留，後端串接後即可使用。','info'));
-    $('#btnUpgrade')?.addEventListener('click', ()=>showToast('此功能為 UI 預留，後端串接後即可使用。','info'));
-
-    function wireFilters(){
-      function filterRows(tbodySel, q, extra){
-        const tbody = $(tbodySel); if(!tbody) return;
-        const rows = Array.from(tbody.querySelectorAll('tr') || []);
-        rows.forEach(r => {
-          const text = (r.textContent || '').toLowerCase();
-          let ok = !q || text.includes(q);
-          if(ok && extra) ok = extra(text);
-          r.style.display = ok ? '' : 'none';
-        });
-      }
-
-      $('#listingSearch')?.addEventListener('input', () => {
-        const q = ($('#listingSearch')?.value || '').trim().toLowerCase();
-        const st = ($('#listingFilter')?.value || '').trim().toLowerCase();
-        filterRows('#listingsTbody', q, st ? (text => text.includes(st)) : null);
-      });
-      $('#listingFilter')?.addEventListener('change', () => {
-        const q = ($('#listingSearch')?.value || '').trim().toLowerCase();
-        const st = ($('#listingFilter')?.value || '').trim().toLowerCase();
-        filterRows('#listingsTbody', q, st ? (text => text.includes(st)) : null);
-      });
-
-      $('#dealSearch')?.addEventListener('input', () => {
-        const q = ($('#dealSearch')?.value || '').trim().toLowerCase();
-        const st = ($('#dealStatusFilter')?.value || '').trim().toLowerCase();
-        filterRows('#dealsTbody', q, st ? (text => text.includes(st)) : null);
-      });
-      $('#dealStatusFilter')?.addEventListener('change', () => {
-        const q = ($('#dealSearch')?.value || '').trim().toLowerCase();
-        const st = ($('#dealStatusFilter')?.value || '').trim().toLowerCase();
-        filterRows('#dealsTbody', q, st ? (text => text.includes(st)) : null);
-      });
-    }
-
-    (function init(){
+    document.addEventListener('DOMContentLoaded', ()=>{
       const auth = requireLogin(); if(!auth) return;
-      guardDealerOrAdmin(auth.user);
+      if(!guardDealerOrAdmin(auth.user)) return;
+
+      $('#logoutBtn')?.addEventListener('click', (e)=>{ e.preventDefault(); logout(); });
+      $('#refreshBtn')?.addEventListener('click', syncAll);
+      $('#btnRefreshSubs')?.addEventListener('click', loadMySubmissions);
+
+      $('#btnReportDeal')?.addEventListener('click', ()=>showToast('此功能將於下一版開放。','info'));
+      $('#btnUpgrade')?.addEventListener('click', ()=>showToast('此功能將於下一版開放。','info'));
+
+      setupTabs();
+      wireListingModal();
       wireFilters();
       syncAll();
-    })();
-  
-
-  // =========================
-  // dealer_listings integration
-  // =========================
-  function escapeHtml(s){
-    return String(s ?? "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#39;");
-  }
-
-  function authHeaders(){
-    const token = localStorage.getItem("xinghuo_token") || "";
-    return token ? { "Authorization": "Bearer " + token } : {};
-  }
-
-  async function dealerListingsApi(action, payload){
-    const res = await fetch("/.netlify/functions/dealer-listings", {
-      method:"POST",
-      headers:{ "content-type":"application/json", ...authHeaders() },
-      body: JSON.stringify({ action, ...payload })
     });
-    return res.json();
-  }
-
-  function fmtMoney(v){
-    const n = Number(v||0);
-    if(!Number.isFinite(n)) return "-";
-    return "$ " + n.toLocaleString("zh-TW");
-  }
-
-  function statusChip(s){
-    const t = String(s||"").toLowerCase();
-    if(t==="active") return `<span class="chip ok">active</span>`;
-    if(t==="need_fix") return `<span class="chip warn">need_fix</span>`;
-    if(t==="rejected") return `<span class="chip bad">rejected</span>`;
-    return `<span class="chip">${escapeHtml(s||"submitted")}</span>`;
-  }
-
-  async function loadMyListings(){
-    const tb = document.getElementById("listingsTbody");
-    if(!tb) return;
-    tb.innerHTML = `<tr><td colspan="7" class="muted">載入中…</td></tr>`;
-    const r = await dealerListingsApi("list_my", {});
-    if(!r?.ok){
-      tb.innerHTML = `<tr><td colspan="7" class="muted">載入失敗：${escapeHtml(r?.error||"unknown")}</td></tr>`;
-      return;
-    }
-    const items = r.items || [];
-    if(!items.length){
-      tb.innerHTML = `<tr><td colspan="7" class="muted">目前沒有刊登紀錄</td></tr>`;
-      return;
-    }
-    tb.innerHTML = items.map(x=>{
-      return `
-        <tr>
-          <td>${escapeHtml(x.submitted_at||"-")}</td>
-          <td><code>${escapeHtml(x.listing_id||"-")}</code></td>
-          <td>${escapeHtml(x.title||"-")}</td>
-          <td>${fmtMoney(x.budget_total)}</td>
-          <td>${fmtMoney(x.reward_min)} ~ ${fmtMoney(x.reward_max)}</td>
-          <td>${statusChip(x.status)}</td>
-          <td class="muted">${escapeHtml(x.review_note||"-")}</td>
-        </tr>
-      `;
-    }).join("");
-  }
-
-  function openListingModal(){
-    const m = document.getElementById("listingModal");
-    if(!m) return;
-    m.style.display="block";
-    document.body.style.overflow="hidden";
-  }
-  function closeListingModal(){
-    const m = document.getElementById("listingModal");
-    if(!m) return;
-    m.style.display="none";
-    document.body.style.overflow="";
-  }
-
-  function wireListingModal(){
-    const m = document.getElementById("listingModal");
-    if(!m) return;
-
-    m.addEventListener("click", (e)=>{
-      const el = e.target.closest("[data-close]");
-      if(el) closeListingModal();
-    });
-
-    document.getElementById("btnCreateListing")?.addEventListener("click", ()=>{
-      openListingModal();
-    });
-
-    document.getElementById("btnSubmitListing")?.addEventListener("click", async ()=>{
-      const title = (document.getElementById("mTitle")?.value||"").trim();
-      const budget_total = Number(document.getElementById("mBudget")?.value||0);
-      const reward_min = Number(document.getElementById("mRewardMin")?.value||0);
-      const reward_max = Number(document.getElementById("mRewardMax")?.value||0);
-      const quest_id = (document.getElementById("mQuestId")?.value||"").trim();
-
-      let car_info_json = (document.getElementById("mCarJson")?.value||"").trim();
-
-      if(!title){
-        showToast("缺少資料", "請輸入 title");
-        return;
-      }
-      if(car_info_json){
-        try{ JSON.parse(car_info_json); }catch(e){
-          showToast("JSON 錯誤", "car_info_json 不是合法 JSON");
-          return;
-        }
-      }else{
-        car_info_json = "{}";
-      }
-
-      const btn = document.getElementById("btnSubmitListing");
-      btn && (btn.disabled=true);
-
-      const r = await dealerListingsApi("create", {
-        title,
-        car_info_json,
-        budget_total: Number.isFinite(budget_total)?budget_total:0,
-        reward_min: Number.isFinite(reward_min)?reward_min:0,
-        reward_max: Number.isFinite(reward_max)?reward_max:0,
-        quest_id: quest_id || ""
-      });
-
-      btn && (btn.disabled=false);
-
-      if(!r?.ok){
-        showToast("失敗", r?.error||"create_failed");
-        return;
-      }
-      showToast("完成", "已提交刊登審核");
-      closeListingModal();
-      ["mTitle","mBudget","mRewardMin","mRewardMax","mCarJson","mQuestId"].forEach(id=>{
-        const el=document.getElementById(id); if(el) el.value="";
-      });
-      loadMyListings();
-    });
-  }
-
-  // Override old snapshot (dealer.cjs) -> minimal UI from local user
-  async function fetchDealerSnapshot(){
-    const user = JSON.parse(localStorage.getItem("xinghuo_user")||"{}");
-    const navUsername = document.getElementById("navUsername");
-    if(navUsername) navUsername.textContent = user.username || user.name || "Dealer";
-
-    const dn = document.getElementById("dealerName");
-    if(dn) dn.textContent = user.name || "-";
-    const de = document.getElementById("dealerEmail");
-    if(de) de.textContent = user.email || "-";
-
-    const s = String(user.social_status||"").toLowerCase();
-    const chip = document.getElementById("verifyChip");
-    const txt = document.getElementById("verifyText");
-    if(chip && txt){
-      if(s==="approved"){ chip.className="chip ok"; txt.textContent="已驗證"; }
-      else if(s==="submitted"){ chip.className="chip warn"; txt.textContent="審核中"; }
-      else { chip.className="chip"; txt.textContent="未送審"; }
-    }
-
-    await loadMyListings();
-  }
-
-  // Extend init
-  try{
-    const __oldInit = init;
-    init = async function(){
-      await __oldInit();
-      wireListingModal();
-      await loadMyListings();
-    };
-  }catch(e){}
-</script>
+  </script>
 
   <!-- Create Listing Modal -->
   <div class="modal" id="listingModal" style="display:none;">
