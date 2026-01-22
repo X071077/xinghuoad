@@ -40,30 +40,6 @@
       overflow-x: hidden;
     }
 
-    body::before{
-      content:"";
-      position: fixed;
-      inset: 0;
-      background-image: url("picture/p1.png");
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      transform: scale(1.02);
-      z-index: -3;
-    }
-
-    body::after{
-      content:"";
-      position: fixed;
-      inset: 0;
-      background:
-        radial-gradient(900px 600px at 20% 0%, rgba(255,255,255,.08), transparent 60%),
-        radial-gradient(800px 520px at 80% 15%, rgba(255,255,255,.06), transparent 55%),
-        linear-gradient(180deg, rgba(0,0,0,.52) 0%, rgba(0,0,0,.60) 45%, rgba(0,0,0,.70) 100%);
-      z-index: -2;
-      pointer-events: none;
-    }
-
     a{ color:inherit; text-decoration:none; }
     .container{ width:min(var(--max), calc(100% - 40px)); margin:0 auto; }
 
@@ -591,10 +567,53 @@
       .navPanel nav{ grid-template-columns: 1fr; }
       .navPanel .actions{ grid-template-columns: 1fr; }
     }
-  </style>
+
+/* Random background slideshow (injected/used by js/random-bg.js) */
+#bg-slideshow{
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  overflow:hidden;
+}
+#bg-slideshow .bg-layer{
+  position:absolute;
+  inset:0;
+  background-position:center;
+  background-repeat:no-repeat;
+  background-size:cover;
+  background-attachment:fixed;
+  opacity:0;
+  transition:opacity 1200ms ease;
+  will-change:opacity;
+}
+#bg-slideshow .bg-layer.is-active{ opacity:1; }
+#bg-slideshow .bg-blur{
+  position:absolute;
+  inset:-24px;
+  background-position:center;
+  background-repeat:no-repeat;
+  background-size:cover;
+  filter: blur(14px);
+  transform: scale(1.06);
+  opacity:.78;
+}
+#bg-slideshow .bg-shade{
+  position:absolute;
+  inset:0;
+  background: rgba(7,10,18,.56);
+}
+</style>
+  <script src="./js/random-bg.js" defer></script>
 </head>
 
 <body>
+  <div id="bg-slideshow" aria-hidden="true">
+    <div class="bg-layer layer-a"></div>
+    <div class="bg-layer layer-b"></div>
+    <div class="bg-blur"></div>
+    <div class="bg-shade"></div>
+  </div>
   <header>
     <div class="container">
       <div class="header-inner">
@@ -678,7 +697,7 @@
 
         <div class="flow-card" aria-label="平台運作原理圖">
           <div class="flow-media">
-            <img src="picture/P2.png" alt="平台運作原理圖" />
+            <img src="picture/principle.png" alt="平台運作原理圖" />
           </div>
           <div class="flow-caption">平台運作原理圖</div>
         </div>

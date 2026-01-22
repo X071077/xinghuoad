@@ -42,28 +42,7 @@
       position:relative;
       overflow-x:hidden;
 
-      background: url("picture/P1.png") center / cover no-repeat fixed;
-    }
-
-    body::before{
-      content:"";
-      position:fixed;
-      inset:-24px;
-      background: url("picture/P1.png") center / cover no-repeat;
-      filter: blur(14px);
-      transform: scale(1.06);
-      opacity: .78;
-      z-index:-2;
-      pointer-events:none;
-    }
-
-    body::after{
-      content:"";
-      position:fixed;
-      inset:0;
-      background: rgba(7,10,18,.56);
-      z-index:-1;
-      pointer-events:none;
+      background: none;
     }
 
     .wrap{ width:min(860px, 100%); }
@@ -312,10 +291,53 @@
       .body{ padding:18px 18px 20px; }
       .section{ padding:14px; }
     }
-  </style>
+
+/* Random background slideshow (injected/used by js/random-bg.js) */
+#bg-slideshow{
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  overflow:hidden;
+}
+#bg-slideshow .bg-layer{
+  position:absolute;
+  inset:0;
+  background-position:center;
+  background-repeat:no-repeat;
+  background-size:cover;
+  background-attachment:fixed;
+  opacity:0;
+  transition:opacity 1200ms ease;
+  will-change:opacity;
+}
+#bg-slideshow .bg-layer.is-active{ opacity:1; }
+#bg-slideshow .bg-blur{
+  position:absolute;
+  inset:-24px;
+  background-position:center;
+  background-repeat:no-repeat;
+  background-size:cover;
+  filter: blur(14px);
+  transform: scale(1.06);
+  opacity:.78;
+}
+#bg-slideshow .bg-shade{
+  position:absolute;
+  inset:0;
+  background: rgba(7,10,18,.56);
+}
+</style>
+  <script src="./js/random-bg.js" defer></script>
 </head>
 
 <body>
+  <div id="bg-slideshow" aria-hidden="true">
+    <div class="bg-layer layer-a"></div>
+    <div class="bg-layer layer-b"></div>
+    <div class="bg-blur"></div>
+    <div class="bg-shade"></div>
+  </div>
   <div class="wrap">
     <div class="card">
       <div class="header">

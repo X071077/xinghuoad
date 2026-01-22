@@ -12,7 +12,7 @@ const DEFAULT_ALLOWED_ORIGINS = [
 ];
 
 function getAllowedOrigins() {
-  const env = String(process.env.ALLOWED_ORIGINS || "")
+  const env = String((process.env.ALLOWED_ORIGINS || process.env.CORS_ALLOWED_ORIGINS) || "")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
