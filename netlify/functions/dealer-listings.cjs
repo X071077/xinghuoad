@@ -198,6 +198,7 @@ exports.handler = async (event) => {
 
       const now = nowISO();
       const status = 'submitted';
+      const plan = 'basic';
 
       const newRow = Array(headers.length).fill('');
       newRow[idx['listing_id']] = listing_id;
@@ -209,6 +210,7 @@ exports.handler = async (event) => {
       newRow[idx['reward_min']] = String(reward_min);
       newRow[idx['reward_max']] = String(reward_max);
       newRow[idx['status']] = status;
+      if (typeof idx['plan'] === 'number') newRow[idx['plan']] = plan;
       newRow[idx['submitted_at']] = now;
       newRow[idx['updated_at']] = now;
 
@@ -252,12 +254,14 @@ exports.handler = async (event) => {
         if (ru && ru === targetUserId) {
           out.push(pickRow(r, idx, [
             'listing_id','dealer_id','user_id','title','budget_total','reward_min','reward_max',
-            'status','submitted_at','reviewed_at','reviewed_by','review_note','quest_id','updated_at',
+            'plan','status','submitted_at','reviewed_at','reviewed_by','review_note','quest_id','updated_at',
           ]));
         }
       }
       // newest first by submitted_at (string ISO)
       out.sort((a, b) => String(b.submitted_at || '').localeCompare(String(a.submitted_at || '')));
+      out.forEach(it=>{ if(!it.plan) it.plan='basic'; });
+      
       return reply(200, { ok: true, listings: out.slice(0, 50) }, origin);
     }
 

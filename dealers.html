@@ -383,12 +383,10 @@
       <div class="nav-links" id="navLinks">
         <a href="#top" class="nav-link"><i class="fas fa-gauge-high"></i> 總覽</a>
         <a href="#listings" class="nav-link"><i class="fas fa-bullhorn"></i> 刊登</a>
-        <a href="#transactions" class="nav-link"><i class="fas fa-receipt"></i> 成交</a>
-        <a href="#billing" class="nav-link"><i class="fas fa-wallet"></i> 方案/帳務</a>
+        <a href="#transactions" class="nav-link"><i class="fas fa-receipt"></i> 任務管理</a>
+        <a href="#billing" class="nav-link"><i class="fas fa-wallet"></i> 帳務紀錄</a>
 
         <span class="nav-sep"></span>
-
-        <a href="dashboard.html" class="nav-link"><i class="fas fa-house-user"></i> 會員中心</a>
         <a href="index.html" class="nav-link"><i class="fas fa-house"></i> 返回首頁</a>
 
         <a href="admin.html" class="nav-link nav-admin" id="adminLink" style="display:none">
@@ -403,7 +401,7 @@
     </div>
   </nav>
 
-  <section class="dashboard-header tabPanel" data-tab="overview" id="top">
+  <section class="dashboard-header" id="top">
     <div class="container">
       <div class="hero-card">
         <div class="hero-left">
@@ -414,12 +412,12 @@
           </div>
 
           <h1 class="hero-title">車行交易者中心</h1>
-          <p class="hero-sub">管理車源刊登、成交回報、方案/帳務，一頁掌控。<span class="muted">（Admin 亦可進入）</span></p>
+          <p class="hero-sub">管理車源刊登、任務管理、帳務紀錄。</p>
 
           <div class="hero-actions">
             <a class="btn btn-primary" href="#listings"><i class="fas fa-bullhorn"></i> 新增刊登</a>
-            <a class="btn" href="#transactions"><i class="fas fa-receipt"></i> 查看成交</a>
-            <a class="btn" href="#billing"><i class="fas fa-wallet"></i> 方案/帳務</a>
+            <a class="btn" href="#transactions"><i class="fas fa-receipt"></i> 任務管理</a>
+            <a class="btn" href="#billing"><i class="fas fa-wallet"></i> 帳務紀錄</a>
           </div>
         </div>
 
@@ -442,31 +440,17 @@
 
             <div class="profile-actions">
               <button class="btn btn-ghost" id="refreshBtn" type="button"><i class="fas fa-rotate"></i> 重新同步</button>
-              <a class="btn btn-ghost" href="dashboard.html"><i class="fas fa-house-user"></i> 會員中心</a>
             </div>
           </div>
         </div>
       </div>
-
-      <div class="stats-row">
-        <div class="stat-card"><div class="stat-icon"><i class="fas fa-eye"></i></div><div class="stat-body"><div class="stat-label">今日瀏覽</div><div class="stat-value"><span id="todayViews" class="skeleton mid">0</span></div></div></div>
         <div class="stat-card"><div class="stat-icon"><i class="fas fa-message"></i></div><div class="stat-body"><div class="stat-label">今日詢問</div><div class="stat-value"><span id="todayLeads" class="skeleton mid">0</span></div></div></div>
         <div class="stat-card"><div class="stat-icon"><i class="fas fa-file-circle-exclamation"></i></div><div class="stat-body"><div class="stat-label">待補件</div><div class="stat-value"><span id="needFix" class="skeleton mid">0</span></div></div></div>
         <div class="stat-card"><div class="stat-icon"><i class="fas fa-circle-check"></i></div><div class="stat-body"><div class="stat-label">本月成交</div><div class="stat-value"><span id="monthDeals" class="skeleton mid">0</span></div></div></div>
       </div>
     </div>
   </section>
-
-  <div class="container tabs-wrap">
-    <div class="tabs" role="tablist" aria-label="Dealer 導覽">
-      <button class="tabBtn active" data-tab="overview" type="button">概覽</button>
-      <button class="tabBtn" data-tab="listings" type="button">刊登管理</button>
-      <button class="tabBtn" data-tab="submissions" type="button">任務提交</button>
-      <button class="tabBtn" data-tab="billing" type="button">帳務方案</button>
-    </div>
-  </div>
-
-  <section class="section tabPanel" data-tab="listings" id="listings">
+  <section class="section" id="listings">
     <div class="container">
       <div class="section-head">
         <h2 class="section-title"><i class="fas fa-bullhorn"></i> 車源刊登管理</h2>
@@ -490,22 +474,6 @@
           </div>
 
           <div style="height:10px"></div>
-
-          <div class="field">
-            <select class="select" id="vStatus">
-              <option value="draft">草稿</option>
-              <option value="review">送審</option>
-              <option value="live">上架</option>
-              <option value="off">下架</option>
-            </select>
-
-            <select class="select" id="vPlan">
-              <option value="basic">方案：Basic</option>
-              <option value="plus">方案：Plus</option>
-              <option value="pro">方案：Pro</option>
-            </select>
-          </div>
-
           <div style="height:12px"></div>
 
           <button class="btn btn-primary" id="btnCreateListing" type="button">
@@ -537,17 +505,18 @@
             <table>
               <thead>
                 <tr>
-                  <th style="width:160px">listing_id</th>
-                  <th style="width:220px">車系</th>
-                  <th style="width:120px">狀態</th>
-                  <th style="width:140px">方案</th>
-                  <th style="width:140px">更新</th>
-                  <th style="width:220px">操作</th>
+                  <th style="width:180px">提交時間</th>
+                  <th style="width:180px">listing_id</th>
+                  <th>標題</th>
+                  <th style="width:140px">預算</th>
+                  <th style="width:180px">獎勵</th>
+                  <th style="width:140px">狀態</th>
+                  <th style="width:220px">審核備註</th>
                 </tr>
               </thead>
               <tbody id="listingsTbody">
                 <tr>
-                  <td colspan="6">
+                  <td colspan="7">
                     <div class="empty">
                       <div><b>尚未載入刊登資料</b></div>
                       <div class="muted">後端串接完成後，這裡會顯示你的車源列表。</div>
@@ -563,10 +532,10 @@
     </div>
   </section>
 
-  <section class="section tabPanel" data-tab="submissions" id="transactions">
+  <section class="section" id="transactions">
     <div class="container">
       <div class="section-head">
-        <h2 class="section-title"><i class="fas fa-clipboard-check"></i> 任務提交追蹤</h2>
+        <h2 class="section-title"><i class="fas fa-clipboard-check"></i> 任務管理追蹤</h2>
         <div class="section-actions">
           <div class="searchWrap">
             <i class="fas fa-magnifying-glass"></i>
@@ -603,60 +572,56 @@
       </div>
 
       <div class="hint muted" style="margin-top:10px;">
-        這裡會顯示屬於你刊登（quests）的任務提交紀錄。若你想讓車行也能「初審」，下一版可加上審核按鈕與流程。
+        這裡會顯示屬於你刊登的任務提交與審核狀態（只讀）。
       </div>
     </div>
   </section>
 
 
-  <section class="section tabPanel" data-tab="billing" id="billing">
-    <div class="container">
-      <div class="section-head">
-        <h2 class="section-title"><i class="fas fa-wallet"></i> 方案/帳務</h2>
-        <p class="section-sub">目前方案、帳單、付款狀態與升級（UI 預留）。</p>
-      </div>
-
-      <div class="grid-2">
-        <div class="card">
-          <h3 class="card-title"><i class="fas fa-gem"></i> 目前方案</h3>
-          <div class="empty" id="planBox">
-            <div><b>尚未載入方案</b></div>
-            <div class="muted">串接後顯示：方案等級、到期日、可刊登數、曝光加成等。</div>
-          </div>
-          <div style="height:12px"></div>
-          <button class="btn btn-primary" id="btnUpgrade" type="button"><i class="fas fa-arrow-up-right-dots"></i> 升級方案（規劃）</button>
-        </div>
-
-        <div class="card">
-          <h3 class="card-title"><i class="fas fa-file-invoice-dollar"></i> 帳單紀錄</h3>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th style="width:160px">invoice_id</th>
-                  <th style="width:180px">期間</th>
-                  <th style="width:140px">金額</th>
-                  <th style="width:140px">狀態</th>
-                  <th style="width:220px">操作</th>
-                </tr>
-              </thead>
-              <tbody id="invoicesTbody">
-                <tr>
-                  <td colspan="5">
-                    <div class="empty">
-                      <div><b>尚未載入帳單</b></div>
-                      <div class="muted">串接後可提供下載發票/收據與付款憑證。</div>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
+  <section class="section" id="billing">
+  <div class="container">
+    <div class="section-head">
+      <h2 class="section-title"><i class="fas fa-file-invoice-dollar"></i> 帳務紀錄</h2>
+      <p class="section-sub">僅供檢視已付款的訂單（只讀）。</p>
     </div>
-  </section>
+
+    <div class="card">
+      <h3 class="card-title"><i class="fas fa-receipt"></i> 已付款訂單</h3>
+
+      <div class="toolbar">
+        <input class="input" id="billingSearch" placeholder="搜尋 invoice_id / 期間 / 金額 / 備註…" />
+        <button class="btn btn-ghost" id="reloadBilling" type="button"><i class="fas fa-rotate"></i> 重新載入</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:180px">invoice_id</th>
+              <th style="width:200px">期間</th>
+              <th style="width:140px">金額</th>
+              <th style="width:200px">付款時間</th>
+              <th>備註</th>
+            </tr>
+          </thead>
+          <tbody id="billingTbody">
+            <tr>
+              <td colspan="5">
+                <div class="empty">
+                  <div><b>目前沒有已付款訂單</b></div>
+                  <div class="muted">串接後會自動顯示付款完成的訂單紀錄。</div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="height:10px"></div>
+      <div class="muted">說明：此頁僅提供查詢與下載憑證（後端串接後開放）。</div>
+    </div>
+  </div>
+</section>
 
   <div class="toast-wrap" id="toastWrap" aria-live="polite" aria-atomic="true"></div>
 
@@ -888,7 +853,7 @@
       }
       const items = r.submissions || [];
       if(!items.length){
-        tb.innerHTML = `<tr><td colspan="7" class="muted">目前沒有任務提交</td></tr>`;
+        tb.innerHTML = `<tr><td colspan="7" class="muted">目前沒有任務管理</td></tr>`;
         return { ok:true, items:[] };
       }
 
@@ -937,6 +902,8 @@
     function setupTabs(){
       const btns = Array.from(document.querySelectorAll('.tabBtn'));
       const panels = Array.from(document.querySelectorAll('.tabPanel'));
+
+      if(btns.length===0 || panels.length===0) return;
 
       const setActive = (tab)=>{
         btns.forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
@@ -1010,6 +977,11 @@
         const st = ($('#subStatusFilter')?.value||'').trim().toLowerCase();
         filterRows('#submissionsTbody', q, st);
       });
+
+      $('#billingSearch')?.addEventListener('input', ()=>{
+        const q = ($('#billingSearch')?.value||'').trim().toLowerCase();
+        filterRows('#billingTbody', q, '');
+      });
     }
 
     async function syncAll(){
@@ -1062,6 +1034,7 @@
 
       $('#btnReportDeal')?.addEventListener('click', ()=>showToast('此功能將於下一版開放。','info'));
       $('#btnUpgrade')?.addEventListener('click', ()=>showToast('此功能將於下一版開放。','info'));
+      $('#reloadBilling')?.addEventListener('click', ()=>showToast('此功能將於下一版開放。','info'));
 
       setupTabs();
       wireListingModal();
